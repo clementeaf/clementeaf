@@ -8,9 +8,11 @@ import { AuthPage } from './pages/AuthPage'
 function App(): JSX.Element {
   return (
     <BrowserRouter>
-      <Routes>
-        <Route path="*" element={<AuthPage />} />
-      </Routes>
+      <div className='flex flex-col items-center justify-center h-screen w-screen bg-blue-50/70'>
+        <Routes>
+          <Route path="*" element={<AuthPage />} />
+        </Routes>
+      </div>
     </BrowserRouter>
   )
 }
