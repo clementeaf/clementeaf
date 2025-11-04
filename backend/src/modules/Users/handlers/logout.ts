@@ -1,51 +1,28 @@
-import { type APIGatewayProxyEvent, type APIGatewayProxyResult } from 'aws-lambda';
+import { type APIGatewayProxyEvent } from 'aws-lambda';
 import { AuthService } from '../services/AuthService';
+import { handlerWrapper } from '../utils/handlerWrapper';
+import { extractToken, validateToken } from '../utils/auth';
+import { successResponse, errorResponse } from '../utils/response';
 
 /**
  * Handler para cerrar sesión
  * @param event - Evento de API Gateway
  * @returns Respuesta de confirmación
  */
-export const handler = async (
-  event: APIGatewayProxyEvent
-): Promise<APIGatewayProxyResult> => {
-  try {
-    const token = event.headers.Authorization?.replace('Bearer ', '') ||
-                  event.headers.authorization?.replace('Bearer ', '');
+const logoutHandler = async (event: APIGatewayProxyEvent) => {
+  const tokenError = validateToken(event);
+  if (tokenError) return tokenError;
 
-    if (!token) {
-      return {
-        statusCode: 401,
-        body: JSON.stringify({ error: 'Token is required' })
-      };
-    }
+  const token = extractToken(event)!;
+  const authService = new AuthService();
+  const isValid = await authService.logout(token);
 
-    const authService = new AuthService();
-    const isValid = await authService.logout(token);
-
-    if (!isValid) {
-      return {
-        statusCode: 401,
-        body: JSON.stringify({ error: 'Invalid token' })
-      };
-    }
-
-    return {
-      statusCode: 200,
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        message: 'Logout successful'
-      })
-    };
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Internal server error';
-
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: errorMessage })
-    };
+  if (!isValid) {
+    return errorResponse(401, 'Invalid token');
   }
+
+  return successResponse(200, undefined, 'Logout successful');
 };
+
+export const handler = handlerWrapper(logoutHandler);
 

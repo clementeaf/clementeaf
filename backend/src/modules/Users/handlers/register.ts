@@ -1,68 +1,45 @@
-import { type APIGatewayProxyEvent, type APIGatewayProxyResult } from 'aws-lambda';
-import { initializeDatabase } from '../../../config/database';
+import { type APIGatewayProxyEvent } from 'aws-lambda';
 import { AuthService } from '../services/AuthService';
 import { type RegisterDto } from '../dto/RegisterDto';
+import { handlerWrapper } from '../utils/handlerWrapper';
+import { validateBody, parseBody } from '../utils/validation';
+import { validateRegisterDto } from '../utils/validators';
+import { successResponse, errorResponse } from '../utils/response';
 
 /**
  * Handler para registro de usuarios
  * @param event - Evento de API Gateway
  * @returns Respuesta con usuario creado
  */
-export const handler = async (
-  event: APIGatewayProxyEvent
-): Promise<APIGatewayProxyResult> => {
-  try {
-    await initializeDatabase();
+const registerHandler = async (event: APIGatewayProxyEvent) => {
+  const bodyError = validateBody(event);
+  if (bodyError) return bodyError;
 
-    if (!event.body) {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ error: 'Request body is required' })
-      };
-    }
-
-    const registerDto: RegisterDto = JSON.parse(event.body);
-
-    if (!registerDto.email || !registerDto.password) {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ error: 'Email and password are required' })
-      };
-    }
-
-    const authService = new AuthService();
-    const user = await authService.register(registerDto);
-
-    return {
-      statusCode: 201,
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        message: 'User registered successfully',
-        user: {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          createdAt: user.createdAt?.toISOString(),
-          updatedAt: user.updatedAt?.toISOString()
-        }
-      })
-    };
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Internal server error';
-
-    if (errorMessage.includes('already exists')) {
-      return {
-        statusCode: 409,
-        body: JSON.stringify({ error: errorMessage })
-      };
-    }
-
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: errorMessage })
-    };
+  const registerDto = parseBody<RegisterDto>(event.body!);
+  if (!registerDto) {
+    return errorResponse(400, 'Invalid JSON format');
   }
+
+  const validationError = validateRegisterDto(registerDto);
+  if (validationError) {
+    return errorResponse(400, validationError);
+  }
+
+  const authService = new AuthService();
+  const user = await authService.register(registerDto);
+
+  return successResponse(
+    201,
+    {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      createdAt: user.createdAt?.toISOString(),
+      updatedAt: user.updatedAt?.toISOString()
+    },
+    'User registered successfully'
+  );
 };
+
+export const handler = handlerWrapper(registerHandler);
 
