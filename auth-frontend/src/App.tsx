@@ -1,10 +1,17 @@
 import type { JSX } from "react"
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { AuthPage } from './pages/AuthPage'
 
+/**
+ * Componente principal de la aplicación
+ */
 function App(): JSX.Element {
   return (
-    <div>
-      <h1>Auth Frontend</h1>
-    </div>
+    <BrowserRouter>
+      <Routes>
+        <Route path="*" element={<AuthPage />} />
+      </Routes>
+    </BrowserRouter>
   )
 }
 
