@@ -1,0 +1,78 @@
+service: backend
+
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: nodejs20.x
+  stage: ${opt:stage, 'dev'}
+  region: ${opt:region, 'us-east-1'}
+  environment:
+    AWS_ENDPOINT_URL: ${env:AWS_ENDPOINT_URL, ''}
+    AWS_ACCESS_KEY_ID: ${env:AWS_ACCESS_KEY_ID, ''}
+    AWS_SECRET_ACCESS_KEY: ${env:AWS_SECRET_ACCESS_KEY, ''}
+    AWS_DEFAULT_REGION: ${env:AWS_DEFAULT_REGION, 'us-east-1'}
+    JWT_SECRET: ${env:JWT_SECRET, 'your-secret-key-change-in-production'}
+    JWT_EXPIRES_IN: ${env:JWT_EXPIRES_IN, '7d'}
+    DB_HOST: ${env:DB_HOST, 'localhost'}
+    DB_PORT: ${env:DB_PORT, '5432'}
+    DB_USERNAME: ${env:DB_USERNAME, 'postgres'}
+    DB_PASSWORD: ${env:DB_PASSWORD, 'postgres'}
+    DB_DATABASE: ${env:DB_DATABASE, 'banados_db'}
+
+plugins:
+  - serverless-offline
+
+functions:
+  hello:
+    handler: dist/handlers/hello.handler
+    events:
+      - http:
+          path: hello
+          method: get
+
+  register:
+    handler: dist/modules/Users/handlers/register.handler
+    events:
+      - http:
+          path: auth/register
+          method: post
+          cors: true
+
+  login:
+    handler: dist/modules/Users/handlers/login.handler
+    events:
+      - http:
+          path: auth/login
+          method: post
+          cors: true
+
+  me:
+    handler: dist/modules/Users/handlers/me.handler
+    events:
+      - http:
+          path: auth/me
+          method: get
+          cors: true
+
+  logout:
+    handler: dist/modules/Users/handlers/logout.handler
+    events:
+      - http:
+          path: auth/logout
+          method: post
+          cors: true
+
+custom:
+  serverless-offline:
+    httpPort: 9500
+    host: 0.0.0.0
+    lambdaPort: 3002
+    useInProcess: true
+  localstack:
+    stages:
+      - local
+    endpoint: http://localhost:4566
+  serverlessPluginTypescript:
+    tsConfigFileLocation: "./tsconfig.json"
+

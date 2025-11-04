@@ -1,0 +1,40 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "tsc && serverless offline",
+    "dev:local": "tsc && AWS_ENDPOINT_URL=http://localhost:4566 serverless offline",
+    "dev:docker": "docker-compose up",
+    "localstack:up": "docker-compose up localstack -d",
+    "localstack:down": "docker-compose stop localstack",
+    "docker:build": "docker-compose build",
+    "deploy": "tsc && serverless deploy",
+    "deploy:aws": "tsc && serverless deploy --stage prod",
+    "build": "tsc",
+    "lint": "eslint .",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "serverless": "^3.38.0",
+    "typeorm": "^0.3.17",
+    "pg": "^8.11.3",
+    "reflect-metadata": "^0.1.13",
+    "jsonwebtoken": "^9.0.2",
+    "bcryptjs": "^2.4.3"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.130",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/jsonwebtoken": "^9.0.5",
+    "@types/node": "^20.11.0",
+    "@types/pg": "^8.10.9",
+    "@typescript-eslint/eslint-plugin": "^6.19.0",
+    "@typescript-eslint/parser": "^6.19.0",
+    "eslint": "^8.56.0",
+    "serverless-offline": "^13.0.0",
+    "serverless-plugin-typescript": "^2.1.0",
+    "typescript": "^5.3.3"
+  }
+}
+

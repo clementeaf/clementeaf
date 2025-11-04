@@ -1,0 +1,11 @@
+node_modules/
+dist/
+.serverless/
+.env
+.env.local
+.env.aws
+*.log
+.DS_Store
+localstack-data/
+postgres-data/
+
