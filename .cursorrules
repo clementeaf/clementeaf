@@ -1,0 +1,74 @@
+# Reglas de Formato para Backend Serverless - BANADOS FULLSTACK
+
+## Estructura de Archivos
+
+### Handlers
+- **Ubicación fuente**: `src/modules/[Module]/handlers/[nombre].ts` (SIN `.handler` en el nombre)
+- **Ubicación compilada**: `dist/modules/[Module]/handlers/[nombre].js`
+- **Handler en serverless.yml**: `dist/modules/[Module]/handlers/[nombre].handler`
+
+### Ejemplo:
+```
+src/modules/Users/handlers/register.ts → dist/modules/Users/handlers/register.js
+handler en serverless.yml: dist/modules/Users/handlers/register.handler
+```
+
+## Configuración OBLIGATORIA
+
+### serverless.yml
+```yaml
+custom:
+  serverless-offline:
+    useInProcess: true  # CRÍTICO: Requerido para rutas profundas
+```
+
+### TypeORM - Configuración de Entidades
+```typescript
+entities: [
+  'dist/modules/**/*.entity.js',
+  'dist/modules/**/entities/*.entity.js'
+]
+```
+- **NUNCA** usar condicionales `NODE_ENV` para rutas de entidades
+- **SIEMPRE** apuntar a archivos compilados en `dist/`
+
+### TypeScript
+- **Module**: `CommonJS` (NO ESNext)
+- **package.json**: Sin `"type": "module"`
+- **Imports**: Sin extensión `.js` en imports
+
+### TypeORM - Columnas
+- **SIEMPRE** especificar `type: 'varchar'` explícitamente para strings en PostgreSQL
+- **Usar** `nullable: true` para campos opcionales
+
+## Flujo de Trabajo
+
+1. Crear handler en `src/modules/[Module]/handlers/[nombre].ts`
+2. Compilar con `tsc` antes de ejecutar
+3. Agregar handler en serverless.yml: `dist/modules/[Module]/handlers/[nombre].handler`
+4. Verificar que entidades apunten a `dist/modules/**/*.entity.js`
+
+## Patrones para Nuevos Módulos
+
+Al crear un nuevo módulo:
+1. Estructura: `src/modules/[NombreModulo]/handlers/[nombre].ts`
+2. Handler en serverless.yml: `dist/modules/[NombreModulo]/handlers/[nombre].handler`
+3. Entidades: `src/modules/[NombreModulo]/entities/[Nombre].entity.ts`
+4. Compilar antes de ejecutar: `npm run build` o `tsc`
+
+## Errores Comunes a Evitar
+
+❌ **NUNCA** usar `src/` en rutas de entidades de TypeORM cuando se ejecuta código compilado
+❌ **NUNCA** usar `ESNext` o `"type": "module"` en TypeScript
+❌ **NUNCA** poner `.handler` en el nombre del archivo fuente
+❌ **NUNCA** omitir `useInProcess: true` en serverless-offline
+❌ **NUNCA** omitir `type: 'varchar'` en columnas de string de PostgreSQL
+
+## Verificación
+
+Antes de probar cualquier endpoint:
+1. ✅ Compilar: `tsc` o `npm run build`
+2. ✅ Verificar que `dist/` tiene los archivos compilados
+3. ✅ Verificar que serverless.yml tiene `useInProcess: true`
+4. ✅ Verificar que entidades apuntan a `dist/modules/**/*.entity.js`
+
