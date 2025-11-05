@@ -3,6 +3,7 @@ import { ComponentList } from './Components/ComponentList';
 import { ContentArea } from './Components/ContentArea';
 import { ButtonsContent } from './Components/ButtonsContent';
 import { BlockContent } from './Components/BlockContent';
+import { FilterChipContent } from './Components/FilterChipContent';
 
 /**
  * Página de componentes
@@ -21,6 +22,8 @@ export const Components = () => {
         return <ButtonsContent />;
       case 'Block':
         return <BlockContent />;
+      case 'Filter chip':
+        return <FilterChipContent />;
       default:
         return null;
     }

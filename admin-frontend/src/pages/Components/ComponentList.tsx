@@ -41,6 +41,16 @@ export const ComponentList = ({ selectedComponent, onSelectComponent }: Componen
         >
           Block
         </button>
+        <button
+          onClick={() => onSelectComponent('Filter chip')}
+          className={`w-full text-left px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 ${
+            selectedComponent === 'Filter chip'
+              ? 'bg-[#004BB7] text-white'
+              : 'text-gray-700 hover:bg-gray-100'
+          }`}
+        >
+          Filter chip
+        </button>
       </div>
     </div>
   );

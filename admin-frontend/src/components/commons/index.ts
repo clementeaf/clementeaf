@@ -10,5 +10,21 @@ export { Separator } from './Separator';
 export type { SeparatorProps } from './Separator';
 export { InputContainer } from './InputContainer';
 export type { InputContainerProps } from './InputContainer';
-export { CheckIcon, DropdownIcon, SortIcon } from './icons';
+export { FilterChip } from './FilterChip';
+export type { FilterChipProps } from './FilterChip';
+export { Table } from './Table';
+export type { TableProps } from './Table';
+export {
+  CheckIcon,
+  DropdownIcon,
+  SortIcon,
+  ChevronUpIcon,
+  BellIcon,
+  ProfileIcon,
+  PlusIcon,
+  SearchIcon,
+  DocumentIcon,
+  EyeIcon,
+  MoreOptionsIcon
+} from './icons';
 
