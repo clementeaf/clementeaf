@@ -14,6 +14,8 @@ export { FilterChip } from './FilterChip';
 export type { FilterChipProps } from './FilterChip';
 export { Table } from './Table';
 export type { TableProps } from './Table';
+export { Input } from './Input';
+export type { InputProps } from './Input';
 export {
   CheckIcon,
   DropdownIcon,
@@ -25,6 +27,10 @@ export {
   SearchIcon,
   DocumentIcon,
   EyeIcon,
-  MoreOptionsIcon
+  MoreOptionsIcon,
+  BuildingIcon,
+  PersonIcon,
+  LocationIcon,
+  ChevronRightIcon
 } from './icons';
 

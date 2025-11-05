@@ -7,6 +7,7 @@ import { Opportunities } from './pages/Opportunities';
 import { Components } from './pages/Components';
 import { Sells } from './pages/Sells';
 import { Clients } from './pages/Clients';
+import { CreateClient } from './pages/Clients/CreateClient';
 import { Quotes } from './pages/Quotes';
 import { SalesOrder } from './pages/SalesOrder';
 
@@ -26,6 +27,7 @@ function App(): React.ReactNode {
           <Route path={routes.components} element={<Components />} />
           <Route path={routes.sells} element={<Sells />} />
           <Route path={routes.clients} element={<Clients />} />
+          <Route path={routes.createClient} element={<CreateClient />} />
           <Route path={routes.quotes} element={<Quotes />} />
           <Route path={routes.salesOrder} element={<SalesOrder />} />
         </Routes>

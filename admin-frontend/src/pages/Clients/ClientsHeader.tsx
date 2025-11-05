@@ -1,12 +1,14 @@
+import { useNavigate } from 'react-router-dom';
 import { Button } from '../../components/commons';
 import { PlusIcon, BellIcon, ProfileIcon } from '../../components/commons/icons';
+import { routes } from '../../routes';
 
 /**
  * Props del componente ClientsHeader
  */
 interface ClientsHeaderProps {
   /**
-   * Función para manejar el click en crear cliente
+   * Función para manejar el click en crear cliente (opcional, usa navegación por defecto)
    */
   onCreateClient?: () => void;
 }
@@ -17,12 +19,22 @@ interface ClientsHeaderProps {
  * @returns Componente ClientsHeader
  */
 export const ClientsHeader = ({ onCreateClient }: ClientsHeaderProps) => {
+  const navigate = useNavigate();
+
+  const handleCreateClient = (): void => {
+    if (onCreateClient) {
+      onCreateClient();
+    } else {
+      navigate(routes.createClient);
+    }
+  };
+
   return (
     <div className="flex items-center justify-between mb-6">
       <h1 className="text-2xl font-bold text-gray-800">Clientes</h1>
       <div className="flex items-center gap-4">
         <Button
-          onClick={onCreateClient}
+          onClick={handleCreateClient}
           leftIcon={<PlusIcon color="white" />}
           className="bg-[#004BB7] text-white hover:bg-blue-600"
         >

@@ -156,3 +156,74 @@ export const MoreOptionsIcon = ({ color = 'currentColor' }: { color?: string }) 
     <circle cx="8" cy="12" r="1" fill={color} />
   </svg>
 );
+
+/**
+ * Componente de ícono de edificio/dirección
+ * @param color - Color del ícono
+ * @returns Componente BuildingIcon
+ */
+export const BuildingIcon = ({ color = 'currentColor' }: { color?: string }) => (
+  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path
+      d="M3 18H17M4 18V9C4 8.4 4.4 8 5 8H9C9.6 8 10 8.4 10 9V18M10 18V6C10 5.4 10.4 5 11 5H15C15.6 5 16 5.4 16 6V18"
+      stroke={color}
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path d="M7 12H9M7 15H9" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
+/**
+ * Componente de ícono de persona/contacto
+ * @param color - Color del ícono
+ * @returns Componente PersonIcon
+ */
+export const PersonIcon = ({ color = 'currentColor' }: { color?: string }) => (
+  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="10" cy="6" r="3" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    <path
+      d="M4 18C4 15.2 6.5 13 10 13C13.5 13 16 15.2 16 18"
+      stroke={color}
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
+/**
+ * Componente de ícono de ubicación/dirección
+ * @param color - Color del ícono
+ * @returns Componente LocationIcon
+ */
+export const LocationIcon = ({ color = 'currentColor' }: { color?: string }) => (
+  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path
+      d="M10 10C11.1 10 12 9.1 12 8C12 6.9 11.1 6 10 6C8.9 6 8 6.9 8 8C8 9.1 8.9 10 10 10Z"
+      stroke={color}
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M10 2C7.2 2 5 4.2 5 7C5 11 10 17 10 17C10 17 15 11 15 7C15 4.2 12.8 2 10 2Z"
+      stroke={color}
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
+/**
+ * Componente de ícono de chevron derecho (>)
+ * @param color - Color del ícono
+ * @returns Componente ChevronRightIcon
+ */
+export const ChevronRightIcon = ({ color = 'currentColor' }: { color?: string }) => (
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M6 4L10 8L6 12" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);

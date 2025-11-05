@@ -1,10 +1,12 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Table } from '../components/commons';
 import { ClientsHeader } from './Clients/ClientsHeader';
 import { ClientsFilters } from './Clients/ClientsFilters';
 import { ClientsSearchBar } from './Clients/ClientsSearchBar';
 import { columns } from './Clients/columns';
 import { mockClients } from './Clients/mockData';
+import { routes } from '../routes';
 import type { ClientRow } from './Clients/columns';
 
 /**
@@ -13,9 +15,10 @@ import type { ClientRow } from './Clients/columns';
  */
 export const Clients = () => {
   const [searchValue, setSearchValue] = useState('');
+  const navigate = useNavigate();
 
   const handleCreateClient = (): void => {
-    console.log('Crear cliente');
+    navigate(routes.createClient);
   };
 
   const handleSearchChange = (value: string): void => {

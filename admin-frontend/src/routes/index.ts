@@ -9,6 +9,7 @@ export const routes = {
   components: '/components',
   sells: '/sells',
   clients: '/sells/clients',
+  createClient: '/sells/clients/create',
   quotes: '/sells/quotes',
   salesOrder: '/sells/sales-order',
   notFound: '/*'
