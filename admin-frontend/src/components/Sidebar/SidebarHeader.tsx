@@ -76,7 +76,7 @@ export const SidebarHeader = ({ isCollapsed, onToggleCollapse, isExpanded }: Sid
         className={`${
           isCollapsed
             ? 'p-2 text-white hover:opacity-80 transition-opacity duration-200 flex items-center justify-center'
-            : 'px-4 py-2 bg-[#004BB7] text-white rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors duration-200'
+            : 'py-2 text-white rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors duration-200'
         }`}
       >
         {isCollapsed ? <ExpandIcon /> : 'Comprimir'}

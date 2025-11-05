@@ -4,6 +4,7 @@ import { routes } from './routes';
 import { Home } from './pages/Home';
 import { Articles } from './pages/Articles';
 import { Opportunities } from './pages/Opportunities';
+import { Components } from './pages/Components';
 import { Sells } from './pages/Sells';
 import { Clients } from './pages/Clients';
 import { Quotes } from './pages/Quotes';
@@ -15,13 +16,14 @@ import { SalesOrder } from './pages/SalesOrder';
  */
 function App(): React.ReactNode {
   return (
-    <div className="w-screen h-screen bg-blue-50/70 flex gap-4">
+    <div className="w-screen h-screen bg-blue-50/70 flex">
       <Sidebar />
       <div className="w-full h-full bg-white rounded-lg shadow-sm overflow-auto">
         <Routes>
           <Route path={routes.home} element={<Home />} />
           <Route path={routes.articles} element={<Articles />} />
           <Route path={routes.opportunities} element={<Opportunities />} />
+          <Route path={routes.components} element={<Components />} />
           <Route path={routes.sells} element={<Sells />} />
           <Route path={routes.clients} element={<Clients />} />
           <Route path={routes.quotes} element={<Quotes />} />

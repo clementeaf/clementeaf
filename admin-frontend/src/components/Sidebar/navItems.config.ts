@@ -13,6 +13,7 @@ export const navItems: NavItem[] = [
   { name: 'Inicio', path: routes.home, icon: homeIcon },
   { name: 'Oportunidades', path: routes.opportunities, icon: opportunitiesIcon },
   { name: 'Artículos', path: routes.articles, icon: articlesIcon, hasSubItems: true },
+  { name: 'Componentes', path: routes.components, icon: articlesIcon },
   { name: 'Ventas', path: routes.sells, icon: sellsIcon, hasSubItems: true }
 ];
 
