@@ -6,7 +6,6 @@ import {
   getFilteredRowModel,
   getPaginationRowModel,
   type ColumnDef,
-  type Table as TanStackTable,
   type SortingState,
   type ColumnFiltersState,
   type Row,
