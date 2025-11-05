@@ -20,3 +20,15 @@ export const DropdownIcon = ({ color = 'currentColor' }: { color?: string }) => 
   </svg>
 );
 
+/**
+ * Componente de ícono de ordenamiento (flechas arriba/abajo)
+ * @param color - Color del ícono
+ * @returns Componente SortIcon
+ */
+export const SortIcon = ({ color = 'currentColor' }: { color?: string }) => (
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M4 6L8 2L12 6" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M4 10L8 14L12 10" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+

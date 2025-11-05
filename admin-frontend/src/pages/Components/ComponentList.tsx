@@ -31,6 +31,16 @@ export const ComponentList = ({ selectedComponent, onSelectComponent }: Componen
         >
           Botones
         </button>
+        <button
+          onClick={() => onSelectComponent('Block')}
+          className={`w-full text-left px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 ${
+            selectedComponent === 'Block'
+              ? 'bg-[#004BB7] text-white'
+              : 'text-gray-700 hover:bg-gray-100'
+          }`}
+        >
+          Block
+        </button>
       </div>
     </div>
   );
