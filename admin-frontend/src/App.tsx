@@ -1,13 +1,8 @@
-import './App.css'
-
-/**
- * Componente principal de la aplicación
- * @returns JSX del componente App
- */
-function App(): JSX.Element {
+function App(): React.ReactNode {
   return (
-    <div>
-      <h1>Admin Frontend</h1>
+    <div className="w-screen h-screen bg-blue-50/70 p-4 flex gap-4">
+      <div className="w-[15%] h-full bg-white rounded-lg shadow-sm p-4">Sidebar</div>
+      <div className="w-full h-full bg-white rounded-lg shadow-sm p-4">MainContent</div>
     </div>
   )
 }
