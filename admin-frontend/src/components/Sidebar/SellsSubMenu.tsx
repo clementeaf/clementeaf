@@ -8,6 +8,7 @@ interface SellsSubMenuProps {
   subItems: NavItem[];
   isExpanded: boolean;
   onNavigate?: () => void;
+  isCollapsed?: boolean;
 }
 
 /**
@@ -15,7 +16,7 @@ interface SellsSubMenuProps {
  * @param props - Props del submenu
  * @returns Componente SellsSubMenu
  */
-export const SellsSubMenu = ({ subItems, isExpanded, onNavigate }: SellsSubMenuProps) => {
+export const SellsSubMenu = ({ subItems, isExpanded, onNavigate, isCollapsed = false }: SellsSubMenuProps) => {
   return (
     <div 
       className={`ml-4 overflow-hidden transition-all duration-300 ease-in-out ${
