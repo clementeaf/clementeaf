@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { routes } from '../routes';
 import { Wrapper, FormHeader } from '../components/ui';
 import { Form } from '../components/Form';
@@ -52,6 +52,7 @@ const RegisterForm = () => {
 const LoginForm = () => {
   const { mutate: login, isPending } = useLogin();
   const [apiError, setApiError] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   const handleSubmit = (data: RegisterRequest | LoginRequest) => {
     setApiError(null);
@@ -64,6 +65,10 @@ const LoginForm = () => {
         setApiError(errorMessage);
       }
     });
+  };
+
+  const handleRegisterClick = () => {
+    navigate(routes.auth.register);
   };
 
   return (
@@ -88,6 +93,15 @@ const LoginForm = () => {
           >
             Olvidaste tu contraseña?
           </a>
+        }
+        registerLink={
+          <button
+            type="button"
+            onClick={handleRegisterClick}
+            className="text-sm text-blue-500 hover:text-blue-700 hover:border-blue-700 transition-colors duration-200 bg-transparent"
+          >
+            Registro
+          </button>
         }
       />
     </div>

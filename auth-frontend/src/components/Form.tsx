@@ -18,6 +18,7 @@ export interface FormProps extends Omit<FormHTMLAttributes<HTMLFormElement>, 'on
   isLoading?: boolean;
   formClassName?: string;
   forgotPasswordLink?: React.ReactNode;
+  registerLink?: React.ReactNode;
 }
 
 /**
@@ -26,7 +27,7 @@ export interface FormProps extends Omit<FormHTMLAttributes<HTMLFormElement>, 'on
  * @param props - Props del form
  * @returns Elemento Form
  */
-export const Form = ({ type, onSubmit, isLoading = false, formClassName, className, forgotPasswordLink, ...formProps }: FormProps) => {
+export const Form = ({ type, onSubmit, isLoading = false, formClassName, className, forgotPasswordLink, registerLink, ...formProps }: FormProps) => {
   // Estado inicial basado en los DTOs del backend
   const [formData, setFormData] = useState<RegisterRequest | LoginRequest>(
     type === 'register'
@@ -100,6 +101,12 @@ export const Form = ({ type, onSubmit, isLoading = false, formClassName, classNa
       {type === 'login' && forgotPasswordLink && (
         <div className="w-full py-2">
           {forgotPasswordLink}
+        </div>
+      )}
+
+      {type === 'login' && registerLink && (
+        <div className="w-full py-2">
+          {registerLink}
         </div>
       )}
 
