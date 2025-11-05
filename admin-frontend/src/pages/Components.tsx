@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { ComponentList } from './Components/ComponentList';
 import { ContentArea } from './Components/ContentArea';
 import { ButtonsContent } from './Components/ButtonsContent';
+import { BlockContent } from './Components/BlockContent';
 
 /**
  * Página de componentes
@@ -18,6 +19,8 @@ export const Components = () => {
     switch (selectedComponent) {
       case 'Botones':
         return <ButtonsContent />;
+      case 'Block':
+        return <BlockContent />;
       default:
         return null;
     }
