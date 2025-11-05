@@ -16,6 +16,8 @@ export interface FormProps extends Omit<FormHTMLAttributes<HTMLFormElement>, 'on
   type: FormType;
   onSubmit: (data: RegisterRequest | LoginRequest) => void;
   isLoading?: boolean;
+  formClassName?: string;
+  forgotPasswordLink?: React.ReactNode;
 }
 
 /**
@@ -24,7 +26,7 @@ export interface FormProps extends Omit<FormHTMLAttributes<HTMLFormElement>, 'on
  * @param props - Props del form
  * @returns Elemento Form
  */
-export const Form = ({ type, onSubmit, isLoading = false, ...formProps }: FormProps) => {
+export const Form = ({ type, onSubmit, isLoading = false, formClassName, className, forgotPasswordLink, ...formProps }: FormProps) => {
   // Estado inicial basado en los DTOs del backend
   const [formData, setFormData] = useState<RegisterRequest | LoginRequest>(
     type === 'register'
@@ -69,8 +71,14 @@ export const Form = ({ type, onSubmit, isLoading = false, ...formProps }: FormPr
     onSubmit(submitData);
   };
 
+  const defaultFormClass = 'flex flex-col items-start justify-start w-full p-4';
+  
   return (
-    <form {...formProps} onSubmit={handleSubmit} className='flex flex-col items-start justify-start w-full p-4'>
+    <form 
+      {...formProps} 
+      onSubmit={handleSubmit} 
+      className={className || formClassName || defaultFormClass}
+    >
       <Input
         type="email"
         label="Email"
@@ -88,6 +96,12 @@ export const Form = ({ type, onSubmit, isLoading = false, ...formProps }: FormPr
         error={errors.password}
         required
       />
+
+      {type === 'login' && forgotPasswordLink && (
+        <div className="w-full py-2">
+          {forgotPasswordLink}
+        </div>
+      )}
 
       {type === 'register' && (
         <Input

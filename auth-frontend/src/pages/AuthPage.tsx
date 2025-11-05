@@ -1,28 +1,48 @@
+import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { routes } from '../routes';
-import { Wrapper } from '../components/ui';
+import { Wrapper, FormHeader } from '../components/ui';
 import { Form } from '../components/Form';
 import { useRegister, useLogin } from '../hooks/useAuth';
 import type { ReactNode } from 'react';
 import { registerFormConfig, loginFormConfig } from './authForms.config';
 import type { RegisterRequest, LoginRequest } from '../api/types';
+import { extractErrorMessage } from '../api/client';
 
 /**
  * Componente para el formulario de registro
  */
 const RegisterForm = () => {
   const { mutate: register, isPending } = useRegister();
+  const [apiError, setApiError] = useState<string | null>(null);
 
   const handleSubmit = (data: RegisterRequest | LoginRequest) => {
-    register(data as RegisterRequest);
+    setApiError(null);
+    register(data as RegisterRequest, {
+      onError: (error) => {
+        const errorMessage = extractErrorMessage(
+          error,
+          'Registration failed. Please try again.'
+        );
+        setApiError(errorMessage);
+      }
+    });
   };
 
   return (
-    <Form
-      {...registerFormConfig}
-      onSubmit={handleSubmit}
-      isLoading={isPending}
-    />
+    <div className="w-full flex flex-col items-center">
+      <FormHeader subtitle="Registrarse" />
+      {apiError && (
+        <div className="mb-4 w-full p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+          {apiError}
+        </div>
+      )}
+      <Form
+        {...registerFormConfig}
+        onSubmit={handleSubmit}
+        isLoading={isPending}
+      />
+    </div>
   );
 };
 
@@ -31,17 +51,46 @@ const RegisterForm = () => {
  */
 const LoginForm = () => {
   const { mutate: login, isPending } = useLogin();
+  const [apiError, setApiError] = useState<string | null>(null);
 
   const handleSubmit = (data: RegisterRequest | LoginRequest) => {
-    login(data as LoginRequest);
+    setApiError(null);
+    login(data as LoginRequest, {
+      onError: (error) => {
+        const errorMessage = extractErrorMessage(
+          error,
+          'Login failed. Please check your credentials.'
+        );
+        setApiError(errorMessage);
+      }
+    });
   };
 
   return (
-    <Form
-      {...loginFormConfig}
-      onSubmit={handleSubmit}
-      isLoading={isPending}
-    />
+    <div className="w-full flex flex-col items-center">
+      <FormHeader subtitle="Iniciar sesión" />
+      {apiError && (
+        <div className="mb-4 w-full p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+          {apiError}
+        </div>
+      )}
+      <Form
+        {...loginFormConfig}
+        onSubmit={handleSubmit}
+        isLoading={isPending}
+        forgotPasswordLink={
+          <a 
+            href="#" 
+            className="text-sm text-blue-500 hover:text-blue-700 hover:underline"
+            onClick={(e) => {
+              e.preventDefault();
+            }}
+          >
+            Olvidaste tu contraseña?
+          </a>
+        }
+      />
+    </div>
   );
 };
 
@@ -72,7 +121,7 @@ export const AuthPage = () => {
   const content = routeContent[currentPath] ?? defaultContent;
 
   return (
-    <Wrapper className='flex flex-col items-center justify-center bg-white rounded-lg shadow-sm p-4'>
+    <Wrapper className='flex flex-col items-center justify-center bg-white rounded-lg shadow-sm p-4 w-auto min-w-[400px]'>
       {content}
     </Wrapper>
   );

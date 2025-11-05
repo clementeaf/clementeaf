@@ -45,3 +45,14 @@ export interface ApiError {
   error: string;
 }
 
+/**
+ * Respuesta de error de la API
+ */
+export interface ApiErrorResponse {
+  error: string;
+  message?: string;
+  data?: {
+    error?: string;
+  };
+}
+
