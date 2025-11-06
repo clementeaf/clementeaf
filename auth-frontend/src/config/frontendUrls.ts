@@ -7,7 +7,7 @@
  */
 const DEV_URLS = {
   admin: 'http://localhost:8400',
-  client: 'http://localhost:5173'
+  client: 'http://localhost:8500'
 } as const;
 
 /**
