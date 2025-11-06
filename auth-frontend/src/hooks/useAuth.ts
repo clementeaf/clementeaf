@@ -36,9 +36,8 @@ export const useLogin = () => {
       if (data.data.token) {
         localStorage.setItem('token', data.data.token);
       }
-      // Redirigir después de login exitoso (puedes cambiar la ruta según necesites)
-      // Por ahora, mantenemos en la misma página pero podrías redirigir a /dashboard
-      navigate('/');
+      // Redirigir a la página de selección de aplicación después del login exitoso
+      navigate('/select-app');
     },
     onError: (error) => {
       // El error se manejará en el componente que usa el hook

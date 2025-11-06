@@ -8,6 +8,7 @@ import type { ReactNode } from 'react';
 import { registerFormConfig, loginFormConfig } from './authForms.config';
 import type { RegisterRequest, LoginRequest } from '../api/types';
 import { extractErrorMessage } from '../api/client';
+import { AppSelector } from './AppSelector';
 
 /**
  * Componente para el formulario de registro
@@ -113,7 +114,8 @@ const LoginForm = () => {
  */
 const routeContent: Record<string, ReactNode> = {
   [routes.root]: <LoginForm />,
-  [routes.auth.register]: <RegisterForm />
+  [routes.auth.register]: <RegisterForm />,
+  [routes.auth.selectApp]: <AppSelector />
 };
 
 /**
