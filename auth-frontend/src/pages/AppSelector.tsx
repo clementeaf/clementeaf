@@ -1,13 +1,6 @@
 import { Wrapper, FormHeader } from '../components/ui';
 import { Button } from '../components/ui/Button';
-
-/**
- * URLs de los frontends en CloudFront
- */
-const FRONTEND_URLS = {
-  admin: 'https://d13cunasrg048d.cloudfront.net',
-  client: 'https://d30lw2uu9x30lw.cloudfront.net'
-};
+import { getFrontendUrls } from '../config/frontendUrls';
 
 /**
  * Redirige a la aplicación seleccionada
@@ -22,6 +15,8 @@ const redirectToApp = (url: string): void => {
  * @returns Componente AppSelector
  */
 export const AppSelector = (): React.ReactNode => {
+  const frontendUrls = getFrontendUrls();
+  
   return (
     <Wrapper className='flex flex-col items-center justify-center bg-white rounded-lg shadow-sm p-8 w-auto min-w-[400px]'>
       <FormHeader subtitle="Selecciona una aplicación" />
@@ -34,7 +29,7 @@ export const AppSelector = (): React.ReactNode => {
         <div className="space-y-3">
           <Button
             type="button"
-            onClick={() => redirectToApp(FRONTEND_URLS.admin)}
+            onClick={() => redirectToApp(frontendUrls.admin)}
             className="w-full py-3 text-base font-medium border-2 border-blue-500 rounded-xl px-4 text-blue-500 hover:bg-blue-500 hover:text-white ease-in-out duration-300"
           >
             Admin Frontend
@@ -42,7 +37,7 @@ export const AppSelector = (): React.ReactNode => {
           
           <Button
             type="button"
-            onClick={() => redirectToApp(FRONTEND_URLS.client)}
+            onClick={() => redirectToApp(frontendUrls.client)}
             className="w-full py-3 text-base font-medium border-2 border-blue-500 rounded-xl px-4 text-blue-500 hover:bg-blue-500 hover:text-white ease-in-out duration-300"
           >
             Client Frontend
