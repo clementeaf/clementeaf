@@ -1,4 +1,5 @@
-import { BuildingIcon, PersonIcon, LocationIcon } from '../../../components/commons/icons';
+import clientInfoIcon from '../../../assets/client-info.png';
+import personIcon from '../../../assets/person.png';
 
 /**
  * Props del componente ClientStepper
@@ -20,60 +21,52 @@ export const ClientStepper = ({ currentStep }: ClientStepperProps) => {
     {
       number: 1,
       title: 'Información del cliente',
-      icon: BuildingIcon,
+      iconSrc: clientInfoIcon,
       active: currentStep === 1
     },
     {
       number: 2,
       title: 'Datos de facturación',
-      icon: PersonIcon,
+      iconSrc: personIcon,
       active: currentStep === 2
     },
     {
       number: 3,
       title: 'Contacto principal',
-      icon: PersonIcon,
+      iconSrc: personIcon,
       active: currentStep === 3
     },
     {
       number: 4,
       title: 'Dirección',
-      icon: LocationIcon,
+      iconSrc: null,
       active: currentStep === 4
     }
   ];
 
   return (
-    <div className="w-80 p-6 pl-12 border-r border-gray-200">
-      <div className="relative">
-        {steps.map((step, index) => {
-          const Icon = step.icon;
+    <div className="w-80 p-6 pl-12 border-r border-gray-200 bg-white rounded-lg shadow-sm relative">
+      <div className="flex flex-col gap-4">
+        {steps.map((step) => {
           const isActive = step.active;
-          const isPast = currentStep > step.number;
-          const isLast = index === steps.length - 1;
 
           return (
-            <div key={step.number} className="relative">
+            <div key={step.number}>
               <div className="flex items-start gap-4">
-                <div className="relative flex flex-col items-center">
+                <div className="flex flex-col items-center">
                   <div
-                    className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-colors duration-200 z-10 relative ${
-                      isActive
-                        ? 'bg-[#004BB7] text-white'
-                        : isPast
-                          ? 'bg-gray-300 text-gray-600'
-                          : 'bg-gray-200 text-gray-500'
-                    }`}
+                    className={`w-10 flex items-center justify-center`}
                   >
-                    <Icon color={isActive ? 'white' : isPast ? '#6B7280' : '#9CA3AF'} />
+                    {step.iconSrc ? (
+                      <img
+                        src={step.iconSrc}
+                        alt={step.title}
+                        className={`h-12 object-contain`}
+                      />
+                    ) : (
+                      <div></div>
+                    )}
                   </div>
-                  {!isLast && (
-                    <div
-                      className={`absolute top-10 left-1/2 transform -translate-x-1/2 transition-colors duration-200 ${
-                        isPast || isActive ? 'bg-[#004BB7] w-1' : 'bg-gray-200 w-0.5'
-                      } h-20`}
-                    />
-                  )}
                 </div>
                 <div className="flex-1 pt-1 pb-6">
                   <div className="flex flex-col gap-0.5">
