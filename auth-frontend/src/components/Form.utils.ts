@@ -18,12 +18,12 @@ export type ValidationErrors = Record<string, string>;
 /**
  * Valida los campos del formulario según el DTO correspondiente
  * @param formData - Datos del formulario
- * @param type - Tipo de formulario (register o login)
+ * @param _type - Tipo de formulario (register o login)
  * @returns Errores de validación o null si no hay errores
  */
 export const validateForm = (
   formData: FormData,
-  type: FormType
+  _type: FormType
 ): ValidationErrors => {
   const errors: ValidationErrors = {};
 

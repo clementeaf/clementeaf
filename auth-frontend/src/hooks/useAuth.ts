@@ -12,7 +12,7 @@ export const useRegister = () => {
 
   return useMutation<RegisterResponse, Error, RegisterRequest>({
     mutationFn: authService.register,
-    onSuccess: (data) => {
+    onSuccess: (_data) => {
       // Redirigir a login después de registro exitoso
       navigate('/');
     },
