@@ -12,9 +12,22 @@ export const useRegister = () => {
 
   return useMutation<RegisterResponse, Error, RegisterRequest>({
     mutationFn: authService.register,
-    onSuccess: (_data) => {
-      // Redirigir a login después de registro exitoso
-      navigate('/');
+    onSuccess: (_data, variables) => {
+      // Después de registro exitoso, hacer login automático con las credenciales usadas
+      authService.login({
+        email: variables.email,
+        password: variables.password
+      }).then((loginResponse) => {
+        if (loginResponse.data.token) {
+          localStorage.setItem('token', loginResponse.data.token);
+        }
+        // Redirigir a la página de selección de aplicación
+        navigate('/select-app');
+      }).catch((error) => {
+        // Si el login automático falla, redirigir a login manual
+        console.error('Auto-login after registration failed:', error);
+        navigate('/');
+      });
     },
     onError: (error) => {
       // El error se manejará en el componente que usa el hook
