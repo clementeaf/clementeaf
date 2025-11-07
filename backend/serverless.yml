@@ -7,6 +7,12 @@ provider:
   runtime: nodejs20.x
   stage: ${opt:stage, 'dev'}
   region: ${opt:region, 'us-east-1'}
+  vpc:
+    securityGroupIds:
+      - ${env:LAMBDA_SECURITY_GROUP_ID, 'sg-07008cd2c332f0575'}
+    subnetIds:
+      - ${env:SUBNET_ID_1, 'subnet-080e7f68a48916130'}
+      - ${env:SUBNET_ID_2, 'subnet-08323bd8b359d22b9'}
   environment:
     AWS_ENDPOINT_URL: ${env:AWS_ENDPOINT_URL, ''}
     JWT_SECRET: ${env:JWT_SECRET, 'your-secret-key-change-in-production'}
@@ -16,6 +22,7 @@ provider:
     DB_USERNAME: ${env:DB_USERNAME, 'postgres'}
     DB_PASSWORD: ${env:DB_PASSWORD, 'postgres'}
     DB_DATABASE: ${env:DB_DATABASE, 'banados_db'}
+    ENABLE_SYNC: ${env:ENABLE_SYNC, 'true'}
 
 plugins:
   - serverless-offline

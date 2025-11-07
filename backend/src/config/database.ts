@@ -6,6 +6,8 @@ import 'reflect-metadata';
  * @returns Configuración de TypeORM
  */
 const getDatabaseConfig = (): DataSourceOptions => {
+  const isProduction = process.env.NODE_ENV === 'production' || process.env.AWS_LAMBDA_FUNCTION_NAME !== undefined;
+  
   return {
     type: 'postgres',
     host: process.env.DB_HOST ?? 'localhost',
@@ -13,7 +15,7 @@ const getDatabaseConfig = (): DataSourceOptions => {
     username: process.env.DB_USERNAME ?? 'postgres',
     password: process.env.DB_PASSWORD ?? 'postgres',
     database: process.env.DB_DATABASE ?? 'banados_db',
-    synchronize: process.env.NODE_ENV === 'development',
+    synchronize: process.env.NODE_ENV === 'development' || process.env.ENABLE_SYNC === 'true',
     logging: process.env.NODE_ENV === 'development',
     entities: [
       'dist/modules/**/*.entity.js',
@@ -22,6 +24,14 @@ const getDatabaseConfig = (): DataSourceOptions => {
     migrations: [
       'dist/migrations/*.js'
     ],
+    ssl: isProduction ? {
+      rejectUnauthorized: false
+    } : false,
+    extra: isProduction ? {
+      ssl: {
+        rejectUnauthorized: false
+      }
+    } : undefined,
   };
 };
 
