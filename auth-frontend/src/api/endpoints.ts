@@ -1,7 +1,18 @@
 /**
- * Base URL del backend
+ * Detecta si estamos en desarrollo (localhost) o producción (CloudFront)
+ * @returns true si estamos en desarrollo, false si estamos en producción
  */
-const BASE_URL = 'http://localhost:9500';
+const isDevelopment = (): boolean => {
+  const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
+  return hostname === 'localhost' || hostname === '127.0.0.1' || hostname.includes('localhost');
+};
+
+/**
+ * Base URL del backend según el entorno
+ */
+const BASE_URL = isDevelopment() 
+  ? 'http://localhost:9500'
+  : 'https://9hzayjhnz8.execute-api.us-east-1.amazonaws.com';
 
 /**
  * Stage del backend (dev, prod, etc.)

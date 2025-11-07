@@ -9,9 +9,6 @@ provider:
   region: ${opt:region, 'us-east-1'}
   environment:
     AWS_ENDPOINT_URL: ${env:AWS_ENDPOINT_URL, ''}
-    AWS_ACCESS_KEY_ID: ${env:AWS_ACCESS_KEY_ID, ''}
-    AWS_SECRET_ACCESS_KEY: ${env:AWS_SECRET_ACCESS_KEY, ''}
-    AWS_DEFAULT_REGION: ${env:AWS_DEFAULT_REGION, 'us-east-1'}
     JWT_SECRET: ${env:JWT_SECRET, 'your-secret-key-change-in-production'}
     JWT_EXPIRES_IN: ${env:JWT_EXPIRES_IN, '7d'}
     DB_HOST: ${env:DB_HOST, 'localhost'}

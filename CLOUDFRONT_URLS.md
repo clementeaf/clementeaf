@@ -61,9 +61,33 @@ Estas URLs están disponibles directamente desde S3, pero **no tienen HTTPS**:
 
 ---
 
+## Backend API (AWS Lambda + API Gateway)
+
+**Base URL:** `https://9hzayjhnz8.execute-api.us-east-1.amazonaws.com/dev`
+
+### Endpoints de Autenticación
+
+- **POST** `/auth/register` - Registro de usuarios
+- **POST** `/auth/login` - Login de usuarios
+- **GET** `/auth/me` - Obtener información del usuario actual
+- **POST** `/auth/logout` - Logout de usuarios
+
+### Endpoints de Prueba
+
+- **GET** `/hello` - Endpoint de prueba
+
+**Stack:** `backend-dev`  
+**Región:** `us-east-1`  
+**Stage:** `dev`
+
+⚠️ **Nota:** El backend está configurado para usar `localhost` como DB_HOST, lo cual no funcionará en Lambda. Se necesita configurar una base de datos RDS PostgreSQL en producción.
+
+---
+
 ## Notas
 
 - Las distribuciones CloudFront pueden tardar 15-20 minutos en estar completamente desplegadas después de cada actualización
 - Los cambios se propagan automáticamente después de cada `npm run deploy`
 - La invalidación de caché se realiza automáticamente en cada despliegue
+- El backend está desplegado en AWS Lambda y usa API Gateway
 
