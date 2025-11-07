@@ -1,12 +1,11 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Table } from '../components/commons';
 import { ClientsHeader } from './Clients/ClientsHeader';
 import { ClientsFilters } from './Clients/ClientsFilters';
 import { ClientsSearchBar } from './Clients/ClientsSearchBar';
+import { VerifyRutModal } from './Clients/CreateClient/VerifyRutModal';
 import { columns } from './Clients/columns';
 import { mockClients } from './Clients/mockData';
-import { routes } from '../routes';
 import type { ClientRow } from './Clients/columns';
 
 /**
@@ -15,10 +14,14 @@ import type { ClientRow } from './Clients/columns';
  */
 export const Clients = () => {
   const [searchValue, setSearchValue] = useState('');
-  const navigate = useNavigate();
+  const [isRutModalOpen, setIsRutModalOpen] = useState(false);
 
   const handleCreateClient = (): void => {
-    navigate(routes.createClient);
+    setIsRutModalOpen(true);
+  };
+
+  const handleCloseRutModal = (): void => {
+    setIsRutModalOpen(false);
   };
 
   const handleSearchChange = (value: string): void => {
@@ -26,32 +29,35 @@ export const Clients = () => {
   };
 
   return (
-    <div className="w-full h-full flex flex-col p-4">
-      <ClientsHeader onCreateClient={handleCreateClient} />
+    <>
+      <div className="w-full h-full flex flex-col p-4">
+        <ClientsHeader onCreateClient={handleCreateClient} />
 
-      <div className="flex gap-4 flex-1 min-h-0">
-        <ClientsFilters />
+        <div className="flex gap-4 flex-1 min-h-0">
+          <ClientsFilters />
 
-        <div className="flex-1 flex flex-col min-w-0">
-          <ClientsSearchBar searchValue={searchValue} onSearchChange={handleSearchChange} />
+          <div className="flex-1 flex flex-col min-w-0">
+            <ClientsSearchBar searchValue={searchValue} onSearchChange={handleSearchChange} />
 
-          <div className="flex-1 overflow-auto rounded-lg shadow-sm bg-white p">
-            <Table<ClientRow>
-              data={mockClients}
-              columns={columns}
-              enableSorting={true}
-              containerClassName="w-full"
-              tableClassName="w-full border-collapse"
-              theadClassName="bg-gray-50 sticky top-0"
-              headerRowClassName="border-b border-gray-200"
-              headerCellClassName="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider"
-              bodyRowClassName="border-b border-gray-200 hover:bg-gray-50 transition-colors duration-150"
-              bodyCellClassName="px-4 py-3 text-sm text-gray-900"
-            />
+            <div className="flex-1 overflow-auto rounded-lg shadow-sm bg-white p">
+              <Table<ClientRow>
+                data={mockClients}
+                columns={columns}
+                enableSorting={true}
+                containerClassName="w-full"
+                tableClassName="w-full border-collapse"
+                theadClassName="bg-gray-50 sticky top-0"
+                headerRowClassName="border-b border-gray-200"
+                headerCellClassName="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider"
+                bodyRowClassName="border-b border-gray-200 hover:bg-gray-50 transition-colors duration-150"
+                bodyCellClassName="px-4 py-3 text-sm text-gray-900"
+              />
+            </div>
           </div>
         </div>
       </div>
-    </div>
+      <VerifyRutModal isOpen={isRutModalOpen} onClose={handleCloseRutModal} />
+    </>
   );
 };
 
