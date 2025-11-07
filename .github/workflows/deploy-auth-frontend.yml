@@ -1,0 +1,52 @@
+name: Deploy Auth Frontend
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'auth-frontend/**'
+      - '.github/workflows/deploy-auth-frontend.yml'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: auth-frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ./auth-frontend
+        run: npm ci
+
+      - name: Build application
+        working-directory: ./auth-frontend
+        run: npm run build
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Deploy to S3
+        working-directory: ./auth-frontend
+        run: |
+          S3_BUCKET_NAME=banados-auth-frontend-1762469469 \
+          CLOUDFRONT_DISTRIBUTION_ID=E296Z8WIYMY1TJ \
+          npm run deploy:prod
+
+      - name: Deployment summary
+        run: |
+          echo "✅ Auth Frontend desplegado exitosamente"
+          echo "URL: https://d1wdj9ggvinelv.cloudfront.net"
+

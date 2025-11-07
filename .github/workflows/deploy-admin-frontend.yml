@@ -1,0 +1,52 @@
+name: Deploy Admin Frontend
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'admin-frontend/**'
+      - '.github/workflows/deploy-admin-frontend.yml'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: admin-frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ./admin-frontend
+        run: npm ci
+
+      - name: Build application
+        working-directory: ./admin-frontend
+        run: npm run build
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Deploy to S3
+        working-directory: ./admin-frontend
+        run: |
+          S3_BUCKET_NAME=banados-admin-frontend-1762469469 \
+          CLOUDFRONT_DISTRIBUTION_ID=EHRAZA3DEI3JP \
+          npm run deploy:prod
+
+      - name: Deployment summary
+        run: |
+          echo "✅ Admin Frontend desplegado exitosamente"
+          echo "URL: https://d13cunasrg048d.cloudfront.net"
+

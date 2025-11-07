@@ -1,0 +1,52 @@
+name: Deploy Client Frontend
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'client-frontend/**'
+      - '.github/workflows/deploy-client-frontend.yml'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: client-frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ./client-frontend
+        run: npm ci
+
+      - name: Build application
+        working-directory: ./client-frontend
+        run: npm run build
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Deploy to S3
+        working-directory: ./client-frontend
+        run: |
+          S3_BUCKET_NAME=banados-client-frontend-1762469469 \
+          CLOUDFRONT_DISTRIBUTION_ID=E19017Y3Y6IWLG \
+          npm run deploy:prod
+
+      - name: Deployment summary
+        run: |
+          echo "✅ Client Frontend desplegado exitosamente"
+          echo "URL: https://d30lw2uu9x30lw.cloudfront.net"
+

@@ -1,0 +1,72 @@
+name: Deploy Backend
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'backend/**'
+      - '.github/workflows/deploy-backend.yml'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ./backend
+        run: npm ci
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Install Serverless Framework
+        working-directory: ./backend
+        run: npm install -g serverless@3
+
+      - name: Get database credentials from Secrets Manager
+        id: get-secrets
+        working-directory: ./backend
+        run: |
+          SECRET_JSON=$(aws secretsmanager get-secret-value \
+            --secret-id banados-db-credentials \
+            --region us-east-1 \
+            --query 'SecretString' \
+            --output text)
+          
+          echo "DB_HOST=$(echo $SECRET_JSON | python3 -c 'import sys, json; print(json.load(sys.stdin)[\"DB_HOST\"])')" >> $GITHUB_ENV
+          echo "DB_PASSWORD=$(echo $SECRET_JSON | python3 -c 'import sys, json; print(json.load(sys.stdin)[\"DB_PASSWORD\"])')" >> $GITHUB_ENV
+          echo "JWT_SECRET=$(echo $SECRET_JSON | python3 -c 'import sys, json; print(json.load(sys.stdin)[\"JWT_SECRET\"])')" >> $GITHUB_ENV
+          echo "DB_PORT=5432" >> $GITHUB_ENV
+          echo "DB_USERNAME=postgres" >> $GITHUB_ENV
+          echo "DB_DATABASE=banados_db" >> $GITHUB_ENV
+          echo "JWT_EXPIRES_IN=7d" >> $GITHUB_ENV
+          echo "ENABLE_SYNC=true" >> $GITHUB_ENV
+
+      - name: Build TypeScript
+        working-directory: ./backend
+        run: npm run build
+
+      - name: Deploy to AWS Lambda
+        working-directory: ./backend
+        run: serverless deploy --force
+
+      - name: Deployment summary
+        run: |
+          echo "✅ Backend desplegado exitosamente"
+          echo "API URL: https://9hzayjhnz8.execute-api.us-east-1.amazonaws.com/dev"
+
