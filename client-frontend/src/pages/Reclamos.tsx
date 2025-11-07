@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Table } from '../components/table';
+import { Modal } from '../components/Modal';
 import { ReclamosHeader } from './Reclamos/ReclamosHeader';
 import { CreateClaimForm } from './Reclamos/CreateClaimForm';
 import { claimColumns } from './Reclamos/columns';
@@ -51,28 +52,19 @@ export const Reclamos = (): React.ReactNode => {
     <div className="w-full h-full p-6 flex flex-col items-start justify-start gap-8">
       <ReclamosHeader onCreateClaim={handleCreateClaim} />
 
-      <div
-        className={`w-full overflow-hidden transition-[max-height,opacity] duration-500 ease-in-out ${
-          showCreateForm
-            ? 'max-h-[2000px] opacity-100'
-            : 'max-h-0 opacity-0'
-        }`}
+      <Modal
+        isOpen={showCreateForm}
+        onClose={handleCancelCreate}
+        title="Nuevo Reclamo"
+        closeOnOverlayClick={true}
+        closeOnEscape={true}
       >
-        <div
-          className={`bg-white rounded-lg shadow-lg p-6 border border-gray-200 ${
-            showCreateForm
-              ? 'animate-slide-down'
-              : 'animate-slide-up'
-          }`}
-        >
-          <h2 className="text-xl font-bold text-gray-800 mb-4">Nuevo Reclamo</h2>
-          <CreateClaimForm
-            bills={mockBills}
-            onSubmit={handleSubmitClaim}
-            onCancel={handleCancelCreate}
-          />
-        </div>
-      </div>
+        <CreateClaimForm
+          bills={mockBills}
+          onSubmit={handleSubmitClaim}
+          onCancel={handleCancelCreate}
+        />
+      </Modal>
 
       <div className="flex-1 flex flex-col min-w-full bg-white rounded-lg shadow-sm p-4 overflow-auto">
         <Table<ClaimRow>

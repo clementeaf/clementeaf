@@ -38,10 +38,28 @@ export default {
             transform: 'translateY(-20px) scale(0.95)',
           },
         },
+        'fade-in': {
+          '0%': {
+            opacity: '0',
+          },
+          '100%': {
+            opacity: '1',
+          },
+        },
+        'fade-out': {
+          '0%': {
+            opacity: '1',
+          },
+          '100%': {
+            opacity: '0',
+          },
+        },
       },
       animation: {
         'slide-down': 'slide-down 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
         'slide-up': 'slide-up 0.3s cubic-bezier(0.4, 0, 1, 1)',
+        'fade-in': 'fade-in 0.3s ease-in-out',
+        'fade-out': 'fade-out 0.3s ease-in-out',
       },
     },
   },
