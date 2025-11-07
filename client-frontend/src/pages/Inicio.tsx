@@ -11,6 +11,7 @@ import type { BillRow } from './Inicio/columns';
  * @returns Componente Inicio
  */
 export const Inicio = (): React.ReactNode => {
+  // Test deploy automático
   const stats = useBillStats(mockBills);
 
   const formatCurrency = (amount: number): string => {
