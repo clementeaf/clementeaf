@@ -29,9 +29,9 @@ export const BillDetail = ({ bill }: BillDetailProps): React.ReactElement => {
           tableClassName="w-full border-collapse"
           theadClassName="bg-gray-50"
           headerRowClassName="border-b border-gray-200"
-          headerCellClassName="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider"
+          headerCellClassName="px-4 py-3 text-left text-sm font-extrabold text-gray-600 leading-5 tracking-normal"
           bodyRowClassName="border-b border-gray-200 hover:bg-gray-50 transition-colors duration-150"
-          bodyCellClassName="px-4 py-3 text-sm text-gray-900"
+          bodyCellClassName="px-4 py-3 text-sm font-book text-black-900 leading-5 tracking-normal"
         />
       </div>
     </div>
