@@ -56,6 +56,10 @@ jobs:
           DB_HOST=$(echo "$SECRET_JSON" | python3 -c 'import sys, json; print(json.load(sys.stdin).get("DB_HOST", ""))')
           DB_PASSWORD=$(echo "$SECRET_JSON" | python3 -c 'import sys, json; print(json.load(sys.stdin).get("DB_PASSWORD", ""))')
           JWT_SECRET=$(echo "$SECRET_JSON" | python3 -c 'import sys, json; print(json.load(sys.stdin).get("JWT_SECRET", ""))')
+          DB_DATABASE=$(echo "$SECRET_JSON" | python3 -c 'import sys, json; print(json.load(sys.stdin).get("DB_DATABASE", "postgres"))')
+          DB_USERNAME=$(echo "$SECRET_JSON" | python3 -c 'import sys, json; print(json.load(sys.stdin).get("DB_USERNAME", "postgres"))')
+          DB_PORT=$(echo "$SECRET_JSON" | python3 -c 'import sys, json; print(json.load(sys.stdin).get("DB_PORT", "5432"))')
+          JWT_EXPIRES_IN=$(echo "$SECRET_JSON" | python3 -c 'import sys, json; print(json.load(sys.stdin).get("JWT_EXPIRES_IN", "7d"))')
           
           if [ -z "$DB_HOST" ] || [ -z "$DB_PASSWORD" ] || [ -z "$JWT_SECRET" ]; then
             echo "Error: Faltan credenciales en el secreto"
@@ -68,10 +72,10 @@ jobs:
           echo "DB_HOST=$DB_HOST" >> $GITHUB_ENV
           echo "DB_PASSWORD=$DB_PASSWORD" >> $GITHUB_ENV
           echo "JWT_SECRET=$JWT_SECRET" >> $GITHUB_ENV
-          echo "DB_PORT=5432" >> $GITHUB_ENV
-          echo "DB_USERNAME=postgres" >> $GITHUB_ENV
-          echo "DB_DATABASE=postgres" >> $GITHUB_ENV
-          echo "JWT_EXPIRES_IN=7d" >> $GITHUB_ENV
+          echo "DB_PORT=${DB_PORT:-5432}" >> $GITHUB_ENV
+          echo "DB_USERNAME=${DB_USERNAME:-postgres}" >> $GITHUB_ENV
+          echo "DB_DATABASE=${DB_DATABASE:-postgres}" >> $GITHUB_ENV
+          echo "JWT_EXPIRES_IN=${JWT_EXPIRES_IN:-7d}" >> $GITHUB_ENV
           echo "ENABLE_SYNC=true" >> $GITHUB_ENV
 
       - name: Build TypeScript
