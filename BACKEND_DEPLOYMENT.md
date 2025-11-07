@@ -38,65 +38,63 @@
 
 ### Variables de Entorno (Lambda)
 
-- **JWT_SECRET:** `your-secret-key-change-in-production` (⚠️ Cambiar en producción)
+✅ **Configuradas con RDS y AWS Secrets Manager**
+
+- **JWT_SECRET:** Configurado en AWS Secrets Manager
 - **JWT_EXPIRES_IN:** `7d`
-- **DB_HOST:** `localhost` (⚠️ No funcionará en Lambda, necesita RDS)
+- **DB_HOST:** `banados-db.cupsguy6sr11.us-east-1.rds.amazonaws.com` (RDS)
 - **DB_PORT:** `5432`
 - **DB_USERNAME:** `postgres`
-- **DB_PASSWORD:** `postgres` (⚠️ Cambiar en producción)
+- **DB_PASSWORD:** Configurado en AWS Secrets Manager
 - **DB_DATABASE:** `banados_db`
 
-## ⚠️ Acciones Requeridas para Producción
+## ✅ Configuración de RDS Completada
 
-### 1. Crear Base de Datos RDS PostgreSQL
+### Base de Datos RDS PostgreSQL
 
-El backend actualmente está configurado para usar `localhost` como DB_HOST, lo cual no funcionará en Lambda. Necesitas:
+✅ **Instancia RDS creada y configurada**
 
-1. **Crear una instancia RDS PostgreSQL:**
-   ```bash
-   aws rds create-db-instance \
-     --db-instance-identifier banados-db \
-     --db-instance-class db.t3.micro \
-     --engine postgres \
-     --master-username postgres \
-     --master-user-password <TU_PASSWORD_SEGURO> \
-     --allocated-storage 20 \
-     --region us-east-1
-   ```
+- **Identificador:** `banados-db`
+- **Endpoint:** `banados-db.cupsguy6sr11.us-east-1.rds.amazonaws.com`
+- **Puerto:** `5432`
+- **Usuario:** `postgres`
+- **Base de datos:** `banados_db`
+- **Estado:** `available`
+- **Región:** `us-east-1`
 
-2. **Obtener el endpoint de la base de datos:**
-   ```bash
-   aws rds describe-db-instances \
-     --db-instance-identifier banados-db \
-     --query 'DBInstances[0].Endpoint.Address' \
-     --output text
-   ```
+### AWS Secrets Manager
 
-### 2. Configurar Variables de Entorno para Producción
+✅ **Credenciales almacenadas en AWS Secrets Manager**
 
-Antes de desplegar a producción, configura:
+- **Secreto:** `banados-db-credentials`
+- **Contiene:** DB_HOST, DB_PORT, DB_USERNAME, DB_PASSWORD, DB_DATABASE, JWT_SECRET, JWT_EXPIRES_IN
 
-```bash
-export DB_HOST=<RDS_ENDPOINT>
-export DB_PASSWORD=<TU_PASSWORD_SEGURO>
-export JWT_SECRET=<SECRETO_JWT_SEGURO>
-export DB_USERNAME=postgres
-export DB_DATABASE=banados_db
-export DB_PORT=5432
-```
+### Desplegar con RDS
 
-### 3. Desplegar a Producción
+El backend está configurado para usar RDS. Para desplegar:
 
 ```bash
 cd backend
-./deploy.sh prod
+./deploy-with-secrets.sh [stage]
 ```
 
 O manualmente:
 
 ```bash
 cd backend
-npm run deploy:aws
+# Obtener credenciales de Secrets Manager
+SECRET_JSON=$(aws secretsmanager get-secret-value --secret-id banados-db-credentials --region us-east-1 --query 'SecretString' --output text)
+export DB_HOST=$(echo "$SECRET_JSON" | python3 -c "import sys, json; print(json.load(sys.stdin)['DB_HOST'])")
+export DB_PASSWORD=$(echo "$SECRET_JSON" | python3 -c "import sys, json; print(json.load(sys.stdin)['DB_PASSWORD'])")
+export JWT_SECRET=$(echo "$SECRET_JSON" | python3 -c "import sys, json; print(json.load(sys.stdin)['JWT_SECRET'])")
+export DB_PORT=5432
+export DB_USERNAME=postgres
+export DB_DATABASE=banados_db
+export JWT_EXPIRES_IN=7d
+
+# Desplegar
+npm run build
+serverless deploy --force
 ```
 
 ## Actualizar Frontends
@@ -134,9 +132,10 @@ serverless remove
 
 ## Notas Importantes
 
-- ⚠️ **Base de datos:** Actualmente configurada para `localhost`, no funcionará en Lambda
-- ⚠️ **JWT_SECRET:** Usa el valor por defecto, cambiar en producción
-- ⚠️ **DB_PASSWORD:** Usa el valor por defecto, cambiar en producción
+- ✅ **Base de datos:** Configurada con RDS PostgreSQL
+- ✅ **JWT_SECRET:** Configurado en AWS Secrets Manager
+- ✅ **DB_PASSWORD:** Configurado en AWS Secrets Manager
 - ✅ **CORS:** Configurado en todos los endpoints de autenticación
 - ✅ **API Gateway:** Configurado automáticamente por Serverless Framework
+- ✅ **AWS Secrets Manager:** Credenciales almacenadas de forma segura
 
