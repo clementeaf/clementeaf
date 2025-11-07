@@ -1,4 +1,5 @@
 import { type ColumnDef } from '@tanstack/react-table';
+import { DownloadIcon, EyeIcon, InfoIcon } from '../../components/icons';
 
 /**
  * Tipo de datos para un producto
@@ -17,10 +18,12 @@ export interface ProductRow {
 export interface BillRow {
   id: string;
   number: string;
-  date: string;
-  client: string;
+  purchaseDate: string;
+  dispatchDate: string;
   amount: number;
-  status: string;
+  productCount: number;
+  paymentDate: string | null;
+  paymentStatus: 'Por pagar' | 'Pagado';
   products: ProductRow[];
 }
 
@@ -60,22 +63,38 @@ export const columns: ColumnDef<BillRow>[] = [
   },
   {
     accessorKey: 'number',
-    header: 'Número',
+    header: 'ID Factura',
     enableSorting: true
   },
   {
-    accessorKey: 'date',
-    header: 'Fecha',
-    enableSorting: true
+    accessorKey: 'purchaseDate',
+    header: 'Fecha Compra',
+    enableSorting: true,
+    cell: ({ getValue }) => {
+      const date = getValue() as string;
+      return new Date(date).toLocaleDateString('es-CL', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      });
+    }
   },
   {
-    accessorKey: 'client',
-    header: 'Cliente',
-    enableSorting: true
+    accessorKey: 'dispatchDate',
+    header: 'Fecha Despacho',
+    enableSorting: true,
+    cell: ({ getValue }) => {
+      const date = getValue() as string;
+      return new Date(date).toLocaleDateString('es-CL', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      });
+    }
   },
   {
     accessorKey: 'amount',
-    header: 'Monto',
+    header: 'Monto ($)',
     enableSorting: true,
     cell: ({ getValue }) => {
       const amount = getValue() as number;
@@ -86,15 +105,39 @@ export const columns: ColumnDef<BillRow>[] = [
     }
   },
   {
-    accessorKey: 'status',
-    header: 'Estado',
+    accessorKey: 'productCount',
+    header: 'Cantidad/Volumen',
     enableSorting: true,
     cell: ({ getValue }) => {
-      const status = getValue() as string;
+      const count = getValue() as number;
+      return count.toLocaleString('es-CL');
+    }
+  },
+  {
+    accessorKey: 'paymentDate',
+    header: 'Fecha Pago',
+    enableSorting: true,
+    cell: ({ getValue }) => {
+      const date = getValue() as string | null;
+      if (!date) {
+        return '-';
+      }
+      return new Date(date).toLocaleDateString('es-CL', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      });
+    }
+  },
+  {
+    accessorKey: 'paymentStatus',
+    header: 'Estado del Pago',
+    enableSorting: true,
+    cell: ({ getValue }) => {
+      const status = getValue() as 'Por pagar' | 'Pagado';
       const statusColors: Record<string, string> = {
-        'Pagada': 'bg-green-100 text-green-800',
-        'Pendiente': 'bg-yellow-100 text-yellow-800',
-        'Vencida': 'bg-red-100 text-red-800'
+        'Pagado': 'bg-green-100 text-green-800',
+        'Por pagar': 'bg-yellow-100 text-yellow-800'
       };
       return (
         <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[status] || 'bg-gray-100 text-gray-800'}`}>
@@ -102,6 +145,53 @@ export const columns: ColumnDef<BillRow>[] = [
         </span>
       );
     }
+  },
+  {
+    id: 'actions',
+    header: 'Acciones',
+    cell: ({ row }) => {
+      const handleDownload = (): void => {
+        console.log('Descargar factura:', row.original.number);
+      };
+
+      const handleView = (): void => {
+        console.log('Visualizar factura:', row.original.number);
+      };
+
+      const handleDetail = (): void => {
+        row.toggleExpanded();
+      };
+
+      return (
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleDownload}
+            className="p-1 hover:bg-gray-100 rounded transition-colors duration-200"
+            aria-label="Descargar factura"
+            title="Descargar factura"
+          >
+            <DownloadIcon color="#6B7280" />
+          </button>
+          <button
+            onClick={handleView}
+            className="p-1 hover:bg-gray-100 rounded transition-colors duration-200"
+            aria-label="Visualizar factura"
+            title="Visualizar factura"
+          >
+            <EyeIcon color="#6B7280" />
+          </button>
+          <button
+            onClick={handleDetail}
+            className="p-1 hover:bg-gray-100 rounded transition-colors duration-200"
+            aria-label="Detalle factura"
+            title="Detalle factura"
+          >
+            <InfoIcon color="#6B7280" />
+          </button>
+        </div>
+      );
+    },
+    enableSorting: false
   }
 ];
 
