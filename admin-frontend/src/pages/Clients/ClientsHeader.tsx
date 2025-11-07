@@ -1,7 +1,9 @@
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../../components/commons';
-import { PlusIcon, BellIcon, ProfileIcon } from '../../components/commons/icons';
+import { BellIcon, ProfileIcon } from '../../components/commons/icons';
 import { routes } from '../../routes';
+import addBlueIcon from '../../assets/addBlue.png';
+import addWhiteIcon from '../../assets/addWhite.png';
 
 /**
  * Props del componente ClientsHeader
@@ -35,8 +37,15 @@ export const ClientsHeader = ({ onCreateClient }: ClientsHeaderProps) => {
       <div className="flex items-center gap-4">
         <Button
           onClick={handleCreateClient}
-          leftIcon={<PlusIcon color="white" />}
-          className="bg-[#004BB7] text-white hover:bg-blue-600"
+          leftIcon={<img src={addBlueIcon} alt="add blue icon" />}
+          className="bg-[#E6EEFA] text-[#0052C9]"
+        >
+          Crear cotización
+        </Button>
+        <Button
+          onClick={handleCreateClient}
+          leftIcon={<img src={addWhiteIcon} alt="add white icon" />}
+          className="bg-[#0052C9] text-[#E6EEFA]"
         >
           Crear cliente
         </Button>
