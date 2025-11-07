@@ -16,12 +16,13 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "serverless": "^3.38.0",
-    "typeorm": "^0.3.17",
+    "axios": "^1.13.2",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.2",
     "pg": "^8.11.3",
     "reflect-metadata": "^0.1.13",
-    "jsonwebtoken": "^9.0.2",
-    "bcryptjs": "^2.4.3"
+    "serverless": "^3.38.0",
+    "typeorm": "^0.3.17"
   },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.130",
@@ -37,4 +38,3 @@
     "typescript": "^5.3.3"
   }
 }
-

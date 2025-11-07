@@ -12,6 +12,7 @@ export const routes = {
   createClient: '/sells/clients/create',
   quotes: '/sells/quotes',
   salesOrder: '/sells/sales-order',
+  analytics: '/analytics',
   notFound: '/*'
 } as const;
 

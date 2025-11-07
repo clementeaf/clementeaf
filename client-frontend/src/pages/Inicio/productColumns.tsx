@@ -44,8 +44,8 @@ export const productColumns: ColumnDef<ProductRow>[] = [
     }
   },
   {
-    accessorKey: 'certificacion',
-    header: 'Certificación',
+    accessorKey: 'fichaTecnica',
+    header: 'Ficha Técnica',
     enableSorting: true,
     cell: ({ getValue }) => {
       const certificacion = getValue() as boolean;
@@ -61,8 +61,8 @@ export const productColumns: ColumnDef<ProductRow>[] = [
     }
   },
   {
-    accessorKey: 'capacitacion',
-    header: 'Capacitación',
+    accessorKey: 'hojaSeguridad',
+    header: 'Hoja Seguridad',
     enableSorting: true,
     cell: ({ getValue }) => {
       const capacitacion = getValue() as boolean;
