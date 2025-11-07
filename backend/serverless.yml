@@ -13,6 +13,16 @@ provider:
     subnetIds:
       - ${env:SUBNET_ID_1, 'subnet-080e7f68a48916130'}
       - ${env:SUBNET_ID_2, 'subnet-08323bd8b359d22b9'}
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - s3:GetObject
+            - s3:ListBucket
+          Resource:
+            - arn:aws:s3:::banados-analytics-data
+            - arn:aws:s3:::banados-analytics-data/*
   environment:
     AWS_ENDPOINT_URL: ${env:AWS_ENDPOINT_URL, ''}
     JWT_SECRET: ${env:JWT_SECRET, 'your-secret-key-change-in-production'}
@@ -25,6 +35,8 @@ provider:
     ENABLE_SYNC: ${env:ENABLE_SYNC, 'true'}
     CHECKAUDITOR_API_KEY: ${env:CHECKAUDITOR_API_KEY, ''}
     CHECKAUDITOR_BASE_URL: ${env:CHECKAUDITOR_BASE_URL, 'https://app.checkauditor.com'}
+    S3_BUCKET_NAME: ${env:S3_BUCKET_NAME, 'banados-analytics-data'}
+    S3_DATA_KEY: ${env:S3_DATA_KEY, 'Analytics_CtasPorCobrar/combined_data.json'}
 
 plugins:
   - serverless-offline
@@ -125,6 +137,16 @@ functions:
       - http:
           path: analytics/estadisticas
           method: get
+          cors: true
+
+  syncData:
+    handler: dist/modules/Analytics/handlers/syncData.handler
+    timeout: 300
+    memorySize: 1024
+    events:
+      - http:
+          path: analytics/sync
+          method: post
           cors: true
 
   # CheckAuditor endpoints
