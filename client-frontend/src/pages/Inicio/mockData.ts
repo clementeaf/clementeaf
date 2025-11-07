@@ -26,7 +26,9 @@ const generateProducts = (billId: string, count: number): ProductRow[] => {
       name: productNames[i % productNames.length],
       quantity,
       unitPrice,
-      total: quantity * unitPrice
+      total: quantity * unitPrice,
+      certificacion: Math.random() > 0.5,
+      capacitacion: Math.random() > 0.5
     };
   });
 };

@@ -10,6 +10,8 @@ export interface ProductRow {
   quantity: number;
   unitPrice: number;
   total: number;
+  certificacion: boolean;
+  capacitacion: boolean;
 }
 
 /**

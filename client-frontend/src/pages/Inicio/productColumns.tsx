@@ -42,6 +42,40 @@ export const productColumns: ColumnDef<ProductRow>[] = [
         currency: 'CLP'
       }).format(total);
     }
+  },
+  {
+    accessorKey: 'certificacion',
+    header: 'Certificación',
+    enableSorting: true,
+    cell: ({ getValue }) => {
+      const certificacion = getValue() as boolean;
+      return (
+        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+          certificacion
+            ? 'bg-green-100 text-green-800'
+            : 'bg-gray-100 text-gray-800'
+        }`}>
+          {certificacion ? 'Sí' : 'No'}
+        </span>
+      );
+    }
+  },
+  {
+    accessorKey: 'capacitacion',
+    header: 'Capacitación',
+    enableSorting: true,
+    cell: ({ getValue }) => {
+      const capacitacion = getValue() as boolean;
+      return (
+        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+          capacitacion
+            ? 'bg-green-100 text-green-800'
+            : 'bg-gray-100 text-gray-800'
+        }`}>
+          {capacitacion ? 'Sí' : 'No'}
+        </span>
+      );
+    }
   }
 ];
 
