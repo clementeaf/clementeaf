@@ -29,6 +29,14 @@ export interface BillStats {
    * Cantidad de facturas pagadas
    */
   paidCount: number;
+  /**
+   * Promedio por factura
+   */
+  averageAmount: number;
+  /**
+   * Tasa de pago (porcentaje)
+   */
+  paymentRate: number;
 }
 
 /**
@@ -46,6 +54,8 @@ export const useBillStats = (bills: BillRow[]): BillStats => {
     const paidAmount = paidBills.reduce((sum, bill) => sum + bill.amount, 0);
     const pendingCount = pendingBills.length;
     const paidCount = paidBills.length;
+    const averageAmount = totalBills > 0 ? totalAmount / totalBills : 0;
+    const paymentRate = totalBills > 0 ? (paidCount / totalBills) * 100 : 0;
 
     return {
       totalBills,
@@ -53,7 +63,9 @@ export const useBillStats = (bills: BillRow[]): BillStats => {
       pendingAmount,
       paidAmount,
       pendingCount,
-      paidCount
+      paidCount,
+      averageAmount,
+      paymentRate
     };
   }, [bills]);
 };
