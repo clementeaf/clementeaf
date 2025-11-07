@@ -11,7 +11,7 @@ function App(): React.ReactNode {
   return (
     <div className="w-screen h-screen bg-blue-50/50 flex">
       <Sidebar />
-      <div className="w-full h-full rounded-lg shadow-sm overflow-auto">
+      <div className="w-full h-full overflow-auto">
         <Routes>
           <Route path={routes.home} element={<Inicio />} />
         </Routes>
