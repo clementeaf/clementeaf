@@ -35,11 +35,13 @@ export const NavItem = ({
     if (shouldPreventNavigation) {
       e.preventDefault();
       e.stopPropagation();
+    } else {
+      e.stopPropagation();
     }
   };
 
   const handleDivClick = (e: React.MouseEvent<HTMLDivElement>): void => {
-    if (onToggle) {
+    if (onToggle && shouldPreventNavigation) {
       e.preventDefault();
       e.stopPropagation();
       onToggle();
@@ -69,7 +71,7 @@ export const NavItem = ({
           ? 'bg-[#004BB7] shadow-md'
           : 'hover:bg-blue-800 hover:shadow-sm'
       }`}
-      onClick={handleDivClick}
+      onClick={shouldPreventNavigation ? handleDivClick : undefined}
     >
       {shouldPreventNavigation ? (
         <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'flex-1 justify-start'} text-white transition-opacity duration-200 hover:opacity-90`}>
