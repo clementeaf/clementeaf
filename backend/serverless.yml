@@ -17,12 +17,14 @@ provider:
     AWS_ENDPOINT_URL: ${env:AWS_ENDPOINT_URL, ''}
     JWT_SECRET: ${env:JWT_SECRET, 'your-secret-key-change-in-production'}
     JWT_EXPIRES_IN: ${env:JWT_EXPIRES_IN, '7d'}
-    DB_HOST: ${env:DB_HOST, 'localhost'}
+    DB_HOST: ${env:DB_HOST, 'banados-analytics-db.cupsguy6sr11.us-east-1.rds.amazonaws.com'}
     DB_PORT: ${env:DB_PORT, '5432'}
     DB_USERNAME: ${env:DB_USERNAME, 'postgres'}
-    DB_PASSWORD: ${env:DB_PASSWORD, 'postgres'}
-    DB_DATABASE: ${env:DB_DATABASE, 'banados_db'}
+    DB_PASSWORD: ${env:DB_PASSWORD, 'BanadosAnalytics2024Secure'}
+    DB_DATABASE: ${env:DB_DATABASE, 'postgres'}
     ENABLE_SYNC: ${env:ENABLE_SYNC, 'true'}
+    CHECKAUDITOR_API_KEY: ${env:CHECKAUDITOR_API_KEY, ''}
+    CHECKAUDITOR_BASE_URL: ${env:CHECKAUDITOR_BASE_URL, 'https://app.checkauditor.com'}
 
 plugins:
   - serverless-offline
@@ -36,8 +38,20 @@ functions:
           method: get
           cors: true
 
+  runMigrations:
+    handler: dist/handlers/runMigrations.handler
+    timeout: 60
+    memorySize: 512
+    events:
+      - http:
+          path: migrations/run
+          method: post
+          cors: true
+
   register:
     handler: dist/modules/Users/handlers/register.handler
+    timeout: 30
+    memorySize: 512
     events:
       - http:
           path: auth/register
@@ -46,6 +60,8 @@ functions:
 
   login:
     handler: dist/modules/Users/handlers/login.handler
+    timeout: 30
+    memorySize: 512
     events:
       - http:
           path: auth/login
@@ -54,6 +70,8 @@ functions:
 
   me:
     handler: dist/modules/Users/handlers/me.handler
+    timeout: 30
+    memorySize: 512
     events:
       - http:
           path: auth/me
@@ -66,6 +84,72 @@ functions:
       - http:
           path: auth/logout
           method: post
+          cors: true
+
+  # Analytics endpoints
+  getCtasPorCobrar:
+    handler: dist/modules/Analytics/handlers/getCtasPorCobrar.handler
+    events:
+      - http:
+          path: analytics/ctas-por-cobrar
+          method: get
+          cors: true
+
+  getDeudasActivas:
+    handler: dist/modules/Analytics/handlers/getDeudasActivas.handler
+    events:
+      - http:
+          path: analytics/deudas-activas
+          method: get
+          cors: true
+
+  getResumenClientes:
+    handler: dist/modules/Analytics/handlers/getResumenClientes.handler
+    events:
+      - http:
+          path: analytics/resumen/clientes
+          method: get
+          cors: true
+
+  getResumenVendedores:
+    handler: dist/modules/Analytics/handlers/getResumenVendedores.handler
+    events:
+      - http:
+          path: analytics/resumen/vendedores
+          method: get
+          cors: true
+
+  getEstadisticas:
+    handler: dist/modules/Analytics/handlers/getEstadisticas.handler
+    events:
+      - http:
+          path: analytics/estadisticas
+          method: get
+          cors: true
+
+  # CheckAuditor endpoints
+  authenticateSession:
+    handler: dist/modules/CheckAuditor/handlers/authenticateSession.handler
+    events:
+      - http:
+          path: checkauditor/sessions
+          method: post
+          cors: true
+
+  getCompanyData:
+    handler: dist/modules/CheckAuditor/handlers/getCompanyData.handler
+    events:
+      - http:
+          path: checkauditor/company-data
+          method: get
+          cors: true
+
+  getNotifications:
+    handler: dist/modules/CheckAuditor/handlers/getNotifications.handler
+    events:
+      - http:
+          path: checkauditor/notifications
+          method: get
           cors: true
 
 custom:

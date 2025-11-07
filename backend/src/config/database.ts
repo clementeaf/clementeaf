@@ -6,15 +6,13 @@ import 'reflect-metadata';
  * @returns Configuración de TypeORM
  */
 const getDatabaseConfig = (): DataSourceOptions => {
-  const isProduction = process.env.NODE_ENV === 'production' || process.env.AWS_LAMBDA_FUNCTION_NAME !== undefined;
-  
   return {
     type: 'postgres',
     host: process.env.DB_HOST ?? 'localhost',
     port: parseInt(process.env.DB_PORT ?? '5432', 10),
     username: process.env.DB_USERNAME ?? 'postgres',
     password: process.env.DB_PASSWORD ?? 'postgres',
-    database: process.env.DB_DATABASE ?? 'banados_db',
+    database: process.env.DB_DATABASE ?? 'postgres',
     synchronize: process.env.NODE_ENV === 'development' || process.env.ENABLE_SYNC === 'true',
     logging: process.env.NODE_ENV === 'development',
     entities: [
@@ -24,14 +22,16 @@ const getDatabaseConfig = (): DataSourceOptions => {
     migrations: [
       'dist/migrations/*.js'
     ],
-    ssl: isProduction ? {
-      rejectUnauthorized: false
-    } : false,
-    extra: isProduction ? {
-      ssl: {
-        rejectUnauthorized: false
-      }
-    } : undefined,
+    connectTimeoutMS: 30000,
+          ssl: {
+            rejectUnauthorized: false
+          },
+          extra: {
+            ssl: {
+              rejectUnauthorized: false
+            },
+            connectionTimeoutMillis: 30000
+          },
   };
 };
 
@@ -42,9 +42,24 @@ export const AppDataSource = new DataSource(getDatabaseConfig());
  * @returns Promise que resuelve cuando la conexión está lista
  */
 export const initializeDatabase = async (): Promise<DataSource> => {
-  if (!AppDataSource.isInitialized) {
-    await AppDataSource.initialize();
+  try {
+    if (!AppDataSource.isInitialized) {
+      await AppDataSource.initialize();
+    }
+    return AppDataSource;
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown database error';
+    const errorDetails = error instanceof Error ? error.stack : String(error);
+    
+    console.error('Database initialization error:', {
+      message: errorMessage,
+      details: errorDetails,
+      host: process.env.DB_HOST,
+      database: process.env.DB_DATABASE,
+      isProduction: process.env.AWS_LAMBDA_FUNCTION_NAME !== undefined
+    });
+    
+    throw new Error(`Database connection failed: ${errorMessage}`);
   }
-  return AppDataSource;
 };
 
