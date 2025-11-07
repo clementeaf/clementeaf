@@ -7,6 +7,14 @@ import type { TableCellProps, TableCellType } from './types';
  * @returns Contenido renderizado
  */
 const defaultRenderBodyCell = <TData,>(cell: TableCellType<TData>): ReactNode => {
+  const cellDef = cell.column.columnDef.cell;
+  if (cellDef && typeof cellDef === 'function') {
+    return cellDef(cell.getContext()) as ReactNode;
+  }
+  const renderValue = cell.renderValue();
+  if (renderValue !== undefined && renderValue !== null) {
+    return renderValue as ReactNode;
+  }
   return cell.getValue() as ReactNode;
 };
 

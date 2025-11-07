@@ -101,6 +101,10 @@ export interface TableProps<TData> {
    * Estado inicial de filtros
    */
   initialColumnFilters?: ColumnFiltersState;
+  /**
+   * Renderizar el contenido expandido de una fila
+   */
+  renderExpandedContent?: (row: TData) => ReactNode;
 }
 
 /**

@@ -1,6 +1,17 @@
 import { type ColumnDef } from '@tanstack/react-table';
 
 /**
+ * Tipo de datos para un producto
+ */
+export interface ProductRow {
+  id: string;
+  name: string;
+  quantity: number;
+  unitPrice: number;
+  total: number;
+}
+
+/**
  * Tipo de datos para una fila de factura
  */
 export interface BillRow {
@@ -10,12 +21,43 @@ export interface BillRow {
   client: string;
   amount: number;
   status: string;
+  products: ProductRow[];
 }
 
 /**
  * Definición de columnas para la tabla de facturas
  */
 export const columns: ColumnDef<BillRow>[] = [
+  {
+    id: 'expand',
+    header: '',
+    cell: ({ row }) => {
+      return (
+        <button
+          onClick={() => row.toggleExpanded()}
+          className="p-1 hover:bg-gray-100 rounded transition-colors duration-200"
+          aria-label={row.getIsExpanded() ? 'Colapsar' : 'Expandir'}
+        >
+          <svg
+            className={`w-5 h-5 text-gray-600 transition-transform duration-200 ${
+              row.getIsExpanded() ? 'rotate-90' : ''
+            }`}
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M9 5l7 7-7 7"
+            />
+          </svg>
+        </button>
+      );
+    },
+    enableSorting: false
+  },
   {
     accessorKey: 'number',
     header: 'Número',

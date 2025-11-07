@@ -1,9 +1,11 @@
+import React from 'react';
 import {
   useReactTable,
   getCoreRowModel,
   getSortedRowModel,
   getFilteredRowModel,
-  getPaginationRowModel
+  getPaginationRowModel,
+  getExpandedRowModel
 } from '@tanstack/react-table';
 import type { TableProps } from './types';
 import { useTableSorting, useTableFilters, useTableRowSelection } from './hooks';
@@ -36,7 +38,8 @@ export const Table = <TData,>({
   enablePagination = false,
   defaultPageSize = 10,
   initialSorting = [],
-  initialColumnFilters = []
+  initialColumnFilters = [],
+  renderExpandedContent
 }: TableProps<TData>): React.ReactElement => {
   const [sorting, setSorting] = useTableSorting(initialSorting);
   const [columnFilters, setColumnFilters] = useTableFilters(initialColumnFilters);
@@ -49,6 +52,7 @@ export const Table = <TData,>({
     getSortedRowModel: enableSorting ? getSortedRowModel() : undefined,
     getFilteredRowModel: enableFiltering ? getFilteredRowModel() : undefined,
     getPaginationRowModel: enablePagination ? getPaginationRowModel() : undefined,
+    getExpandedRowModel: getExpandedRowModel(),
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onRowSelectionChange: setRowSelection,
@@ -83,6 +87,7 @@ export const Table = <TData,>({
           bodyCellClassName={bodyCellClassName}
           renderRow={renderRow}
           renderBodyCell={renderBodyCell}
+          renderExpandedContent={renderExpandedContent}
         />
       </table>
     </div>
