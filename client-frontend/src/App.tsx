@@ -1,6 +1,7 @@
 import { Routes, Route } from 'react-router-dom';
 import { Sidebar } from './components/Sidebar';
 import { routes } from './routes';
+import { Inicio } from './pages/Inicio';
 
 /**
  * Componente principal de la aplicación cliente
@@ -12,7 +13,7 @@ function App(): React.ReactNode {
       <Sidebar />
       <div className="w-full h-full rounded-lg shadow-sm overflow-auto">
         <Routes>
-          <Route path={routes.home} element={<div>Home</div>} />
+          <Route path={routes.home} element={<Inicio />} />
         </Routes>
       </div>
     </div>

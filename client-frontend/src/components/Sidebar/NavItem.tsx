@@ -47,7 +47,7 @@ export const NavItem = ({
   };
 
   const iconElement = (
-    <img src={item.icon} alt={item.name} className="w-5 h-5 transition-transform duration-200 hover:scale-110 flex-shrink-0" />
+    <img src={item.icon} alt={item.name} className="w-3 mb-1 transition-transform duration-200 hover:scale-110 flex-shrink-0" />
   );
 
   const textElement = (
@@ -79,7 +79,7 @@ export const NavItem = ({
       ) : (
         <Link
           to={item.path}
-          className={`flex items-center ${isCollapsed ? 'justify-center' : 'flex-1 justify-start'} text-white transition-opacity duration-200 hover:opacity-90`}
+          className={`flex items-center justify-start ${isCollapsed ? 'justify-center' : 'flex-1 justify-start'} text-white transition-opacity duration-200 hover:opacity-90`}
           onClick={handleLinkClick}
         >
           {iconElement}
