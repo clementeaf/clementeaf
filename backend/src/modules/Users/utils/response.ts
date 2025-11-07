@@ -1,6 +1,18 @@
 import { type APIGatewayProxyResult } from 'aws-lambda';
 
 /**
+ * Headers CORS para las respuestas
+ */
+const getCorsHeaders = (): Record<string, string> => {
+  return {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
+    'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
+    'Content-Type': 'application/json'
+  };
+};
+
+/**
  * Respuesta HTTP exitosa
  * @param statusCode - Código de estado HTTP
  * @param data - Datos a devolver
@@ -24,9 +36,7 @@ export const successResponse = (
   
   return {
     statusCode,
-    headers: {
-      'Content-Type': 'application/json'
-    },
+    headers: getCorsHeaders(),
     body: JSON.stringify(responseBody)
   };
 };
@@ -43,9 +53,7 @@ export const errorResponse = (
 ): APIGatewayProxyResult => {
   return {
     statusCode,
-    headers: {
-      'Content-Type': 'application/json'
-    },
+    headers: getCorsHeaders(),
     body: JSON.stringify({ error })
   };
 };

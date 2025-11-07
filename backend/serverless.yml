@@ -34,6 +34,7 @@ functions:
       - http:
           path: hello
           method: get
+          cors: true
 
   register:
     handler: dist/modules/Users/handlers/register.handler
