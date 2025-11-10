@@ -21,7 +21,8 @@ export const isActive = (path: string, currentPath: string): boolean => {
  * @returns true si alguna subruta de Ventas está activa
  */
 export const isSellsSectionActive = (currentPath: string, sellsSubItems: NavItem[]): boolean => {
-  return sellsSubItems.some(item => currentPath === item.path) || 
-         currentPath === routes.sells;
+  return sellsSubItems.some(item => currentPath.startsWith(item.path)) || 
+         currentPath === routes.sells ||
+         currentPath.startsWith(routes.sells);
 };
 

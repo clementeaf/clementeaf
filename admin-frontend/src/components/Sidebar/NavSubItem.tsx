@@ -17,7 +17,7 @@ interface NavSubItemProps {
  */
 export const NavSubItem = ({ item, onNavigate }: NavSubItemProps) => {
   const location = useLocation();
-  const isActive = location.pathname === item.path;
+  const isActive = location.pathname.startsWith(item.path);
   const handleClick = (e: React.MouseEvent<HTMLAnchorElement>): void => {
     e.stopPropagation();
     if (onNavigate) {

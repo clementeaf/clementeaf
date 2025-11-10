@@ -66,7 +66,9 @@ export const Input = ({
         <input
           className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#004BB7] focus:border-transparent ${
             leftIcon ? 'pl-10' : ''
-          } ${rightIcon ? 'pr-10' : ''} ${error ? 'border-red-500' : ''} ${inputClassName}`}
+          } ${rightIcon ? 'pr-10' : ''} ${error ? 'border-red-500' : ''} ${
+            htmlInputProps.disabled ? 'bg-gray-100 cursor-not-allowed opacity-60' : ''
+          } ${inputClassName}`}
           {...htmlInputProps}
         />
         {rightIcon && (

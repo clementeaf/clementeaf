@@ -85,12 +85,13 @@ export const Sidebar = () => {
           const active = isActive(item.path, location.pathname);
           const isSellsItem = item.name === 'Ventas';
           const expanded = isSellsItem ? isSellsExpanded : false;
+          const sellsSectionActive = isSellsItem && isSellsSectionActive(location.pathname, sellsSubItems);
 
           return (
             <div key={item.path} className="w-full">
               <NavItem
                 item={item}
-                isActive={active && !isSellsItem}
+                isActive={isSellsItem ? sellsSectionActive : active}
                 isExpanded={expanded}
                 onToggle={isSellsItem ? handleToggleSells : undefined}
                 showExpandIcon={item.hasSubItems === true}
