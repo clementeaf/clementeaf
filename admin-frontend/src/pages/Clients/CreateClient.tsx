@@ -4,6 +4,7 @@ import { ClientStepper } from './CreateClient/ClientStepper';
 import { ClientInfoForm } from './CreateClient/ClientInfoForm';
 import { SegmentationForm } from './CreateClient/SegmentationForm';
 import { BillingForm } from './CreateClient/BillingForm';
+import { ContactForm } from './CreateClient/ContactForm';
 import { Button } from '../../components/commons';
 import { ChevronRightIcon } from '../../components/commons/icons';
 
@@ -122,11 +123,17 @@ export const CreateClient = () => {
           aprobadoPorFinanzas: formData.aprobadoPorFinanzas || ''
         };
       case 4:
-        return formData.step4 || {};
+        // Datos del paso 4 (Contacto)
+        return {
+          nombre: formData.nombre || '',
+          cargo: formData.cargo || '',
+          correoElectronico: formData.correoElectronico || '',
+          telefono: formData.telefono || ''
+        };
       case 5:
-        return formData.step5 || {};
+        return (formData.step5 as Record<string, unknown>) || {};
       default:
-        return {};
+        return {} as Record<string, unknown>;
     }
   };
 
@@ -162,7 +169,13 @@ export const CreateClient = () => {
         onBack={handleBack}
       />
     ),
-    4: () => <div>Paso 4: Contacto (TODO)</div>,
+    4: () => (
+      <ContactForm 
+        onDataChange={handleDataChange}
+        initialData={formData as Record<string, string>}
+        onBack={handleBack}
+      />
+    ),
     5: () => <div>Paso 5: Dirección (TODO)</div>
   };
 
@@ -171,9 +184,6 @@ export const CreateClient = () => {
    */
   const handleSubmit = async (): Promise<void> => {
     try {
-      // Obtener los datos del último step
-      const stepData = getStepData(5);
-      
       // Mostrar alert con todos los datos antes de enviar
       alert(`Datos completos del cliente:\n\n${JSON.stringify(formData, null, 2)}`);
       

@@ -1,5 +1,6 @@
 import clientInfoIcon from '../../../assets/client-info.png';
 import personIcon from '../../../assets/contacto.png';
+import contactoActiveIcon from '../../../assets/contactoActive.png';
 import segmentacionIcon from '../../../assets/segmentacion.png';
 import segmentacionActiveIcon from '../../../assets/segmentacionActive.png';
 import facturacion from '../../../assets/facturacion.png';
@@ -48,6 +49,7 @@ export const ClientStepper = ({ currentStep }: ClientStepperProps) => {
       number: 4,
       title: 'Contacto',
       iconSrc: personIcon,
+      activeIconSrc: contactoActiveIcon,
       completedIconSrc: completedStepIcon
     },
     {
@@ -105,7 +107,7 @@ export const ClientStepper = ({ currentStep }: ClientStepperProps) => {
               <div className="flex items-start">
                 <div className="flex flex-col items-center">
                   {stepIcon ? (
-                    <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
+                    <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 ease-in-out ${
                       isActive 
                         ? 'bg-[#0052C9]' 
                         : isCompleted
@@ -116,12 +118,13 @@ export const ClientStepper = ({ currentStep }: ClientStepperProps) => {
                         <img
                           src={stepIcon}
                           alt={step.title}
-                          className="w-full h-full object-contain"
+                          className="w-full h-full object-contain transition-all duration-300 ease-in-out"
                           style={{
                             display: 'block',
                             maxWidth: '100%',
                             maxHeight: '100%',
-                            filter: isPending ? 'brightness(0) opacity(0.6)' : 'none'
+                            filter: isPending ? 'brightness(0) opacity(0.6)' : 'none',
+                            transition: 'filter 0.3s ease-in-out, opacity 0.3s ease-in-out'
                           }}
                         />
                       </div>
@@ -129,7 +132,7 @@ export const ClientStepper = ({ currentStep }: ClientStepperProps) => {
                   ) : null}
                   {!isLast && (
                     <div
-                      className={`w-[4px] rounded-full my-2 ${
+                      className={`w-[4px] rounded-full my-2 transition-all duration-300 ease-in-out ${
                         isCompleted
                           ? 'bg-[#12B980]'
                           : 'bg-gray-200'
@@ -140,7 +143,7 @@ export const ClientStepper = ({ currentStep }: ClientStepperProps) => {
                 </div>
                 <div className="pt-1 pl-2">
                   <div className="flex flex-col gap-0.5">
-                    <span className={`text-xs leading-tight ${
+                    <span className={`text-xs leading-tight transition-all duration-300 ease-in-out ${
                       isActive 
                         ? 'text-gray-600' 
                         : isCompleted 
@@ -149,7 +152,7 @@ export const ClientStepper = ({ currentStep }: ClientStepperProps) => {
                     }`}>
                       Paso {step.number}
                     </span>
-                    <span className={`text-sm leading-tight ${
+                    <span className={`text-sm leading-tight transition-all duration-300 ease-in-out ${
                       isActive
                         ? 'text-[#0052C9] font-semibold'
                         : isCompleted
