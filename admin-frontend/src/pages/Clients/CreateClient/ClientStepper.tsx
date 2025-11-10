@@ -54,8 +54,8 @@ export const ClientStepper = ({ currentStep }: ClientStepperProps) => {
   ];
 
   return (
-    <div className="w-80 p-6 pl-8 border-r border-gray-200 w-[204px] h-full">
-      <div className="flex flex-col w-[120px] h-[314px]">
+    <div className="border-r border-gray-200 w-[15%] h-full flex flex-col items-center pr-5">
+      <div className="flex flex-col w-[120px] h-[314px] py-6">
         {steps.map((step, index) => {
           const isActive = step.active;
           const isLast = index === steps.length - 1;

@@ -37,9 +37,9 @@ export const CreateClient = () => {
     <div className="w-full h-full flex flex-col p-8">
       <CreateClientHeader />
 
-      <div className="flex gap-6 flex-1 min-h-0 bg-white rounded-lg shadow-sm border border-gray-200">
+      <div className="flex gap-6 bg-white rounded-lg shadow-sm border border-gray-200">
         <ClientStepper currentStep={currentStep} />
-        {renderStepContent()}
+        <div className="w-full px-[100px] py-6">{renderStepContent()}</div>
       </div>
     </div>
   );
