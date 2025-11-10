@@ -1,6 +1,5 @@
 import { useNavigate } from 'react-router-dom';
 import { BellIcon, ProfileIcon } from '../../../components/commons/icons';
-import { Button } from '../../../components/commons';
 import { routes } from '../../../routes';
 import ArrowRightIcon from '../../../assets/right.png';
 
