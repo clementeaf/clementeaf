@@ -107,6 +107,14 @@ export interface TableProps<TData> {
    * Estado inicial de filtros
    */
   initialColumnFilters?: ColumnFiltersState;
+  /**
+   * Estado de carga para mostrar skeleton rows
+   */
+  isLoading?: boolean;
+  /**
+   * Número de filas skeleton a mostrar cuando está cargando
+   */
+  skeletonRowCount?: number;
 }
 
 /**
@@ -135,7 +143,9 @@ export const Table = <TData,>({
   enablePagination = false,
   defaultPageSize = 10,
   initialSorting = [],
-  initialColumnFilters = []
+  initialColumnFilters = [],
+  isLoading = false,
+  skeletonRowCount = 5
 }: TableProps<TData>): React.ReactElement => {
   const [sorting, setSorting] = useState<SortingState>(initialSorting);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(initialColumnFilters);
@@ -249,6 +259,41 @@ export const Table = <TData,>({
     );
   };
 
+  /**
+   * Renderiza una fila skeleton
+   */
+  const renderSkeletonRow = (index: number): ReactNode => {
+    return (
+      <tr key={`skeleton-${index}`} className={bodyRowClassName}>
+        {table.getAllColumns().map((column, colIndex) => {
+          const isSelectColumn = column.id === 'select';
+          const cellClassName = isSelectColumn 
+            ? 'px-1 py-3 text-sm text-gray-90 pr-6'
+            : bodyCellClassName;
+
+          return (
+            <td
+              key={colIndex}
+              className={cellClassName}
+              style={{
+                width: isSelectColumn ? '40px' : undefined,
+                maxWidth: isSelectColumn ? '40px' : undefined
+              }}
+            >
+              {isSelectColumn ? (
+                <div className="flex items-center justify-center">
+                  <div className="w-4 h-4 bg-gray-200 rounded animate-pulse" />
+                </div>
+              ) : (
+                <div className="h-4 bg-gray-200 rounded animate-pulse" style={{ width: `${Math.random() * 40 + 60}%` }} />
+              )}
+            </td>
+          );
+        })}
+      </tr>
+    );
+  };
+
   return (
     <div className={containerClassName}>
       <table className={tableClassName}>
@@ -271,22 +316,28 @@ export const Table = <TData,>({
           })}
         </thead>
         <tbody className={tbodyClassName}>
-          {table.getRowModel().rows.map((row) => {
-            if (renderRow) {
-              return <React.Fragment key={row.id}>{renderRow(row)}</React.Fragment>;
-            }
+          {isLoading ? (
+            // Mostrar skeleton rows cuando está cargando
+            Array.from({ length: skeletonRowCount }).map((_, index) => renderSkeletonRow(index))
+          ) : (
+            // Mostrar filas normales cuando no está cargando
+            table.getRowModel().rows.map((row) => {
+              if (renderRow) {
+                return <React.Fragment key={row.id}>{renderRow(row)}</React.Fragment>;
+              }
 
-            return (
-              <tr key={row.id} className={bodyRowClassName}>
-                {row.getVisibleCells().map((cell) => {
-                  if (renderBodyCell) {
-                    return <React.Fragment key={cell.id}>{renderBodyCell(cell)}</React.Fragment>;
-                  }
-                  return <React.Fragment key={cell.id}>{defaultRenderBodyCell(cell)}</React.Fragment>;
-                })}
-              </tr>
-            );
-          })}
+              return (
+                <tr key={row.id} className={bodyRowClassName}>
+                  {row.getVisibleCells().map((cell) => {
+                    if (renderBodyCell) {
+                      return <React.Fragment key={cell.id}>{renderBodyCell(cell)}</React.Fragment>;
+                    }
+                    return <React.Fragment key={cell.id}>{defaultRenderBodyCell(cell)}</React.Fragment>;
+                  })}
+                </tr>
+              );
+            })
+          )}
         </tbody>
       </table>
     </div>

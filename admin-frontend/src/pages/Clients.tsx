@@ -18,7 +18,7 @@ export const Clients = () => {
   const [page, setPage] = useState(1);
   const limit = 50;
 
-  const { data: clientsData, isLoading, error } = useAllClients(page, limit);
+  const { data: clientsData, isLoading, error, hasDataChanged } = useAllClients(page, limit);
 
   /**
    * Mapea los datos del API a la estructura esperada por la tabla
@@ -29,6 +29,14 @@ export const Clients = () => {
     rut: client.rut || '',
     segment: client.segmento || ''
   })) || [];
+
+  /**
+   * Mostrar skeleton solo si:
+   * 1. Está cargando Y no hay datos persistidos (primera carga)
+   * 2. Está cargando Y los datos de la API son diferentes a los persistidos (necesita actualizar)
+   */
+  const hasPersistedData = clientsData && clientsData.data.length > 0;
+  const shouldShowSkeleton = isLoading && (!hasPersistedData || hasDataChanged);
 
   const handleCreateClient = (): void => {
     setIsRutModalOpen(true);
@@ -54,11 +62,7 @@ export const Clients = () => {
             <ClientsSearchBar searchValue={searchValue} onSearchChange={handleSearchChange} />
 
             <div className="flex-1 overflow-auto rounded-lg shadow-sm bg-white p">
-              {isLoading ? (
-                <div className="flex items-center justify-center h-64">
-                  <div className="text-lg text-gray-500">Cargando clientes...</div>
-                </div>
-              ) : error ? (
+              {error ? (
                 <div className="flex items-center justify-center h-64">
                   <div className="text-lg text-red-500">Error al cargar los clientes</div>
                 </div>
@@ -67,6 +71,8 @@ export const Clients = () => {
                   data={mappedClients}
                   columns={columns}
                   enableSorting={true}
+                  isLoading={shouldShowSkeleton}
+                  skeletonRowCount={5}
                   containerClassName="w-full"
                   tableClassName="w-full border-collapse"
                   theadClassName="bg-gray-50 sticky top-0"
