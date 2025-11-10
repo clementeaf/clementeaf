@@ -23,6 +23,11 @@ provider:
           Resource:
             - arn:aws:s3:::banados-analytics-data
             - arn:aws:s3:::banados-analytics-data/*
+        - Effect: Allow
+          Action:
+            - execute-api:ManageConnections
+          Resource:
+            - arn:aws:execute-api:${self:provider.region}:*:*/@connections/*
   environment:
     AWS_ENDPOINT_URL: ${env:AWS_ENDPOINT_URL, ''}
     JWT_SECRET: ${env:JWT_SECRET, 'your-secret-key-change-in-production'}
@@ -224,6 +229,94 @@ functions:
           path: clients/{id}
           method: delete
           cors: true
+
+  # Chat endpoints
+  createConversation:
+    handler: dist/modules/Chat/handlers/createConversation.handler
+    timeout: 30
+    memorySize: 512
+    events:
+      - http:
+          path: chat/conversations
+          method: post
+          cors: true
+
+  getConversationById:
+    handler: dist/modules/Chat/handlers/getConversationById.handler
+    timeout: 30
+    memorySize: 512
+    events:
+      - http:
+          path: chat/conversations/{conversationId}
+          method: get
+          cors: true
+
+  getConversationsByUserId:
+    handler: dist/modules/Chat/handlers/getConversationsByUserId.handler
+    timeout: 30
+    memorySize: 512
+    events:
+      - http:
+          path: chat/conversations/user/{userId}
+          method: get
+          cors: true
+
+  createMessage:
+    handler: dist/modules/Chat/handlers/createMessage.handler
+    timeout: 30
+    memorySize: 512
+    events:
+      - http:
+          path: chat/messages
+          method: post
+          cors: true
+
+  getMessagesByConversationId:
+    handler: dist/modules/Chat/handlers/getMessagesByConversationId.handler
+    timeout: 30
+    memorySize: 512
+    events:
+      - http:
+          path: chat/conversations/{conversationId}/messages
+          method: get
+          cors: true
+
+  markMessageAsRead:
+    handler: dist/modules/Chat/handlers/markMessageAsRead.handler
+    timeout: 30
+    memorySize: 512
+    events:
+      - http:
+          path: chat/messages/{messageId}/read
+          method: put
+          cors: true
+
+  markConversationMessagesAsRead:
+    handler: dist/modules/Chat/handlers/markConversationMessagesAsRead.handler
+    timeout: 30
+    memorySize: 512
+    events:
+      - http:
+          path: chat/conversations/{conversationId}/messages/read
+          method: put
+          cors: true
+
+  # WebSocket handlers
+  websocketConnect:
+    handler: dist/modules/Chat/handlers/websocket/connect.handler
+    timeout: 30
+    memorySize: 512
+    events:
+      - websocket:
+          route: $connect
+
+  websocketDisconnect:
+    handler: dist/modules/Chat/handlers/websocket/disconnect.handler
+    timeout: 30
+    memorySize: 512
+    events:
+      - websocket:
+          route: $disconnect
 
 custom:
   serverless-offline:

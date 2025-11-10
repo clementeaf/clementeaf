@@ -38,7 +38,7 @@ export const Analytics = () => {
     <div className="p-6 space-y-6">
       {/* Header */}
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold text-gray-800">Analytics - Cuentas por Cobrar</h1>
+        <h1 className="text-3xl font-bold text-gray-800">Cuentas por Cobrar</h1>
         {estadisticas && (
           <div className="text-sm text-gray-500">
             Última sincronización: {formatDate(estadisticas.ultima_sincronizacion)}

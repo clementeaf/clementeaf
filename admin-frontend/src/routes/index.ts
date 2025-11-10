@@ -13,6 +13,7 @@ export const routes = {
   quotes: '/sells/quotes',
   salesOrder: '/sells/sales-order',
   analytics: '/analytics',
+  chat: '/chat',
   notFound: '/*'
 } as const;
 

@@ -16,7 +16,10 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
+    "@aws-sdk/client-apigatewaymanagementapi": "^3.927.0",
+    "@aws-sdk/client-dynamodb": "^3.927.0",
     "@aws-sdk/client-s3": "^3.926.0",
+    "@aws-sdk/lib-dynamodb": "^3.927.0",
     "axios": "^1.13.2",
     "bcryptjs": "^2.4.3",
     "jsonwebtoken": "^9.0.2",
@@ -36,6 +39,7 @@
     "eslint": "^8.56.0",
     "serverless-offline": "^13.0.0",
     "serverless-plugin-typescript": "^2.1.0",
-    "typescript": "^5.3.3"
+    "typescript": "^5.3.3",
+    "ws": "^8.18.3"
   }
 }
