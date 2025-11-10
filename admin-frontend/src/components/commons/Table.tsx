@@ -167,44 +167,84 @@ export const Table = <TData,>({
 
   const defaultRenderHeaderCell = (header: TableHeader<TData>): ReactNode => {
     const canSort = enableSorting && header.column.getCanSort();
+    const isSelectColumn = header.column.id === 'select';
+    
+    // Para la columna del checkbox, usar menos padding y ancho reducido
+    const cellClassName = isSelectColumn 
+      ? 'px-1 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider'
+      : headerCellClassName;
 
     return (
       <th
-        className={headerCellClassName}
+        className={cellClassName}
         style={{
-          width: header.getSize(),
-          cursor: canSort ? 'pointer' : 'default'
+          width: isSelectColumn ? '40px' : header.getSize(),
+          maxWidth: isSelectColumn ? '40px' : undefined,
+          cursor: canSort ? 'pointer' : 'default',
         }}
         onClick={canSort ? header.column.getToggleSortingHandler() : undefined}
       >
         {header.isPlaceholder ? null : (
-          <div className="flex items-center gap-2">
-            {typeof header.column.columnDef.header === 'function'
-              ? header.column.columnDef.header(header.getContext())
-              : header.column.columnDef.header}
-            {canSort && (
-              <span className="flex items-center">
-                {header.column.getIsSorted() === 'asc' ? (
-                  <ChevronUpIcon color="#6B7280" />
-                ) : header.column.getIsSorted() === 'desc' ? (
-                  <DropdownIcon color="#6B7280" />
-                ) : (
-                  <DropdownIcon color="#9CA3AF" />
+          <>
+            {isSelectColumn ? (
+              <div className="flex items-center justify-center pr-5">
+                {typeof header.column.columnDef.header === 'function'
+                  ? header.column.columnDef.header(header.getContext())
+                  : header.column.columnDef.header}
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                {typeof header.column.columnDef.header === 'function'
+                  ? header.column.columnDef.header(header.getContext())
+                  : header.column.columnDef.header}
+                {canSort && (
+                  <span className="flex items-center">
+                    {header.column.getIsSorted() === 'asc' ? (
+                      <ChevronUpIcon color="#6B7280" />
+                    ) : header.column.getIsSorted() === 'desc' ? (
+                      <DropdownIcon color="#6B7280" />
+                    ) : (
+                      <DropdownIcon color="#9CA3AF" />
+                    )}
+                  </span>
                 )}
-              </span>
+              </div>
             )}
-          </div>
+          </>
         )}
       </th>
     );
   };
 
   const defaultRenderBodyCell = (cell: TableCell<TData>): ReactNode => {
+    const isSelectColumn = cell.column.id === 'select';
+    
+    // Para la columna del checkbox, usar menos padding y ancho reducido
+    const cellClassName = isSelectColumn 
+      ? 'px-1 py-3 text-sm text-gray-90 pr-6'
+      : bodyCellClassName;
+
     return (
-      <td className={bodyCellClassName}>
-        {typeof cell.column.columnDef.cell === 'function'
-          ? cell.column.columnDef.cell(cell.getContext())
-          : cell.getValue() as ReactNode}
+      <td 
+        className={cellClassName}
+        style={{
+          width: isSelectColumn ? '40px' : undefined,
+          maxWidth: isSelectColumn ? '40px' : undefined
+        }}
+      >
+        {isSelectColumn ? (
+          <div className="flex items-center justify-center">
+            {typeof cell.column.columnDef.cell === 'function'
+              ? cell.column.columnDef.cell(cell.getContext())
+              : cell.getValue() as ReactNode}
+          </div>
+        ) : (
+          <>
+            {typeof cell.column.columnDef.cell === 'function'
+              ? cell.column.columnDef.cell(cell.getContext())
+              : cell.getValue() as ReactNode}
+          </>
+        )}
       </td>
     );
   };
