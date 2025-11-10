@@ -3,6 +3,7 @@ import personIcon from '../../../assets/contacto.png';
 import segmentacionIcon from '../../../assets/segmentacion.png';
 import segmentacionActiveIcon from '../../../assets/segmentacionActive.png';
 import facturacion from '../../../assets/facturacion.png';
+import facturacionActiveIcon from '../../../assets/facturacionActive.png';
 import direccion from '../../../assets/direccion.png';
 import completedStepIcon from '../../../assets/completedStep.png';
 
@@ -40,6 +41,7 @@ export const ClientStepper = ({ currentStep }: ClientStepperProps) => {
       number: 3,
       title: 'Facturación',
       iconSrc: facturacion,
+      activeIconSrc: facturacionActiveIcon,
       completedIconSrc: completedStepIcon
     },
     {
@@ -104,8 +106,10 @@ export const ClientStepper = ({ currentStep }: ClientStepperProps) => {
                 <div className="flex flex-col items-center">
                   {stepIcon ? (
                     <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
-                      isActive || isCompleted 
-                        ? '' 
+                      isActive 
+                        ? 'bg-[#0052C9]' 
+                        : isCompleted
+                        ? 'bg-[#12B980]'
                         : 'bg-white border border-gray-200'
                     }`}>
                       <div className="w-[34px] h-[34px] flex items-center justify-center overflow-hidden">

@@ -70,7 +70,7 @@ export const segmentationFormSchema: SegmentationFormField[] = [
     name: 'propietarioCliente',
     label: 'Propietario del cliente',
     type: 'text',
-    defaultValue: 'Nicolás Suazo',
+    placeholder: 'Nicolas Suazo',
     colSpan: 1,
     inputClassName: 'bg-white'
   },
@@ -117,7 +117,7 @@ export const segmentationFormSchema: SegmentationFormField[] = [
     name: 'empleados',
     label: 'Empleados',
     type: 'number',
-    defaultValue: '25',
+    placeholder: '25',
     colSpan: 1,
     inputClassName: 'bg-white'
   },
@@ -125,7 +125,7 @@ export const segmentationFormSchema: SegmentationFormField[] = [
     name: 'tratos',
     label: 'Tratos',
     type: 'text',
-    placeholder: '[Aún no se que poner]',
+    placeholder: '',
     prefix: '$',
     colSpan: 1,
     inputClassName: 'bg-white'

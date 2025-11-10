@@ -3,6 +3,7 @@ import { CreateClientHeader } from './CreateClient/CreateClientHeader';
 import { ClientStepper } from './CreateClient/ClientStepper';
 import { ClientInfoForm } from './CreateClient/ClientInfoForm';
 import { SegmentationForm } from './CreateClient/SegmentationForm';
+import { BillingForm } from './CreateClient/BillingForm';
 import { Button } from '../../components/commons';
 import { ChevronRightIcon } from '../../components/commons/icons';
 
@@ -107,7 +108,19 @@ export const CreateClient = () => {
           tratos: formData.tratos || ''
         };
       case 3:
-        return formData.step3 || {};
+        // Datos del paso 3 (Facturación)
+        return {
+          documentoPorDefecto: formData.documentoPorDefecto || '',
+          formaPago: formData.formaPago || '',
+          listaPrecios: formData.listaPrecios || '',
+          ingresosAnuales: formData.ingresosAnuales || '',
+          limiteCredito: formData.limiteCredito || '',
+          creditoUsado: formData.creditoUsado || '',
+          motivoBloqueo: formData.motivoBloqueo || '',
+          respaldoRUT: formData.respaldoRUT || '',
+          clienteExigeOC: formData.clienteExigeOC || '',
+          aprobadoPorFinanzas: formData.aprobadoPorFinanzas || ''
+        };
       case 4:
         return formData.step4 || {};
       case 5:
@@ -142,7 +155,13 @@ export const CreateClient = () => {
         onBack={handleBack}
       />
     ),
-    3: () => <div>Paso 3: Facturación (TODO)</div>,
+    3: () => (
+      <BillingForm 
+        onDataChange={handleDataChange}
+        initialData={formData as Record<string, string>}
+        onBack={handleBack}
+      />
+    ),
     4: () => <div>Paso 4: Contacto (TODO)</div>,
     5: () => <div>Paso 5: Dirección (TODO)</div>
   };

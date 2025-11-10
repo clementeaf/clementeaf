@@ -62,7 +62,7 @@ export const clientInfoFormSchema: FormField[] = [
     name: 'rut',
     label: 'RUT',
     type: 'text',
-    defaultValue: '76.543.210-9',
+    placeholder: '76.543.210-9',
     colSpan: 1,
     inputClassName: 'bg-white'
   },
@@ -70,7 +70,7 @@ export const clientInfoFormSchema: FormField[] = [
     name: 'razonSocial',
     label: 'Razón social',
     type: 'text',
-    defaultValue: 'Los Andes Servicios Integrales SpA',
+    placeholder: 'Los Andes Servicios Integrales SpA',
     colSpan: 1,
     inputClassName: 'bg-white'
   },
@@ -78,7 +78,7 @@ export const clientInfoFormSchema: FormField[] = [
     name: 'nombreCliente',
     label: 'Nombre del cliente',
     type: 'text',
-    defaultValue: 'Comercial Los Andes Ltda.',
+    placeholder: 'Comercial Los Andes Ltda.',
     colSpan: 1,
     inputClassName: 'bg-white'
   },
@@ -86,7 +86,7 @@ export const clientInfoFormSchema: FormField[] = [
     name: 'rutCompleto',
     label: 'RUT completo',
     type: 'text',
-    defaultValue: '76.543.210-9',
+    placeholder: '76.543.210-9',
     colSpan: 1,
     inputClassName: 'bg-white'
   },
@@ -94,7 +94,7 @@ export const clientInfoFormSchema: FormField[] = [
     name: 'giro',
     label: 'Giro',
     type: 'text',
-    defaultValue: 'Venta de artículos de aseo industrial',
+    placeholder: 'Venta de artículos de aseo industrial',
     colSpan: 1,
     inputClassName: 'bg-white'
   },
@@ -102,7 +102,7 @@ export const clientInfoFormSchema: FormField[] = [
     name: 'sitioWeb',
     label: 'Sitio web',
     type: 'url',
-    defaultValue: 'www.comercialesandes.cl',
+    placeholder: 'www.comercialesandes.cl',
     optional: true,
     colSpan: 1,
     inputClassName: 'bg-white'
