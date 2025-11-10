@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Input } from '../../../components/commons';
+import { Input, CountrySelector, type Country } from '../../../components/commons';
+import { getCountryByCode } from '../../../components/commons/countries';
 import { contactFormSchema, type ContactFormField } from './ContactForm.schema';
-import chileFlag from '../../../assets/chileFlag.png';
 
 /**
  * Props del componente ContactForm
@@ -27,16 +27,26 @@ interface ContactFormProps {
  * @returns Componente ContactForm
  */
 export const ContactForm = ({ onDataChange, initialData, onBack }: ContactFormProps) => {
-  const [formData, setFormData] = useState<Record<string, string>>(
-    initialData || 
-    contactFormSchema.reduce((acc, field) => {
-      if (field.defaultValue) {
-        acc[field.name] = field.defaultValue;
-      }
-      return acc;
-    }, {} as Record<string, string>)
-  );
+  const defaultCountry = getCountryByCode('CL');
+  const [formData, setFormData] = useState<Record<string, string>>(() => {
+    const baseData = initialData || 
+      contactFormSchema.reduce((acc, field) => {
+        if (field.defaultValue) {
+          acc[field.name] = field.defaultValue;
+        }
+        return acc;
+      }, {} as Record<string, string>);
+    
+    // Inicializar país por defecto si no existe
+    if (!baseData.countryCode && defaultCountry) {
+      baseData.countryCode = defaultCountry.code;
+      baseData.countryDialCode = defaultCountry.dialCode;
+    }
+    
+    return baseData;
+  });
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [selectedCountry, setSelectedCountry] = useState<Country | null>(defaultCountry);
 
   /**
    * Sincroniza el estado local con initialData cuando cambia
@@ -49,8 +59,17 @@ export const ContactForm = ({ onDataChange, initialData, onBack }: ContactFormPr
         );
         return hasChanges ? { ...prev, ...initialData } : prev;
       });
+      
+      // Restaurar país seleccionado si existe en initialData
+      if (initialData.countryCode) {
+        const country = getCountryByCode(initialData.countryCode);
+        if (country) {
+          setSelectedCountry(country);
+        }
+      }
     }
   }, [initialData]);
+
 
   /**
    * Maneja el cambio de un campo
@@ -80,6 +99,20 @@ export const ContactForm = ({ onDataChange, initialData, onBack }: ContactFormPr
   };
 
   /**
+   * Maneja el cambio del país seleccionado
+   * @param country - País seleccionado
+   */
+  const handleCountryChange = (country: Country): void => {
+    setSelectedCountry(country);
+    const newData = { ...formData, countryCode: country.code, countryDialCode: country.dialCode };
+    setFormData(newData);
+    
+    if (onDataChange) {
+      onDataChange(newData);
+    }
+  };
+
+  /**
    * Renderiza un campo del formulario
    * @param field - Configuración del campo
    * @returns Elemento del campo
@@ -89,23 +122,17 @@ export const ContactForm = ({ onDataChange, initialData, onBack }: ContactFormPr
     const colSpanClass = field.colSpan === 2 ? 'col-span-2' : 'col-span-1';
 
     // Renderizar campo de teléfono con selector de país
-    if (field.type === 'phone' && field.phoneConfig) {
+    if (field.type === 'phone') {
       return (
         <div key={field.name} className={`${colSpanClass} ${field.containerClassName || ''} flex flex-col`}>
           <label htmlFor={field.name} className="block text-sm font-medium text-gray-700 mb-2">
             {label}
           </label>
           <div className="flex gap-2">
-            <div className="relative flex-shrink-0">
-              <div className="flex items-center border border-gray-300 rounded-lg bg-white h-[42px] px-3">
-                <img
-                  src={chileFlag}
-                  alt="Chile"
-                  className="w-5 h-5 mr-2"
-                />
-                <span className="text-sm text-gray-700">{field.phoneConfig.countryCode}</span>
-              </div>
-            </div>
+            <CountrySelector
+              value={formData.countryCode || selectedCountry?.code}
+              onChange={handleCountryChange}
+            />
             <div className="flex-1">
               <input
                 id={field.name}

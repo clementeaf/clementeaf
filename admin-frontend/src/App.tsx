@@ -1,4 +1,5 @@
 import { Routes, Route } from 'react-router-dom';
+import { ToastContainer } from 'react-toastify';
 import { Sidebar } from './components/Sidebar';
 import { routes } from './routes';
 import { Home } from './pages/Home';
@@ -34,6 +35,18 @@ function App(): React.ReactNode {
           <Route path={routes.analytics} element={<Analytics />} />
         </Routes>
       </div>
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+      />
     </div>
   );
 }

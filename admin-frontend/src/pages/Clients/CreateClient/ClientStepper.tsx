@@ -6,6 +6,7 @@ import segmentacionActiveIcon from '../../../assets/segmentacionActive.png';
 import facturacion from '../../../assets/facturacion.png';
 import facturacionActiveIcon from '../../../assets/facturacionActive.png';
 import direccion from '../../../assets/direccion.png';
+import direccionActiveIcon from '../../../assets/direccionActive.png';
 import completedStepIcon from '../../../assets/completedStep.png';
 
 /**
@@ -56,6 +57,7 @@ export const ClientStepper = ({ currentStep }: ClientStepperProps) => {
       number: 5,
       title: 'Dirección',
       iconSrc: direccion,
+      activeIconSrc: direccionActiveIcon,
       completedIconSrc: completedStepIcon
     }
   ];

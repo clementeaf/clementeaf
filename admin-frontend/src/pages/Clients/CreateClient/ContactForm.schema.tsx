@@ -1,5 +1,3 @@
-import React from 'react';
-
 /**
  * Tipo para definir un campo del formulario de contacto
  */
@@ -45,13 +43,6 @@ export interface ContactFormField {
    */
   inputClassName?: string;
   /**
-   * Si es un campo de teléfono, configuración del selector de país
-   */
-  phoneConfig?: {
-    countryCode: string;
-    flagIcon: string;
-  };
-  /**
    * Función de validación personalizada
    */
   validate?: (value: string) => string | null;
@@ -91,11 +82,7 @@ export const contactFormSchema: ContactFormField[] = [
     type: 'phone',
     placeholder: '000000000',
     colSpan: 1,
-    inputClassName: 'bg-white',
-    phoneConfig: {
-      countryCode: '+56',
-      flagIcon: 'chileFlag.png'
-    }
+    inputClassName: 'bg-white'
   }
 ];
 

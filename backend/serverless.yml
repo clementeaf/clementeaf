@@ -174,6 +174,57 @@ functions:
           method: get
           cors: true
 
+  # Clients endpoints
+  createClient:
+    handler: dist/modules/Clients/handlers/createClient.handler
+    timeout: 30
+    memorySize: 512
+    events:
+      - http:
+          path: clients
+          method: post
+          cors: true
+
+  getClientById:
+    handler: dist/modules/Clients/handlers/getClientById.handler
+    timeout: 30
+    memorySize: 512
+    events:
+      - http:
+          path: clients/{id}
+          method: get
+          cors: true
+
+  getAllClients:
+    handler: dist/modules/Clients/handlers/getAllClients.handler
+    timeout: 30
+    memorySize: 512
+    events:
+      - http:
+          path: clients
+          method: get
+          cors: true
+
+  updateClient:
+    handler: dist/modules/Clients/handlers/updateClient.handler
+    timeout: 30
+    memorySize: 512
+    events:
+      - http:
+          path: clients/{id}
+          method: put
+          cors: true
+
+  deleteClient:
+    handler: dist/modules/Clients/handlers/deleteClient.handler
+    timeout: 30
+    memorySize: 512
+    events:
+      - http:
+          path: clients/{id}
+          method: delete
+          cors: true
+
 custom:
   serverless-offline:
     httpPort: 9500

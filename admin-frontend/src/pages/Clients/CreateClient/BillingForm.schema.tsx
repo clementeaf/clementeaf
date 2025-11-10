@@ -1,5 +1,3 @@
-import React from 'react';
-
 /**
  * Tipo para definir un campo del formulario de facturación
  */

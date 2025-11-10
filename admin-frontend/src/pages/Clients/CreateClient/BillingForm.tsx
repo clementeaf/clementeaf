@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Input } from '../../../components/commons';
+import { Input, Select } from '../../../components/commons';
 import { billingFormSchema, type BillingFormField } from './BillingForm.schema';
 import uploadIcon from '../../../assets/upload.png';
 
@@ -210,30 +210,17 @@ export const BillingForm = ({ onDataChange, initialData, onBack }: BillingFormPr
 
     if (field.type === 'select') {
       return (
-        <div key={field.name} className={`${colSpanClass} ${field.containerClassName || ''} flex flex-col`}>
-          <label htmlFor={field.name} className="block text-sm font-medium text-gray-700 mb-2">
-            {label}
-          </label>
-          <div className="relative">
-            <select
-              id={field.name}
-              value={formData[field.name] || ''}
-              onChange={(e): void => handleFieldChange(field.name, e.target.value)}
-              className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#004BB7] focus:border-transparent bg-white h-[42px] ${
-                field.inputClassName || ''
-              } ${errors[field.name] ? 'border-red-500' : ''}`}
-            >
-              <option value="">{field.placeholder || 'Selecciona una opción'}</option>
-              {field.options?.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
-          {errors[field.name] && (
-            <span className="text-red-500 text-xs mt-1">{errors[field.name]}</span>
-          )}
+        <div key={field.name} className={`${colSpanClass} ${field.containerClassName || ''}`}>
+          <Select
+            id={field.name}
+            label={label}
+            value={formData[field.name] || ''}
+            onChange={(e): void => handleFieldChange(field.name, e.target.value)}
+            placeholder={field.placeholder}
+            options={field.options || []}
+            selectClassName={field.inputClassName}
+            error={errors[field.name] || undefined}
+          />
         </div>
       );
     }

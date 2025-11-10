@@ -1,39 +1,25 @@
 /**
- * Detecta si estamos en desarrollo (localhost) o producción (CloudFront)
- * @returns true si estamos en desarrollo, false si estamos en producción
- */
-const isDevelopment = (): boolean => {
-  const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
-  return hostname === 'localhost' || hostname === '127.0.0.1' || hostname.includes('localhost');
-};
-
-/**
- * Base URL del backend según el entorno
- */
-const BASE_URL = isDevelopment() 
-  ? 'http://localhost:9500'
-  : 'https://9hzayjhnz8.execute-api.us-east-1.amazonaws.com';
-
-/**
- * Stage del backend (dev, prod, etc.)
- */
-const STAGE = 'dev';
-
-/**
  * Construye endpoints para un módulo
+ * Devuelve rutas relativas que serán combinadas con la baseURL de apiClient
+ * Nota: apiClient ya incluye el stage (/dev) en su baseURL, por lo que los endpoints
+ * solo deben incluir el módulo y la ruta específica
  * @param modulePath - Ruta del módulo (ej: 'auth')
  * @param routes - Objeto con las rutas del módulo
- * @returns Objeto con endpoints completos
+ * @returns Objeto con endpoints relativos
  */
 const buildEndpoints = <T extends Record<string, string>>(
   modulePath: string,
   routes: T
 ): { base: string } & T => {
-  const base = `${BASE_URL}/${STAGE}/${modulePath}`;
+  const base = modulePath;
   const endpoints: Record<string, string> = { base };
   
   for (const [key, route] of Object.entries(routes)) {
-    endpoints[key] = `${base}/${route}`;
+    if (route === '') {
+      endpoints[key] = base;
+    } else {
+      endpoints[key] = `${base}/${route}`;
+    }
   }
   
   return endpoints as { base: string } & T;
@@ -48,6 +34,13 @@ export const endpoints = {
     login: 'login',
     me: 'me',
     logout: 'logout'
+  }),
+  clients: buildEndpoints('clients', {
+    create: '',
+    getById: '{id}',
+    getAll: '',
+    update: '{id}',
+    delete: '{id}'
   })
 } as const;
 
