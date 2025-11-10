@@ -34,7 +34,7 @@ export const CreateClient = () => {
   };
 
   return (
-    <div className="w-full h-full flex flex-col p-4">
+    <div className="w-full h-full flex flex-col p-8">
       <CreateClientHeader />
 
       <div className="flex gap-6 flex-1 min-h-0 bg-white rounded-lg shadow-sm border border-gray-200">
