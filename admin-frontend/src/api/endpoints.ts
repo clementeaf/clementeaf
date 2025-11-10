@@ -41,6 +41,19 @@ export const endpoints = {
     getAll: '',
     update: '{id}',
     delete: '{id}'
+  }),
+  chat: buildEndpoints('chat', {
+    conversations: 'conversations',
+    conversationById: 'conversations/{conversationId}',
+    conversationsByUser: 'conversations/user/{userId}',
+    messages: 'messages',
+    messagesByConversation: 'conversations/{conversationId}/messages',
+    markMessageRead: 'messages/{messageId}/read',
+    markConversationRead: 'conversations/{conversationId}/messages/read'
+  }),
+  users: buildEndpoints('users', {
+    getAll: '',
+    getById: '{id}'
   })
 } as const;
 

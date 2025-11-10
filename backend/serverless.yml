@@ -103,6 +103,27 @@ functions:
           method: post
           cors: true
 
+  # Users endpoints
+  getAllUsers:
+    handler: dist/modules/Users/handlers/getAllUsers.handler
+    timeout: 30
+    memorySize: 512
+    events:
+      - http:
+          path: users
+          method: get
+          cors: true
+
+  getUserById:
+    handler: dist/modules/Users/handlers/getUserById.handler
+    timeout: 30
+    memorySize: 512
+    events:
+      - http:
+          path: users/{id}
+          method: get
+          cors: true
+
   # Analytics endpoints
   getCtasPorCobrar:
     handler: dist/modules/Analytics/handlers/getCtasPorCobrar.handler
