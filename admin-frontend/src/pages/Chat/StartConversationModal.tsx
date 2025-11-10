@@ -48,10 +48,14 @@ export const StartConversationModal = ({
   /**
    * Maneja la selección de un usuario
    */
-  const handleSelectUser = (userId: number): void => {
-    onSelectUser(userId);
+  const handleSelectUser = async (userId: number): Promise<void> => {
     setSearchTerm('');
-    onClose();
+    try {
+      await onSelectUser(userId);
+      onClose();
+    } catch (error) {
+      console.error('Error al seleccionar usuario:', error);
+    }
   };
 
   /**

@@ -35,7 +35,12 @@ export const usersService = {
    */
   async getAllUsers(page: number = 1, limit: number = 100): Promise<PaginatedUsersResponse> {
     const url = endpoints.users.getAll;
-    console.log('🔍 getAllUsers - URL completa:', `${apiClient.defaults.baseURL}${url}?page=${page}&limit=${limit}`);
+    // Axios maneja automáticamente la concatenación de baseURL + url
+    // El log es solo para debugging
+    const baseURL = apiClient.defaults.baseURL || '';
+    const separator = baseURL.endsWith('/') || url.startsWith('/') ? '' : '/';
+    const fullUrl = `${baseURL}${separator}${url}?page=${page}&limit=${limit}`;
+    console.log('🔍 getAllUsers - URL completa:', fullUrl);
     const { data } = await apiClient.get<{ data: PaginatedUsersResponse }>(
       url,
       {

@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { chatService, type CreateConversationDto, type CreateMessageDto } from '../services/chatService';
+import { chatService, type CreateConversationDto, type CreateMessageDto, type Conversation } from '../services/chatService';
 
 /**
  * Hook para crear una conversación
@@ -9,7 +9,31 @@ export const useCreateConversation = () => {
 
   return useMutation({
     mutationFn: (conversationData: CreateConversationDto) => chatService.createConversation(conversationData),
-    onSuccess: () => {
+    onSuccess: (newConversation) => {
+      // Actualizar optimísticamente la lista de conversaciones para todos los usuarios participantes
+      const participantIds = [newConversation.participant1Id, newConversation.participant2Id];
+      
+      participantIds.forEach((userId) => {
+        queryClient.setQueriesData<Conversation[]>(
+          { queryKey: ['conversations', userId] },
+          (oldData) => {
+            if (!oldData) {
+              return [newConversation];
+            }
+            
+            // Verificar si la conversación ya existe
+            const exists = oldData.some(conv => conv.id === newConversation.id);
+            if (exists) {
+              return oldData;
+            }
+            
+            // Agregar la nueva conversación al inicio de la lista
+            return [newConversation, ...oldData];
+          }
+        );
+      });
+      
+      // Invalidar para asegurar sincronización con el servidor
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
     }
   });
@@ -38,7 +62,7 @@ export const useConversationById = (conversationId: number | null) => {
 export const useConversationsByUserId = (userId: number | null) => {
   return useQuery({
     queryKey: ['conversations', userId],
-    queryFn: () => {
+    queryFn: async () => {
       if (!userId) throw new Error('User ID is required');
       return chatService.getConversationsByUserId(userId);
     },

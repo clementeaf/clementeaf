@@ -101,8 +101,9 @@ export const chatService = {
    */
   async getConversationsByUserId(userId: number): Promise<Conversation[]> {
     const url = endpoints.chat.conversationsByUser.replace('{userId}', userId.toString());
-    const { data } = await apiClient.get<{ data: Conversation[]; total: number }>(url);
-    return data.data;
+    const { data } = await apiClient.get<{ data: { data: Conversation[]; total: number } }>(url);
+    // El backend devuelve { data: { data: [...], total: ... } }
+    return Array.isArray(data.data.data) ? data.data.data : (Array.isArray(data.data) ? data.data : []);
   },
 
   /**

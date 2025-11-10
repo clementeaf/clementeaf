@@ -15,7 +15,7 @@ import type { ClientRow } from './Clients/columns';
 export const Clients = () => {
   const [searchValue, setSearchValue] = useState('');
   const [isRutModalOpen, setIsRutModalOpen] = useState(false);
-  const [page, setPage] = useState(1);
+  const [page] = useState(1);
   const limit = 50;
 
   const { data: clientsData, isLoading, error, hasDataChanged } = useAllClients(page, limit);

@@ -10,21 +10,24 @@ import { initializeDatabase } from '../../../../config/database';
 export const handler: APIGatewayProxyWebsocketHandlerV2 = async (
   event: APIGatewayProxyWebsocketEventV2
 ) => {
-  try {
-    await initializeDatabase();
-    
-    const connectionId = event.requestContext.connectionId;
-    if (!connectionId) {
-      return { statusCode: 400, body: 'Connection ID is required' };
-    }
-
-    const webSocketService = new WebSocketService();
-    await webSocketService.deleteConnection(connectionId);
-
-    return { statusCode: 200, body: 'Disconnected' };
-  } catch (error) {
-    console.error('Error en disconnect handler:', error);
-    return { statusCode: 500, body: 'Internal server error' };
+  const connectionId = event.requestContext.connectionId;
+  if (!connectionId) {
+    return { statusCode: 400, body: 'Connection ID is required' };
   }
+
+  // Eliminar conexión de forma asíncrona/no bloqueante
+  (async () => {
+    try {
+      await initializeDatabase();
+      const webSocketService = new WebSocketService();
+      await webSocketService.deleteConnection(connectionId);
+      console.log('Connection deleted:', connectionId);
+    } catch (error) {
+      console.error('Error deleting connection (non-blocking):', error);
+    }
+  })();
+
+  // Retornar inmediatamente sin esperar la eliminación de la base de datos
+  return { statusCode: 200, body: 'Disconnected' };
 };
 

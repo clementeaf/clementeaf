@@ -30,11 +30,18 @@ const createMessageHandler = async (event: APIGatewayProxyEvent) => {
   const chatService = new ChatService();
   const message = await chatService.createMessage(createMessageDto);
 
-  // Enviar mensaje vía WebSocket a los participantes de la conversación (no bloqueante)
-  // No esperamos a que termine para no bloquear la respuesta
+  // STREAMING: Enviar mensaje vía WebSocket a los participantes de la conversación (no bloqueante)
+  // Cuando se inserta un mensaje en la base de datos, automáticamente se notifica vía WebSocket
+  // No esperamos a que termine para no bloquear la respuesta HTTP
   (async () => {
     try {
+      console.log(`🔄 STREAMING: Mensaje creado en BD (ID: ${message.id}), notificando vía WebSocket...`);
+      
       const conversation = await chatService.getConversationById(createMessageDto.conversationId);
+      
+      // El endpoint de WebSocket Management API es diferente del HTTP API
+      // Usamos el endpoint del WebSocket API (us3x8rdme1.execute-api.us-east-1.amazonaws.com)
+      // El WebSocketService usará el fallback correcto si no se proporciona requestContext
       const webSocketService = new WebSocketService();
       
       await webSocketService.sendToConversationParticipants(
@@ -57,9 +64,11 @@ const createMessageHandler = async (event: APIGatewayProxyEvent) => {
           }
         }
       );
+      
+      console.log(`✅ STREAMING: Mensaje notificado vía WebSocket a los participantes`);
     } catch (error) {
       // Si falla el envío WebSocket, no fallamos la creación del mensaje
-      console.error('Error enviando mensaje vía WebSocket:', error);
+      console.error('❌ Error enviando mensaje vía WebSocket (STREAMING):', error);
     }
   })();
 

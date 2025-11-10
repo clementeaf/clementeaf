@@ -4,31 +4,43 @@ import type { Conversation, Message } from '../services/chatService';
 import { useConversationsByUserId, useCreateMessage, useMessagesByConversationId, useCreateConversation } from '../hooks/useChat';
 import { useWebSocket } from '../hooks/useWebSocket';
 import { useAllUsers } from '../hooks/useUsers';
+import { useCurrentUser } from '../hooks/useAuth';
 import { Button, Input, PlusIcon } from '../components/commons';
 import { StartConversationModal } from './Chat/StartConversationModal';
-
-/**
- * Obtiene el ID del usuario actual desde localStorage
- * TODO: Reemplazar con un hook de autenticación real
- */
-const getCurrentUserId = (): number | null => {
-  const userId = localStorage.getItem('userId');
-  return userId ? parseInt(userId, 10) : null;
-};
 
 /**
  * Página de Chat
  * @returns Componente Chat
  */
 export const Chat = () => {
-  const currentUserId = getCurrentUserId();
+  const { data: currentUser, isLoading: isLoadingCurrentUser, error: currentUserError } = useCurrentUser();
+  const [manualUserId, setManualUserId] = useState<number | null>(() => {
+    const stored = localStorage.getItem('manualUserId');
+    return stored ? parseInt(stored, 10) : null;
+  });
+  const currentUserId = currentUser?.id || manualUserId;
+
+  useEffect(() => {
+    if (currentUserError) {
+      console.error('Error obteniendo usuario actual:', currentUserError);
+    }
+  }, [currentUserError]);
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
   const [messageContent, setMessageContent] = useState('');
   const [isStartConversationModalOpen, setIsStartConversationModalOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
 
-  const { data: conversations, isLoading: isLoadingConversations } = useConversationsByUserId(currentUserId);
+  const { data: conversationsData, isLoading: isLoadingConversations, refetch: refetchConversations } = useConversationsByUserId(currentUserId);
+  
+  // Asegurar que conversations sea siempre un array
+  const conversations = Array.isArray(conversationsData) ? conversationsData : [];
+  
+  useEffect(() => {
+    if (currentUserId) {
+      refetchConversations();
+    }
+  }, [currentUserId, refetchConversations]);
   const { data: messagesData, isLoading: isLoadingMessages } = useMessagesByConversationId(
     selectedConversation?.id || null
   );
@@ -99,10 +111,15 @@ export const Chat = () => {
     }
 
     const participant = conversation.participant1Id === currentUserId ? conversation.participant2 : conversation.participant1;
+    
+    if (!participant) {
+      return { id: 0, name: 'Unknown', email: 'unknown@example.com' };
+    }
+    
     return {
       id: participant.id,
-      name: participant.name || participant.email,
-      email: participant.email
+      name: participant.name || participant.email || 'Unknown',
+      email: participant.email || 'unknown@example.com'
     };
   };
 
@@ -110,18 +127,45 @@ export const Chat = () => {
    * Maneja la selección de un usuario para iniciar conversación
    */
   const handleSelectUser = async (selectedUserId: number): Promise<void> => {
-    if (!currentUserId) return;
+    let participant1Id = currentUserId;
+    const participant2Id = selectedUserId;
+    
+    if (!participant1Id && usersData?.data && usersData.data.length > 0) {
+      const otherUser = usersData.data.find(u => u.id !== selectedUserId);
+      if (otherUser) {
+        participant1Id = otherUser.id;
+      } else {
+        participant1Id = selectedUserId;
+      }
+    }
+    
+    if (!participant1Id) {
+      participant1Id = selectedUserId;
+    }
 
     try {
       const newConversation = await createConversationMutation.mutateAsync({
-        participant1Id: currentUserId,
-        participant2Id: selectedUserId
+        participant1Id,
+        participant2Id
       });
+
+      if (!currentUserId && participant1Id) {
+        setManualUserId(participant1Id);
+        localStorage.setItem('manualUserId', participant1Id.toString());
+      }
 
       setSelectedConversation(newConversation);
       setIsStartConversationModalOpen(false);
+      
+      const finalUserId = currentUserId || participant1Id;
+      if (finalUserId) {
+        queryClient.invalidateQueries({ queryKey: ['conversations', finalUserId] });
+        queryClient.invalidateQueries({ queryKey: ['conversations', participant2Id] });
+        queryClient.invalidateQueries({ queryKey: ['conversations'] });
+      }
     } catch (error) {
       console.error('Error creating conversation:', error);
+      throw error;
     }
   };
 
@@ -130,47 +174,79 @@ export const Chat = () => {
       <div className="w-full h-full bg-white rounded-lg shadow-sm border border-gray-200 flex">
         {/* Sección de Contactos */}
         <div className="w-1/3 border-r border-gray-200 flex flex-col">
-          <div className="p-4 border-b border-gray-200 flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-gray-800">Contactos</h2>
-            <div className="flex items-center gap-2">
-              {isConnected && (
-                <span className="w-2 h-2 bg-green-500 rounded-full" title="Conectado"></span>
-              )}
-              <Button
-                onClick={() => setIsStartConversationModalOpen(true)}
-                className="bg-blue-500 text-white hover:bg-blue-600 px-3 py-1.5 text-sm flex items-center gap-1"
-                leftIcon={<PlusIcon />}
-              >
-                Iniciar conversación
-              </Button>
+          <div className="p-4 border-b border-gray-200 flex flex-col gap-2">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-gray-800">Contactos</h2>
+              <div className="flex items-center gap-2">
+                {isConnected && (
+                  <span className="w-2 h-2 bg-green-500 rounded-full" title="Conectado"></span>
+                )}
+                <Button
+                  onClick={() => setIsStartConversationModalOpen(true)}
+                  className="bg-blue-500 text-white hover:bg-blue-600 px-3 py-1.5 text-sm flex items-center gap-1"
+                  leftIcon={<PlusIcon />}
+                >
+                  Iniciar conversación
+                </Button>
+              </div>
             </div>
+            {!currentUser && (
+              <div className="flex flex-col gap-2 p-3 bg-yellow-50 border border-yellow-200 rounded">
+                <div className="flex items-center gap-2">
+                  <label className="text-xs text-gray-700 font-medium">Tu Usuario ID (testing):</label>
+                  <Input
+                    type="number"
+                    value={manualUserId?.toString() || ''}
+                    onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                      const value = e.target.value ? parseInt(e.target.value, 10) : null;
+                      setManualUserId(value);
+                      if (value) {
+                        localStorage.setItem('manualUserId', value.toString());
+                      } else {
+                        localStorage.removeItem('manualUserId');
+                      }
+                    }}
+                    placeholder="Ej: 1"
+                    inputClassName="w-24 h-8 text-sm"
+                  />
+                  {manualUserId && (
+                    <span className="text-xs text-green-600 font-semibold">ID: {manualUserId}</span>
+                  )}
+                </div>
+                {!manualUserId && (
+                  <p className="text-xs text-yellow-700">
+                    Ingresa tu ID de usuario para poder iniciar conversaciones
+                  </p>
+                )}
+              </div>
+            )}
           </div>
           <div className="flex-1 overflow-y-auto">
             {isLoadingConversations ? (
               <div className="p-4 text-center text-gray-500">Cargando conversaciones...</div>
-            ) : conversations && conversations.length > 0 ? (
+            ) : conversations.length > 0 ? (
               <div className="divide-y divide-gray-200">
                 {conversations.map((conversation: Conversation) => {
-                  const otherParticipant = getOtherParticipant(conversation);
-                  const isSelected = selectedConversation?.id === conversation.id;
-                  
-                  return (
-                    <button
-                      key={conversation.id}
-                      onClick={() => setSelectedConversation(conversation)}
-                      className={`w-full p-4 text-left hover:bg-gray-50 transition-colors ${
-                        isSelected ? 'bg-blue-50 border-l-4 border-blue-500' : ''
-                      }`}
-                    >
-                      <div className="font-medium text-gray-900">{otherParticipant.name}</div>
-                      <div className="text-sm text-gray-500">{otherParticipant.email}</div>
-                      {conversation.lastMessageAt && (
-                        <div className="text-xs text-gray-400 mt-1">
-                          {new Date(conversation.lastMessageAt).toLocaleDateString()}
-                        </div>
-                      )}
-                    </button>
-                  );
+                      const otherParticipant = getOtherParticipant(conversation);
+                      const isSelected = selectedConversation?.id === conversation.id;
+                      
+                      return (
+                        <button
+                          key={conversation.id}
+                          onClick={() => setSelectedConversation(conversation)}
+                          className={`w-full p-4 text-left hover:bg-gray-50 transition-colors ${
+                            isSelected ? 'bg-blue-50 border-l-4 border-blue-500' : ''
+                          }`}
+                        >
+                          <div className="font-medium text-gray-900">{otherParticipant.name}</div>
+                          <div className="text-sm text-gray-500">{otherParticipant.email}</div>
+                          {conversation.lastMessageAt && (
+                            <div className="text-xs text-gray-400 mt-1">
+                              {new Date(conversation.lastMessageAt).toLocaleDateString()}
+                            </div>
+                          )}
+                        </button>
+                      );
                 })}
               </div>
             ) : (

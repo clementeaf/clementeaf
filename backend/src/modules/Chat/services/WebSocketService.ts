@@ -2,9 +2,19 @@ import { AppDataSource } from '../../../config/database';
 import { WebSocketConnection } from '../entities/WebSocketConnection.entity';
 import { ApiGatewayManagementApiClient, PostToConnectionCommand } from '@aws-sdk/client-apigatewaymanagementapi';
 
-// El endpoint de WebSocket Management API se construye desde el dominio de API Gateway
-// Para WebSocket Management API, necesitamos el endpoint HTTP (https://), no WSS
-const getWebSocketEndpoint = (): string => {
+/**
+ * Obtiene el endpoint de WebSocket Management API desde el evento de API Gateway
+ * Para WebSocket Management API, necesitamos el endpoint HTTP (https://), no WSS
+ * @param requestContext - Request context del evento de API Gateway
+ * @returns Endpoint de WebSocket Management API
+ */
+const getWebSocketEndpoint = (requestContext?: { domainName?: string; stage?: string }): string => {
+  // Si se proporciona requestContext, construir el endpoint dinámicamente
+  if (requestContext?.domainName && requestContext?.stage) {
+    return `https://${requestContext.domainName}/${requestContext.stage}`;
+  }
+  
+  // Fallback a variables de entorno
   if (process.env.WEBSOCKET_API_ENDPOINT) {
     return process.env.WEBSOCKET_API_ENDPOINT;
   }
@@ -14,27 +24,27 @@ const getWebSocketEndpoint = (): string => {
     return wssEndpoint.replace('wss://', 'https://');
   }
   
+  // Fallback hardcodeado (solo para desarrollo)
   return 'https://us3x8rdme1.execute-api.us-east-1.amazonaws.com/dev';
 };
-
-const API_GATEWAY_ENDPOINT = getWebSocketEndpoint();
 
 /**
  * Servicio para gestionar conexiones WebSocket y envío de mensajes
  */
 export class WebSocketService {
-  private get connectionRepository() {
-    return AppDataSource.getRepository(WebSocketConnection);
-  }
+  private apiGatewayEndpoint: string;
+  private apiGatewayClient: ApiGatewayManagementApiClient | null;
 
-  private get apiGatewayClient(): ApiGatewayManagementApiClient | null {
-    if (!API_GATEWAY_ENDPOINT) {
-      return null;
-    }
-    return new ApiGatewayManagementApiClient({
-      endpoint: API_GATEWAY_ENDPOINT,
+  constructor(requestContext?: { domainName?: string; stage?: string }) {
+    this.apiGatewayEndpoint = getWebSocketEndpoint(requestContext);
+    this.apiGatewayClient = new ApiGatewayManagementApiClient({
+      endpoint: this.apiGatewayEndpoint,
       region: process.env.AWS_REGION ?? process.env.AWS_DEFAULT_REGION ?? 'us-east-1'
     });
+  }
+
+  private get connectionRepository() {
+    return AppDataSource.getRepository(WebSocketConnection);
   }
 
   /**
@@ -110,12 +120,12 @@ export class WebSocketService {
   async sendToConnection(connectionId: string, message: unknown): Promise<boolean> {
     if (!this.apiGatewayClient) {
       console.error('API Gateway Management API client no configurado');
-      console.error(`Endpoint configurado: ${API_GATEWAY_ENDPOINT}`);
+      console.error(`Endpoint configurado: ${this.apiGatewayEndpoint}`);
       return false;
     }
 
     try {
-      console.log(`Enviando mensaje a conexión ${connectionId} usando endpoint: ${API_GATEWAY_ENDPOINT}`);
+      console.log(`Enviando mensaje a conexión ${connectionId} usando endpoint: ${this.apiGatewayEndpoint}`);
       await this.apiGatewayClient.send(
         new PostToConnectionCommand({
           ConnectionId: connectionId,
@@ -129,9 +139,9 @@ export class WebSocketService {
       if (error instanceof Error) {
         console.error(`Error name: ${error.name}, message: ${error.message}`);
       }
-      // Si la conexión ya no existe, la eliminamos de DynamoDB
+      // Si la conexión ya no existe, la eliminamos de PostgreSQL
       if (error instanceof Error && (error.name === 'GoneException' || error.name === '410')) {
-        console.log(`Conexión ${connectionId} ya no existe, eliminando de DynamoDB`);
+        console.log(`Conexión ${connectionId} ya no existe, eliminando de PostgreSQL`);
         await this.deleteConnection(connectionId);
       }
       return false;
@@ -150,33 +160,46 @@ export class WebSocketService {
     participant2Id: number,
     message: unknown
   ): Promise<number> {
-    console.log(`Enviando mensaje a participantes: ${participant1Id}, ${participant2Id}`);
-    console.log(`Endpoint de WebSocket Management API: ${API_GATEWAY_ENDPOINT}`);
+    console.log(`📤 Enviando mensaje vía WebSocket a participantes: ${participant1Id}, ${participant2Id}`);
+    console.log(`🔗 Endpoint de WebSocket Management API: ${this.apiGatewayEndpoint}`);
     
-    const connections1 = await this.getUserConnections(participant1Id);
-    const connections2 = await this.getUserConnections(participant2Id);
+    try {
+      const connections1 = await this.getUserConnections(participant1Id);
+      const connections2 = await this.getUserConnections(participant2Id);
 
-    console.log(`Conexiones del usuario ${participant1Id}:`, connections1);
-    console.log(`Conexiones del usuario ${participant2Id}:`, connections2);
+      console.log(`🔌 Conexiones del usuario ${participant1Id}:`, connections1);
+      console.log(`🔌 Conexiones del usuario ${participant2Id}:`, connections2);
 
-    const allConnections = [...connections1, ...connections2];
-    console.log(`Total de conexiones a enviar: ${allConnections.length}`);
-    
-    let sentCount = 0;
-
-    for (const connectionId of allConnections) {
-      console.log(`Enviando mensaje a conexión: ${connectionId}`);
-      const sent = await this.sendToConnection(connectionId, message);
-      if (sent) {
-        console.log(`✅ Mensaje enviado a conexión: ${connectionId}`);
-        sentCount++;
-      } else {
-        console.log(`❌ Error enviando mensaje a conexión: ${connectionId}`);
+      const allConnections = [...connections1, ...connections2];
+      console.log(`📊 Total de conexiones a enviar: ${allConnections.length}`);
+      
+      if (allConnections.length === 0) {
+        console.log(`⚠️ No hay conexiones activas para los participantes`);
+        return 0;
       }
-    }
+      
+      let sentCount = 0;
 
-    console.log(`Total de mensajes enviados: ${sentCount}/${allConnections.length}`);
-    return sentCount;
+      // Enviar mensajes en paralelo para mejor rendimiento
+      const sendPromises = allConnections.map(async (connectionId) => {
+        console.log(`📨 Enviando mensaje a conexión: ${connectionId}`);
+        const sent = await this.sendToConnection(connectionId, message);
+        if (sent) {
+          console.log(`✅ Mensaje enviado a conexión: ${connectionId}`);
+          sentCount++;
+        } else {
+          console.log(`❌ Error enviando mensaje a conexión: ${connectionId}`);
+        }
+      });
+
+      await Promise.allSettled(sendPromises);
+
+      console.log(`✅ Total de mensajes enviados: ${sentCount}/${allConnections.length}`);
+      return sentCount;
+    } catch (error) {
+      console.error(`❌ Error en sendToConversationParticipants:`, error);
+      return 0;
+    }
   }
 }
 

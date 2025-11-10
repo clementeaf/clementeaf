@@ -132,7 +132,7 @@ export const VerifyRutModal = ({ isOpen, onClose }: VerifyRutModalProps): React.
       } else {
         setVerificationResult('error');
       }
-    } catch (err) {
+    } catch {
       setError('Error al verificar el RUT. Por favor, intenta nuevamente.');
       setVerificationResult(null);
     } finally {
