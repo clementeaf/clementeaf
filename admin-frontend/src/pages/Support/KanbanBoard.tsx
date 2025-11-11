@@ -1,9 +1,11 @@
 import type { Ticket, TicketStatus } from './types';
 import { KanbanColumn } from './KanbanColumn';
+import { KanbanColumnSkeleton } from './KanbanColumnSkeleton';
 
 interface KanbanBoardProps {
   tickets: Ticket[];
   onTicketClick?: (ticket: Ticket) => void;
+  isLoading?: boolean;
 }
 
 /**
@@ -20,12 +22,23 @@ const columns: Array<{ title: string; status: TicketStatus }> = [
  * Componente para mostrar el tablero Kanban
  * @param tickets - Lista de todos los tickets
  * @param onTicketClick - Función que se ejecuta al hacer click en un ticket
+ * @param isLoading - Indica si se están cargando los tickets
  * @returns Componente KanbanBoard
  */
-export const KanbanBoard = ({ tickets, onTicketClick }: KanbanBoardProps) => {
+export const KanbanBoard = ({ tickets, onTicketClick, isLoading = false }: KanbanBoardProps) => {
   const getTicketsByStatus = (status: TicketStatus): Ticket[] => {
     return tickets.filter((ticket) => ticket.status === status);
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex gap-4 h-full">
+        {columns.map((column) => (
+          <KanbanColumnSkeleton key={column.status} />
+        ))}
+      </div>
+    );
+  }
 
   return (
     <div className="flex gap-4 h-full">

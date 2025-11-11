@@ -2,6 +2,7 @@ import { useState, type ChangeEvent, type FormEvent } from 'react';
 import { Modal } from '../../components/commons';
 import { Input, Button, Select } from '../../components/commons';
 import type { TicketType, TicketPriority } from './types';
+import { ImageUpload } from './ImageUpload';
 
 interface CreateTicketModalProps {
   isOpen: boolean;
@@ -11,6 +12,7 @@ interface CreateTicketModalProps {
     description: string;
     type: TicketType;
     priority: TicketPriority;
+    images: File[];
   }) => void;
 }
 
@@ -26,6 +28,7 @@ export const CreateTicketModal = ({ isOpen, onClose, onCreateTicket }: CreateTic
   const [description, setDescription] = useState('');
   const [type, setType] = useState<TicketType>('bug');
   const [priority, setPriority] = useState<TicketPriority>('medium');
+  const [images, setImages] = useState<File[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>): void => {
@@ -50,7 +53,8 @@ export const CreateTicketModal = ({ isOpen, onClose, onCreateTicket }: CreateTic
       title: title.trim(),
       description: description.trim(),
       type,
-      priority
+      priority,
+      images
     });
     
     // Reset form
@@ -58,6 +62,7 @@ export const CreateTicketModal = ({ isOpen, onClose, onCreateTicket }: CreateTic
     setDescription('');
     setType('bug');
     setPriority('medium');
+    setImages([]);
     setErrors({});
     onClose();
   };
@@ -67,6 +72,7 @@ export const CreateTicketModal = ({ isOpen, onClose, onCreateTicket }: CreateTic
     setDescription('');
     setType('bug');
     setPriority('medium');
+    setImages([]);
     setErrors({});
     onClose();
   };
@@ -144,6 +150,15 @@ export const CreateTicketModal = ({ isOpen, onClose, onCreateTicket }: CreateTic
                 placeholder="Selecciona categoría"
               />
             </div>
+          </div>
+
+          <div>
+            <ImageUpload
+              images={images}
+              onImagesChange={setImages}
+              maxImages={5}
+              maxSizeMB={10}
+            />
           </div>
           
           <div className="flex justify-end gap-3 pt-4">

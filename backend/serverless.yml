@@ -423,6 +423,8 @@ functions:
           route: $disconnect
 
 resources:
+  # CORS configurado manualmente en el bucket S3 existente
+  # Para actualizar: aws s3api put-bucket-cors --bucket banados-analytics-data --cors-configuration file://cors.json
   Outputs:
     ApiGatewayRestApiId:
       Description: "API Gateway REST API ID"

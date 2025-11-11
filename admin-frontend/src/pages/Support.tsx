@@ -6,6 +6,7 @@ import { CreateTicketModal } from './Support/CreateTicketModal';
 import { TicketDetailsModal } from './Support/TicketDetailsModal';
 import { useAllTickets, useCreateTicket } from '../hooks/useTickets';
 import { Button, PlusIcon } from '../components/commons';
+import { s3Service } from '../services/s3Service';
 
 /**
  * Página de Soporte
@@ -31,13 +32,29 @@ export const Support = () => {
     description: string;
     type: TicketType;
     priority: TicketPriority;
+    images: File[];
   }): Promise<void> => {
     try {
+      let imageKeys: string[] = [];
+
+      if (ticketData.images.length > 0) {
+        try {
+          toast.info('Subiendo imágenes...');
+          imageKeys = await s3Service.uploadFiles(ticketData.images);
+          toast.success(`${imageKeys.length} imagen(es) subida(s) exitosamente`);
+        } catch (uploadError) {
+          const uploadErrorMessage = uploadError instanceof Error ? uploadError.message : 'Error al subir imágenes';
+          toast.error(`Error al subir imágenes: ${uploadErrorMessage}`);
+          throw uploadError;
+        }
+      }
+
       await createTicketMutation.mutateAsync({
         title: ticketData.title,
         description: ticketData.description,
         type: ticketData.type,
-        priority: ticketData.priority
+        priority: ticketData.priority,
+        images: imageKeys.length > 0 ? imageKeys : undefined
       });
       
       toast.success('Ticket creado exitosamente');
@@ -65,13 +82,7 @@ export const Support = () => {
           </Button>
         </div>
         <div className="flex-1 p-6 overflow-hidden">
-          {isLoading ? (
-            <div className="flex items-center justify-center h-full">
-              <div className="text-gray-500">Cargando tickets...</div>
-            </div>
-          ) : (
-            <KanbanBoard tickets={tickets} onTicketClick={handleTicketClick} />
-          )}
+          <KanbanBoard tickets={tickets} onTicketClick={handleTicketClick} isLoading={isLoading} />
         </div>
       </div>
 

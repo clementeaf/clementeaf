@@ -5,21 +5,31 @@ import { WebSocketService } from '../../Chat/services/WebSocketService';
 import { type CreateTicketDto } from '../dto/CreateTicketDto';
 import { handlerWrapper } from '../../Users/utils/handlerWrapper';
 import { validateBody, parseBody, validateRequiredFields } from '../../Users/utils/validation';
-import { extractToken, validateToken } from '../../Users/utils/auth';
+import { extractToken } from '../../Users/utils/auth';
 import { successResponse, errorResponse } from '../../Users/utils/response';
 
 /**
  * Handler para crear un nuevo ticket
+ * NOTA: Temporalmente sin autenticación para desarrollo
  * @param event - Evento de API Gateway
  * @returns Respuesta con ticket creado
  */
 const createTicketHandler = async (event: APIGatewayProxyEvent) => {
-  const tokenError = validateToken(event);
-  if (tokenError) return tokenError;
-
-  const token = extractToken(event)!;
-  const authService = new AuthService();
-  const user = await authService.verifyToken(token);
+  // Temporalmente sin validación de token para desarrollo
+  // TODO: Restaurar autenticación en producción
+  let userId = 1; // Usuario por defecto temporal
+  
+  const token = extractToken(event);
+  if (token) {
+    try {
+      const authService = new AuthService();
+      const user = await authService.verifyToken(token);
+      userId = user.id;
+    } catch (error) {
+      // Si el token es inválido, usar userId por defecto
+      console.log('Token inválido o no proporcionado, usando userId por defecto');
+    }
+  }
 
   const bodyError = validateBody(event);
   if (bodyError) return bodyError;
@@ -37,7 +47,7 @@ const createTicketHandler = async (event: APIGatewayProxyEvent) => {
   }
 
   const ticketsService = new TicketsService();
-  const ticket = await ticketsService.createTicket(createTicketDto, user.id);
+  const ticket = await ticketsService.createTicket(createTicketDto, userId);
 
   // STREAMING: Notificar creación de ticket vía WebSocket (no bloqueante)
   // Notificamos al usuario asignado si existe

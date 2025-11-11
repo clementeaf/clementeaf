@@ -62,7 +62,8 @@ export const endpoints = {
     getByReporter: 'reporter',
     getByAssignee: 'assignee',
     update: '{id}',
-    delete: '{id}'
+    delete: '{id}',
+    getPresignedUrl: 'presigned-url'
   })
 } as const;
 
