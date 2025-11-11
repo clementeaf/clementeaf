@@ -14,6 +14,7 @@ export const routes = {
   salesOrder: '/sells/sales-order',
   analytics: '/analytics',
   chat: '/chat',
+  support: '/support',
   notFound: '/*'
 } as const;
 

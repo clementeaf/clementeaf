@@ -13,6 +13,7 @@ import { Quotes } from './pages/Quotes';
 import { SalesOrder } from './pages/SalesOrder';
 import { Analytics } from './pages/Analytics';
 import { Chat } from './pages/Chat';
+import { Support } from './pages/Support';
 
 /**
  * Componente principal de la aplicación admin
@@ -35,6 +36,7 @@ function App(): React.ReactNode {
           <Route path={routes.salesOrder} element={<SalesOrder />} />
           <Route path={routes.analytics} element={<Analytics />} />
           <Route path={routes.chat} element={<Chat />} />
+          <Route path={routes.support} element={<Support />} />
         </Routes>
       </div>
       <ToastContainer

@@ -152,13 +152,13 @@ export const Select = ({
           type="button"
           onClick={handleToggle}
           disabled={disabled}
-          className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#004BB7] focus:border-transparent h-[42px] bg-white text-left flex items-center justify-between ${
+          className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#004BB7] focus:border-transparent h-[42px] bg-white text-left flex items-center justify-between gap-2 ${
             error ? 'border-red-500' : ''
           } ${
             disabled ? 'bg-gray-100 cursor-not-allowed opacity-60' : 'bg-white cursor-pointer'
           } ${selectClassName}`}
         >
-          <span className={selectedLabel ? 'text-gray-900' : 'text-gray-500'}>
+          <span className={`truncate flex-1 min-w-0 ${selectedLabel ? 'text-gray-900' : 'text-gray-500'}`}>
             {selectedLabel || placeholder}
           </span>
           <DropdownIcon color={disabled ? '#9ca3af' : '#6b7280'} />
