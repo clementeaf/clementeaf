@@ -18,12 +18,12 @@ interface KanbanColumnProps {
  */
 export const KanbanColumn = ({ title, status, tickets, onTicketClick }: KanbanColumnProps) => {
   return (
-    <div className="flex-1 bg-gray-50 rounded-lg p-4 min-w-[280px]">
-      <div className="mb-4">
+    <div className="flex-1 bg-gray-50 rounded-lg p-4 min-w-[280px] flex flex-col h-full">
+      <div className="mb-4 flex-shrink-0">
         <h2 className="text-lg font-semibold text-gray-800 mb-1">{title}</h2>
         <span className="text-sm text-gray-500">{tickets.length} {tickets.length === 1 ? 'ticket' : 'tickets'}</span>
       </div>
-      <div className="space-y-3 max-h-[calc(100vh-250px)] overflow-y-auto">
+      <div className="flex-1 overflow-y-auto space-y-3 pr-2">
         {tickets.length > 0 ? (
           tickets.map((ticket) => (
             <KanbanCard

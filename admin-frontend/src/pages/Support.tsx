@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { Ticket, TicketType, TicketPriority } from './Support/types';
 import { KanbanBoard } from './Support/KanbanBoard';
 import { CreateTicketModal } from './Support/CreateTicketModal';
+import { TicketDetailsModal } from './Support/TicketDetailsModal';
 import { Button, PlusIcon } from '../components/commons';
 
 /**
@@ -11,10 +12,12 @@ import { Button, PlusIcon } from '../components/commons';
 export const Support = () => {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [isCreateTicketModalOpen, setIsCreateTicketModalOpen] = useState(false);
+  const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
+  const [isTicketDetailsModalOpen, setIsTicketDetailsModalOpen] = useState(false);
 
   const handleTicketClick = (ticket: Ticket): void => {
-    console.log('Ticket clicked:', ticket);
-    // TODO: Abrir modal de detalles del ticket
+    setSelectedTicket(ticket);
+    setIsTicketDetailsModalOpen(true);
   };
 
   const handleCreateTicket = (ticketData: {
@@ -54,7 +57,7 @@ export const Support = () => {
             Crear Ticket
           </Button>
         </div>
-        <div className="flex-1 p-6 overflow-auto">
+        <div className="flex-1 p-6 overflow-hidden">
           <KanbanBoard tickets={tickets} onTicketClick={handleTicketClick} />
         </div>
       </div>
@@ -63,6 +66,15 @@ export const Support = () => {
         isOpen={isCreateTicketModalOpen}
         onClose={() => setIsCreateTicketModalOpen(false)}
         onCreateTicket={handleCreateTicket}
+      />
+
+      <TicketDetailsModal
+        isOpen={isTicketDetailsModalOpen}
+        onClose={() => {
+          setIsTicketDetailsModalOpen(false);
+          setSelectedTicket(null);
+        }}
+        ticket={selectedTicket}
       />
     </div>
   );

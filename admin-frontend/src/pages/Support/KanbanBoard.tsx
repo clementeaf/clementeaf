@@ -28,7 +28,7 @@ export const KanbanBoard = ({ tickets, onTicketClick }: KanbanBoardProps) => {
   };
 
   return (
-    <div className="flex gap-4 overflow-x-auto pb-4">
+    <div className="flex gap-4 h-full">
       {columns.map((column) => (
         <KanbanColumn
           key={column.status}
