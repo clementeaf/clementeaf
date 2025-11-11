@@ -33,11 +33,14 @@ const createMessageHandler = async (event: APIGatewayProxyEvent) => {
   // STREAMING: Enviar mensaje vía WebSocket a los participantes de la conversación (no bloqueante)
   // Cuando se inserta un mensaje en la base de datos, automáticamente se notifica vía WebSocket
   // No esperamos a que termine para no bloquear la respuesta HTTP
+  // Usamos los datos ya obtenidos del mensaje para evitar query adicional
   (async () => {
     try {
       console.log(`🔄 STREAMING: Mensaje creado en BD (ID: ${message.id}), notificando vía WebSocket...`);
       
-      const conversation = await chatService.getConversationById(createMessageDto.conversationId);
+      // Usar los datos del mensaje ya cargado en lugar de hacer otra query
+      const participant1Id = message.conversation.participant1Id;
+      const participant2Id = message.conversation.participant2Id;
       
       // El endpoint de WebSocket Management API es diferente del HTTP API
       // Usamos el endpoint del WebSocket API (us3x8rdme1.execute-api.us-east-1.amazonaws.com)
@@ -45,8 +48,8 @@ const createMessageHandler = async (event: APIGatewayProxyEvent) => {
       const webSocketService = new WebSocketService();
       
       await webSocketService.sendToConversationParticipants(
-        conversation.participant1Id,
-        conversation.participant2Id,
+        participant1Id,
+        participant2Id,
         {
           action: 'newMessage',
           message: {

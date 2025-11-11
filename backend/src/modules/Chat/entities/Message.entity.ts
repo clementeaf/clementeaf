@@ -1,4 +1,4 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn, Index } from 'typeorm';
 import { Conversation } from './Conversation.entity';
 import { User } from '../../Users/entities/User.entity';
 
@@ -6,6 +6,9 @@ import { User } from '../../Users/entities/User.entity';
  * Entidad de Mensajes
  */
 @Entity('messages')
+@Index(['conversationId', 'createdAt'])
+@Index(['conversationId', 'senderId', 'readAt'])
+@Index(['senderId'])
 export class Message {
   @PrimaryGeneratedColumn()
   id!: number;

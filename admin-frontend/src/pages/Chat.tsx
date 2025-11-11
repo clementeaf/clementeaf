@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import type { Conversation, Message } from '../services/chatService';
 import { chatService } from '../services/chatService';
@@ -6,6 +6,7 @@ import { useConversationsByUserId, useCreateMessage, useMessagesByConversationId
 import { useWebSocket } from '../hooks/useWebSocket';
 import { useAllUsers } from '../hooks/useUsers';
 import { useCurrentUser } from '../hooks/useAuth';
+import { useBrowserNotifications } from '../hooks/useBrowserNotifications';
 import { StartConversationModal } from './Chat/StartConversationModal';
 import { ContactsList } from './Chat/ContactsList';
 import { ChatHeader } from './Chat/ChatHeader';
@@ -35,17 +36,39 @@ export const Chat = () => {
   const [isStartConversationModalOpen, setIsStartConversationModalOpen] = useState(false);
   const [isOtherUserTyping, setIsOtherUserTyping] = useState(false);
   const queryClient = useQueryClient();
+  const previousMessagesRef = useRef<Set<number>>(new Set());
+  
+  // Hook para notificaciones del navegador
+  const { showNotification, isTabActive, requestPermission } = useBrowserNotifications();
 
   const { data: conversationsData, isLoading: isLoadingConversations, refetch: refetchConversations } = useConversationsByUserId(currentUserId);
   
-  // Asegurar que conversations sea siempre un array
-  const conversations = Array.isArray(conversationsData) ? conversationsData : [];
+  // Asegurar que conversations sea siempre un array (memoizado para evitar cambios en cada render)
+  const conversations = useMemo(() => {
+    return Array.isArray(conversationsData) ? conversationsData : [];
+  }, [conversationsData]);
   
   useEffect(() => {
     if (currentUserId) {
       refetchConversations();
     }
   }, [currentUserId, refetchConversations]);
+
+  // Solicitar permisos de notificación al cargar el componente
+  useEffect(() => {
+    requestPermission().catch(console.error);
+  }, [requestPermission]);
+
+  // Limpiar mensajes procesados periódicamente para evitar acumulación de memoria
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (previousMessagesRef.current.size > 1000) {
+        previousMessagesRef.current.clear();
+      }
+    }, 60000); // Cada minuto
+
+    return () => clearInterval(interval);
+  }, []);
   const { 
     data: messagesData, 
     isLoading: isLoadingMessages,
@@ -65,16 +88,53 @@ export const Chat = () => {
   /**
    * Maneja la recepción de mensajes en tiempo real vía WebSocket
    */
-  const handleWebSocketMessage = (message: Message): void => {
-    if (message.conversationId === selectedConversation?.id) {
+  const handleWebSocketMessage = useCallback((message: Message): void => {
+    // Verificar si es un mensaje nuevo (no procesado antes)
+    if (previousMessagesRef.current.has(message.id)) {
+      return;
+    }
+    previousMessagesRef.current.add(message.id);
+
+    const isCurrentConversation = message.conversationId === selectedConversation?.id;
+    const isFromOtherUser = currentUserId && message.senderId !== currentUserId;
+
+    if (isCurrentConversation) {
       queryClient.invalidateQueries({ queryKey: ['messages', message.conversationId] });
       // Marcar mensajes como leídos cuando se reciben en la conversación activa
-      if (currentUserId && message.senderId !== currentUserId) {
+      if (isFromOtherUser) {
         chatService.markConversationMessagesAsRead(message.conversationId, currentUserId).catch(console.error);
       }
+    } else {
+      // Mensaje de otra conversación - invalidar lista de conversaciones
+      queryClient.invalidateQueries({ queryKey: ['conversations'] });
     }
-    queryClient.invalidateQueries({ queryKey: ['conversations'] });
-  };
+
+    // Mostrar notificación si:
+    // 1. El mensaje es de otro usuario
+    // 2. No es la conversación actual O la pestaña no está activa
+    // 3. El usuario tiene permisos de notificación
+    if (isFromOtherUser && (!isCurrentConversation || !isTabActive())) {
+      // Obtener información del remitente
+      const senderName = message.sender?.name || message.sender?.email || 'Usuario';
+      const messagePreview = message.content.length > 50 
+        ? message.content.substring(0, 50) + '...' 
+        : message.content;
+
+      showNotification({
+        title: senderName,
+        body: messagePreview,
+        tag: `message-${message.conversationId}`,
+        data: { conversationId: message.conversationId },
+        onClick: () => {
+          // Buscar la conversación y seleccionarla
+          const conversation = conversations.find(c => c.id === message.conversationId);
+          if (conversation) {
+            setSelectedConversation(conversation);
+          }
+        }
+      });
+    }
+  }, [selectedConversation, currentUserId, conversations, isTabActive, showNotification, queryClient, setSelectedConversation]);
 
   /**
    * Maneja eventos de typing vía WebSocket

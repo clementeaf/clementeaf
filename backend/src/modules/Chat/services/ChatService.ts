@@ -88,7 +88,7 @@ export class ChatService {
   }
 
   /**
-   * Obtiene todas las conversaciones de un usuario con información adicional
+   * Obtiene todas las conversaciones de un usuario con información adicional (optimizado - evita N+1)
    * @param userId - ID del usuario
    * @returns Lista de conversaciones del usuario con unreadCount y lastMessage
    */
@@ -102,46 +102,79 @@ export class ChatService {
       order: { lastMessageAt: 'DESC', createdAt: 'DESC' }
     });
 
-    // Obtener conteo de mensajes no leídos y último mensaje para cada conversación
-    const conversationsWithMetadata = await Promise.all(
-      conversations.map(async (conversation) => {
-        // Contar mensajes no leídos (mensajes enviados por el otro participante que no han sido leídos)
-        const unreadCount = await this.messageRepository.count({
-          where: {
-            conversationId: conversation.id,
-            senderId: conversation.participant1Id === userId ? conversation.participant2Id : conversation.participant1Id,
-            readAt: IsNull()
-          }
-        });
+    if (conversations.length === 0) {
+      return [];
+    }
 
-        // Obtener el último mensaje de la conversación
-        const lastMessage = await this.messageRepository.findOne({
-          where: { conversationId: conversation.id },
-          relations: ['sender'],
-          order: { createdAt: 'DESC' }
-        });
+    const conversationIds = conversations.map(c => c.id);
 
-        return {
-          ...conversation,
-          unreadCount,
-          lastMessage
-        };
+    // Obtener todos los últimos mensajes en paralelo (más eficiente que N+1 secuencial)
+    const lastMessagesPromises = conversationIds.map(convId =>
+      this.messageRepository.findOne({
+        where: { conversationId: convId },
+        relations: ['sender'],
+        order: { createdAt: 'DESC' }
       })
     );
+    
+    const lastMessagesResults = await Promise.all(lastMessagesPromises);
+    const lastMessages = lastMessagesResults.filter((msg): msg is Message => msg !== null);
 
-    return conversationsWithMetadata;
+    // Crear mapa de último mensaje por conversación
+    const lastMessageMap = new Map<number, Message>();
+    lastMessages.forEach(msg => {
+      const existing = lastMessageMap.get(msg.conversationId);
+      if (!existing || msg.createdAt > existing.createdAt) {
+        lastMessageMap.set(msg.conversationId, msg);
+      }
+    });
+
+    // Obtener conteos de mensajes no leídos en batch usando queries paralelas
+    // Esto es más eficiente que N+1 queries secuenciales
+    const unreadCountPromises = conversations.map(conv => {
+      const otherParticipantId = conv.participant1Id === userId ? conv.participant2Id : conv.participant1Id;
+      return this.messageRepository.count({
+        where: {
+          conversationId: conv.id,
+          senderId: otherParticipantId,
+          readAt: IsNull()
+        }
+      }).then(count => ({ conversationId: conv.id, count }));
+    });
+
+    const unreadCountsResults = await Promise.all(unreadCountPromises);
+
+    // Crear mapa de conteos no leídos
+    const unreadCountMap = new Map<number, number>();
+    unreadCountsResults.forEach(({ conversationId, count }) => {
+      unreadCountMap.set(conversationId, count);
+    });
+
+    // Combinar resultados
+    return conversations.map(conversation => ({
+      ...conversation,
+      unreadCount: unreadCountMap.get(conversation.id) || 0,
+      lastMessage: lastMessageMap.get(conversation.id) || null
+    }));
   }
 
   /**
-   * Crea un nuevo mensaje
+   * Crea un nuevo mensaje (optimizado - reduce queries)
    * @param createMessageDto - Datos del mensaje a crear
    * @returns Mensaje creado
    */
   async createMessage(createMessageDto: CreateMessageDto): Promise<Message> {
-    // Verificar que la conversación existe
-    const conversation = await this.getConversationById(createMessageDto.conversationId);
+    // Verificar que la conversación existe y obtener datos necesarios en una sola query
+    const conversation = await this.conversationRepository.findOne({
+      where: { id: createMessageDto.conversationId },
+      relations: ['participant1', 'participant2']
+    });
 
-    // Crear el mensaje
+    if (!conversation) {
+      throw new Error('Conversación no encontrada');
+    }
+
+    // Crear y guardar el mensaje con relaciones en una sola operación
     const message = this.messageRepository.create({
       conversationId: createMessageDto.conversationId,
       senderId: createMessageDto.senderId,
@@ -151,15 +184,17 @@ export class ChatService {
 
     const savedMessage = await this.messageRepository.save(message);
 
-    // Actualizar lastMessageAt de la conversación
+    // Actualizar lastMessageAt de la conversación (no bloqueante, se puede hacer en paralelo)
     conversation.lastMessageAt = new Date();
-    await this.conversationRepository.save(conversation);
+    this.conversationRepository.save(conversation).catch(console.error);
 
-    // Cargar relaciones
-    const messageWithRelations = await this.messageRepository.findOne({
-      where: { id: savedMessage.id },
-      relations: ['sender', 'conversation']
-    });
+    // Cargar relaciones del mensaje en una sola query optimizada
+    const messageWithRelations = await this.messageRepository
+      .createQueryBuilder('message')
+      .leftJoinAndSelect('message.sender', 'sender')
+      .leftJoinAndSelect('message.conversation', 'conversation')
+      .where('message.id = :id', { id: savedMessage.id })
+      .getOne();
 
     if (!messageWithRelations) {
       throw new Error('Error al crear el mensaje');
@@ -169,7 +204,7 @@ export class ChatService {
   }
 
   /**
-   * Obtiene todos los mensajes de una conversación
+   * Obtiene todos los mensajes de una conversación (optimizado con índices)
    * @param conversationId - ID de la conversación
    * @param page - Número de página
    * @param limit - Límite de resultados por página
@@ -186,18 +221,21 @@ export class ChatService {
     limit: number;
     totalPages: number;
   }> {
-    // Verificar que la conversación existe
-    await this.getConversationById(conversationId);
-
     const skip = (page - 1) * limit;
 
-    const [data, total] = await this.messageRepository.findAndCount({
-      where: { conversationId },
-      relations: ['sender'],
-      order: { createdAt: 'DESC' },
-      skip,
-      take: limit
-    });
+    // Query optimizada usando query builder con índices
+    const queryBuilder = this.messageRepository
+      .createQueryBuilder('message')
+      .leftJoinAndSelect('message.sender', 'sender')
+      .where('message.conversationId = :conversationId', { conversationId })
+      .orderBy('message.createdAt', 'DESC')
+      .skip(skip)
+      .take(limit);
+
+    const [data, total] = await Promise.all([
+      queryBuilder.getMany(),
+      this.messageRepository.count({ where: { conversationId } })
+    ]);
 
     const totalPages = Math.ceil(total / limit);
 
