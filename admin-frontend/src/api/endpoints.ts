@@ -49,7 +49,9 @@ export const endpoints = {
     messages: 'messages',
     messagesByConversation: 'conversations/{conversationId}/messages',
     markMessageRead: 'messages/{messageId}/read',
-    markConversationRead: 'conversations/{conversationId}/messages/read'
+    markConversationRead: 'conversations/{conversationId}/messages/read',
+    startTyping: 'typing/start',
+    stopTyping: 'typing/stop'
   }),
   users: buildEndpoints('users', {
     getAll: '',

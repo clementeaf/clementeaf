@@ -37,6 +37,14 @@ export interface Conversation {
   participant1: Participant;
   participant2: Participant;
   lastMessageAt: string | null;
+  unreadCount: number;
+  lastMessage: {
+    id: number;
+    content: string;
+    senderId: number;
+    sender: Participant;
+    createdAt: string;
+  } | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -162,6 +170,24 @@ export const chatService = {
       { userId }
     );
     return data.data.messagesMarkedAsRead;
+  },
+
+  /**
+   * Inicia el indicador de typing
+   * @param conversationId - ID de la conversación
+   * @param userId - ID del usuario que está escribiendo
+   */
+  async startTyping(conversationId: number, userId: number): Promise<void> {
+    await apiClient.post(endpoints.chat.startTyping, { conversationId, userId });
+  },
+
+  /**
+   * Detiene el indicador de typing
+   * @param conversationId - ID de la conversación
+   * @param userId - ID del usuario que dejó de escribir
+   */
+  async stopTyping(conversationId: number, userId: number): Promise<void> {
+    await apiClient.post(endpoints.chat.stopTyping, { conversationId, userId });
   }
 };
 

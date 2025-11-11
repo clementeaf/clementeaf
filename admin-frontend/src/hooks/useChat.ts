@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
 import { chatService, type CreateConversationDto, type CreateMessageDto, type Conversation } from '../services/chatService';
 
 /**
@@ -87,20 +87,32 @@ export const useCreateMessage = () => {
 };
 
 /**
- * Hook para obtener mensajes de una conversación
+ * Hook para obtener mensajes de una conversación con paginación infinita
  * @param conversationId - ID de la conversación
- * @param page - Número de página
  * @param limit - Límite de resultados por página
  */
-export const useMessagesByConversationId = (conversationId: number | null, page: number = 1, limit: number = 50) => {
-  return useQuery({
-    queryKey: ['messages', conversationId, page, limit],
-    queryFn: () => {
+export const useMessagesByConversationId = (conversationId: number | null, limit: number = 50) => {
+  return useInfiniteQuery({
+    queryKey: ['messages', conversationId, limit],
+    queryFn: ({ pageParam = 1 }) => {
       if (!conversationId) throw new Error('Conversation ID is required');
-      return chatService.getMessagesByConversationId(conversationId, page, limit);
+      return chatService.getMessagesByConversationId(conversationId, pageParam, limit);
     },
     enabled: !!conversationId,
-    staleTime: 1000 * 30
+    staleTime: 1000 * 30,
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => {
+      if (lastPage.page < lastPage.totalPages) {
+        return lastPage.page + 1;
+      }
+      return undefined;
+    },
+    getPreviousPageParam: (firstPage) => {
+      if (firstPage.page > 1) {
+        return firstPage.page - 1;
+      }
+      return undefined;
+    }
   });
 };
 

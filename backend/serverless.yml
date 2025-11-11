@@ -324,6 +324,26 @@ functions:
           method: put
           cors: true
 
+  startTyping:
+    handler: dist/modules/Chat/handlers/startTyping.handler
+    timeout: 30
+    memorySize: 512
+    events:
+      - http:
+          path: chat/typing/start
+          method: post
+          cors: true
+
+  stopTyping:
+    handler: dist/modules/Chat/handlers/stopTyping.handler
+    timeout: 30
+    memorySize: 512
+    events:
+      - http:
+          path: chat/typing/stop
+          method: post
+          cors: true
+
   # Tickets endpoints
   createTicket:
     handler: dist/modules/Tickets/handlers/createTicket.handler

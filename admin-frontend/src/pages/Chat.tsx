@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import type { Conversation, Message } from '../services/chatService';
+import { chatService } from '../services/chatService';
 import { useConversationsByUserId, useCreateMessage, useMessagesByConversationId, useCreateConversation } from '../hooks/useChat';
 import { useWebSocket } from '../hooks/useWebSocket';
 import { useAllUsers } from '../hooks/useUsers';
@@ -32,6 +33,7 @@ export const Chat = () => {
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
   const [messageContent, setMessageContent] = useState('');
   const [isStartConversationModalOpen, setIsStartConversationModalOpen] = useState(false);
+  const [isOtherUserTyping, setIsOtherUserTyping] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: conversationsData, isLoading: isLoadingConversations, refetch: refetchConversations } = useConversationsByUserId(currentUserId);
@@ -44,9 +46,18 @@ export const Chat = () => {
       refetchConversations();
     }
   }, [currentUserId, refetchConversations]);
-  const { data: messagesData, isLoading: isLoadingMessages } = useMessagesByConversationId(
-    selectedConversation?.id || null
-  );
+  const { 
+    data: messagesData, 
+    isLoading: isLoadingMessages,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage
+  } = useMessagesByConversationId(selectedConversation?.id || null);
+  
+  const allMessages = useMemo(() => {
+    if (!messagesData?.pages) return [];
+    return messagesData.pages.flatMap(page => page.data);
+  }, [messagesData]);
   const { data: usersData, isLoading: isLoadingUsers } = useAllUsers();
   const createMessageMutation = useCreateMessage();
   const createConversationMutation = useCreateConversation();
@@ -57,8 +68,28 @@ export const Chat = () => {
   const handleWebSocketMessage = (message: Message): void => {
     if (message.conversationId === selectedConversation?.id) {
       queryClient.invalidateQueries({ queryKey: ['messages', message.conversationId] });
+      // Marcar mensajes como leídos cuando se reciben en la conversación activa
+      if (currentUserId && message.senderId !== currentUserId) {
+        chatService.markConversationMessagesAsRead(message.conversationId, currentUserId).catch(console.error);
+      }
     }
     queryClient.invalidateQueries({ queryKey: ['conversations'] });
+  };
+
+  /**
+   * Maneja eventos de typing vía WebSocket
+   */
+  const handleWebSocketTyping = (data: { conversationId: number; userId: number; isTyping: boolean }): void => {
+    if (data.conversationId === selectedConversation?.id && data.userId !== currentUserId) {
+      setIsOtherUserTyping(data.isTyping);
+      
+      // Auto-detener typing después de 3 segundos si no hay actualización
+      if (data.isTyping) {
+        setTimeout(() => {
+          setIsOtherUserTyping(false);
+        }, 3000);
+      }
+    }
   };
 
   /**
@@ -67,6 +98,7 @@ export const Chat = () => {
   useWebSocket({
     userId: currentUserId,
     onMessage: handleWebSocketMessage,
+    onTyping: handleWebSocketTyping,
     onError: (error: Error) => {
       console.error('WebSocket error:', error);
     },
@@ -94,6 +126,9 @@ export const Chat = () => {
         content: messageContent.trim()
       });
       setMessageContent('');
+      
+      // Marcar mensajes como leídos después de enviar
+      await chatService.markConversationMessagesAsRead(selectedConversation.id, currentUserId);
     } catch (error) {
       console.error('Error sending message:', error);
     }
@@ -102,7 +137,7 @@ export const Chat = () => {
   /**
    * Obtiene el otro participante de la conversación
    */
-  const getOtherParticipant = (conversation: Conversation): { id: number; name: string; email: string } => {
+  const getOtherParticipant = useCallback((conversation: Conversation): { id: number; name: string; email: string } => {
     if (!currentUserId) {
       return { id: 0, name: 'Unknown', email: 'unknown@example.com' };
     }
@@ -118,7 +153,7 @@ export const Chat = () => {
       name: participant.name || participant.email || 'Unknown',
       email: participant.email || 'unknown@example.com'
     };
-  };
+  }, [currentUserId]);
 
   /**
    * Maneja la selección de un usuario para iniciar conversación
@@ -176,6 +211,7 @@ export const Chat = () => {
           onSelectConversation={setSelectedConversation}
           onStartConversation={() => setIsStartConversationModalOpen(true)}
           getOtherParticipant={getOtherParticipant}
+          currentUserId={currentUserId}
         />
 
         <div className="flex-1 flex flex-col w-full">
@@ -183,17 +219,23 @@ export const Chat = () => {
             <>
               <ChatHeader
                 name={getOtherParticipant(selectedConversation).name}
+                isTyping={isOtherUserTyping}
               />
               <MessageList
-                messages={messagesData?.data || []}
+                messages={allMessages}
                 isLoading={isLoadingMessages}
                 currentUserId={currentUserId}
+                hasNextPage={hasNextPage}
+                isFetchingNextPage={isFetchingNextPage}
+                onLoadMore={() => fetchNextPage()}
               />
               <MessageInput
                 value={messageContent}
                 onChange={(e) => setMessageContent(e.target.value)}
                 onSend={handleSendMessage}
                 isSending={createMessageMutation.isPending}
+                conversationId={selectedConversation.id}
+                userId={currentUserId}
               />
             </>
           ) : (

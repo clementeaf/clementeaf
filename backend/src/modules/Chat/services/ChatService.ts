@@ -1,6 +1,8 @@
 import { AppDataSource } from '../../../config/database';
+import { IsNull } from 'typeorm';
 import { Conversation } from '../entities/Conversation.entity';
 import { Message } from '../entities/Message.entity';
+import { TypingIndicator } from '../entities/TypingIndicator.entity';
 import { type CreateConversationDto } from '../dto/CreateConversationDto';
 import { type CreateMessageDto } from '../dto/CreateMessageDto';
 
@@ -14,6 +16,10 @@ export class ChatService {
 
   private get messageRepository() {
     return AppDataSource.getRepository(Message);
+  }
+
+  private get typingIndicatorRepository() {
+    return AppDataSource.getRepository(TypingIndicator);
   }
 
   /**
@@ -82,11 +88,11 @@ export class ChatService {
   }
 
   /**
-   * Obtiene todas las conversaciones de un usuario
+   * Obtiene todas las conversaciones de un usuario con información adicional
    * @param userId - ID del usuario
-   * @returns Lista de conversaciones del usuario
+   * @returns Lista de conversaciones del usuario con unreadCount y lastMessage
    */
-  async getConversationsByUserId(userId: number): Promise<Conversation[]> {
+  async getConversationsByUserId(userId: number): Promise<Array<Conversation & { unreadCount: number; lastMessage: Message | null }>> {
     const conversations = await this.conversationRepository.find({
       where: [
         { participant1Id: userId },
@@ -96,7 +102,34 @@ export class ChatService {
       order: { lastMessageAt: 'DESC', createdAt: 'DESC' }
     });
 
-    return conversations;
+    // Obtener conteo de mensajes no leídos y último mensaje para cada conversación
+    const conversationsWithMetadata = await Promise.all(
+      conversations.map(async (conversation) => {
+        // Contar mensajes no leídos (mensajes enviados por el otro participante que no han sido leídos)
+        const unreadCount = await this.messageRepository.count({
+          where: {
+            conversationId: conversation.id,
+            senderId: conversation.participant1Id === userId ? conversation.participant2Id : conversation.participant1Id,
+            readAt: IsNull()
+          }
+        });
+
+        // Obtener el último mensaje de la conversación
+        const lastMessage = await this.messageRepository.findOne({
+          where: { conversationId: conversation.id },
+          relations: ['sender'],
+          order: { createdAt: 'DESC' }
+        });
+
+        return {
+          ...conversation,
+          unreadCount,
+          lastMessage
+        };
+      })
+    );
+
+    return conversationsWithMetadata;
   }
 
   /**
@@ -225,6 +258,88 @@ export class ChatService {
       .execute();
 
     return result.affected ?? 0;
+  }
+
+  /**
+   * Inicia o actualiza el indicador de typing para un usuario en una conversación
+   * @param conversationId - ID de la conversación
+   * @param userId - ID del usuario que está escribiendo
+   * @returns Indicador de typing actualizado
+   */
+  async startTyping(conversationId: number, userId: number): Promise<TypingIndicator> {
+    let indicator = await this.typingIndicatorRepository.findOne({
+      where: { conversationId, userId }
+    });
+
+    if (indicator) {
+      indicator.isTyping = true;
+      indicator.lastTypingAt = new Date();
+    } else {
+      indicator = this.typingIndicatorRepository.create({
+        conversationId,
+        userId,
+        isTyping: true,
+        lastTypingAt: new Date()
+      } as TypingIndicator);
+    }
+
+    return await this.typingIndicatorRepository.save(indicator);
+  }
+
+  /**
+   * Detiene el indicador de typing para un usuario en una conversación
+   * @param conversationId - ID de la conversación
+   * @param userId - ID del usuario que dejó de escribir
+   * @returns Indicador de typing actualizado
+   */
+  async stopTyping(conversationId: number, userId: number): Promise<TypingIndicator | null> {
+    const indicator = await this.typingIndicatorRepository.findOne({
+      where: { conversationId, userId }
+    });
+
+    if (indicator) {
+      indicator.isTyping = false;
+      return await this.typingIndicatorRepository.save(indicator);
+    }
+
+    return null;
+  }
+
+  /**
+   * Obtiene todos los usuarios que están escribiendo en una conversación
+   * @param conversationId - ID de la conversación
+   * @param excludeUserId - ID del usuario a excluir (el usuario actual)
+   * @returns Lista de IDs de usuarios que están escribiendo
+   */
+  async getTypingUsers(conversationId: number, excludeUserId: number): Promise<number[]> {
+    const indicators = await this.typingIndicatorRepository.find({
+      where: {
+        conversationId,
+        isTyping: true
+      }
+    });
+
+    // Filtrar usuarios que están escribiendo y no son el usuario actual
+    // También limpiar indicadores antiguos (más de 5 segundos)
+    const now = new Date();
+    const fiveSecondsAgo = new Date(now.getTime() - 5000);
+
+    const activeTypingUsers = indicators
+      .filter((indicator: TypingIndicator) => {
+        if (indicator.userId === excludeUserId) return false;
+        if (indicator.lastTypingAt < fiveSecondsAgo) {
+          // Limpiar indicador antiguo
+          this.typingIndicatorRepository.update(
+            { id: indicator.id },
+            { isTyping: false }
+          ).catch(console.error);
+          return false;
+        }
+        return true;
+      })
+      .map((indicator: TypingIndicator) => indicator.userId);
+
+    return activeTypingUsers;
   }
 }
 

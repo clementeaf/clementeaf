@@ -1,3 +1,4 @@
+import { memo, useMemo } from 'react';
 import type { Message } from '../../services/chatService';
 
 interface MessageItemProps {
@@ -6,12 +7,28 @@ interface MessageItemProps {
 }
 
 /**
- * Componente para mostrar un mensaje individual
+ * Componente para mostrar un mensaje individual con indicadores de estado
  * @param message - Mensaje a mostrar
  * @param isOwnMessage - Indica si el mensaje es propio
  * @returns Componente MessageItem
  */
-export const MessageItem = ({ message, isOwnMessage }: MessageItemProps) => {
+export const MessageItem = memo(({ message, isOwnMessage }: MessageItemProps) => {
+  const formattedTime = useMemo(() => {
+    return new Date(message.createdAt).toLocaleTimeString();
+  }, [message.createdAt]);
+
+  const getStatusIcon = (): string => {
+    if (!isOwnMessage) return '';
+    if (message.readAt) return '✓✓'; // Leído (doble check azul)
+    return '✓'; // Enviado (check simple)
+  };
+
+  const getStatusColor = (): string => {
+    if (!isOwnMessage) return '';
+    if (message.readAt) return 'text-blue-300'; // Leído
+    return 'text-gray-300'; // Enviado
+  };
+
   return (
     <div className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'}`}>
       <div
@@ -22,15 +39,22 @@ export const MessageItem = ({ message, isOwnMessage }: MessageItemProps) => {
         }`}
       >
         <p className="text-sm">{message.content}</p>
-        <p
-          className={`text-xs mt-1 ${
-            isOwnMessage ? 'text-blue-100' : 'text-gray-500'
-          }`}
-        >
-          {new Date(message.createdAt).toLocaleTimeString()}
-        </p>
+        <div className="flex items-center justify-end gap-1 mt-1">
+          <p
+            className={`text-xs ${isOwnMessage ? 'text-blue-100' : 'text-gray-500'}`}
+          >
+            {formattedTime}
+          </p>
+          {isOwnMessage && (
+            <span className={`text-xs ${getStatusColor()}`}>
+              {getStatusIcon()}
+            </span>
+          )}
+        </div>
       </div>
     </div>
   );
-};
+});
+
+MessageItem.displayName = 'MessageItem';
 

@@ -39,6 +39,18 @@ const getConversationsByUserIdHandler = async (event: APIGatewayProxyEvent) => {
         name: conversation.participant2.name
       },
       lastMessageAt: conversation.lastMessageAt?.toISOString() ?? null,
+      unreadCount: conversation.unreadCount,
+      lastMessage: conversation.lastMessage ? {
+        id: conversation.lastMessage.id,
+        content: conversation.lastMessage.content,
+        senderId: conversation.lastMessage.senderId,
+        sender: {
+          id: conversation.lastMessage.sender.id,
+          email: conversation.lastMessage.sender.email,
+          name: conversation.lastMessage.sender.name
+        },
+        createdAt: conversation.lastMessage.createdAt.toISOString()
+      } : null,
       createdAt: conversation.createdAt?.toISOString(),
       updatedAt: conversation.updatedAt?.toISOString()
     })),

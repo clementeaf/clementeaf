@@ -6,11 +6,15 @@ const WSS_ENDPOINT = import.meta.env.VITE_WS_URL || 'wss://us3x8rdme1.execute-ap
 interface WebSocketMessage {
   action: string;
   message?: Message;
+  conversationId?: number;
+  userId?: number;
+  isTyping?: boolean;
 }
 
 interface UseWebSocketOptions {
   userId: number | null;
   onMessage?: (message: Message) => void;
+  onTyping?: (data: { conversationId: number; userId: number; isTyping: boolean }) => void;
   onError?: (error: Error) => void;
   onConnect?: () => void;
   onDisconnect?: () => void;
@@ -22,7 +26,7 @@ interface UseWebSocketOptions {
  * @returns Estado y funciones del WebSocket
  */
 export const useWebSocket = (options: UseWebSocketOptions) => {
-  const { userId, onMessage, onError, onConnect, onDisconnect } = options;
+  const { userId, onMessage, onTyping, onError, onConnect, onDisconnect } = options;
   const [isConnected, setIsConnected] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -68,6 +72,12 @@ export const useWebSocket = (options: UseWebSocketOptions) => {
           const data: WebSocketMessage = JSON.parse(event.data);
           if (data.action === 'newMessage' && data.message) {
             onMessage?.(data.message);
+          } else if (data.action === 'typing' && data.conversationId !== undefined && data.userId !== undefined && data.isTyping !== undefined) {
+            onTyping?.({
+              conversationId: data.conversationId,
+              userId: data.userId,
+              isTyping: data.isTyping
+            });
           }
         } catch (error) {
           console.error('❌ useWebSocket - Error parsing WebSocket message:', error);
@@ -100,7 +110,7 @@ export const useWebSocket = (options: UseWebSocketOptions) => {
       console.error('❌ useWebSocket - Error creating WebSocket:', error);
       onError?.(error instanceof Error ? error : new Error('Failed to create WebSocket'));
     }
-  }, [userId, onMessage, onError, onConnect, onDisconnect]);
+  }, [userId, onMessage, onTyping, onError, onConnect, onDisconnect]);
 
   /**
    * Desconecta del WebSocket
