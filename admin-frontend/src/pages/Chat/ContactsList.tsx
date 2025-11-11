@@ -4,7 +4,6 @@ import { Button, PlusIcon } from '../../components/commons';
 interface ContactsListProps {
   conversations: Conversation[];
   isLoading: boolean;
-  isConnected: boolean;
   selectedConversationId: number | null;
   onSelectConversation: (conversation: Conversation) => void;
   onStartConversation: () => void;
@@ -15,7 +14,6 @@ interface ContactsListProps {
  * Componente para mostrar la lista de contactos/conversaciones
  * @param conversations - Lista de conversaciones
  * @param isLoading - Indica si se están cargando las conversaciones
- * @param isConnected - Indica si el WebSocket está conectado
  * @param selectedConversationId - ID de la conversación seleccionada
  * @param onSelectConversation - Función que se ejecuta al seleccionar una conversación
  * @param onStartConversation - Función que se ejecuta al iniciar una nueva conversación
@@ -25,7 +23,6 @@ interface ContactsListProps {
 export const ContactsList = ({
   conversations,
   isLoading,
-  isConnected,
   selectedConversationId,
   onSelectConversation,
   onStartConversation,

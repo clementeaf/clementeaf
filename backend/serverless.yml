@@ -20,6 +20,7 @@ provider:
           Action:
             - s3:GetObject
             - s3:ListBucket
+            - s3:PutObject
           Resource:
             - arn:aws:s3:::banados-analytics-data
             - arn:aws:s3:::banados-analytics-data/*
@@ -45,6 +46,7 @@ provider:
 
 plugins:
   - serverless-offline
+
 
 functions:
   hello:
@@ -322,6 +324,87 @@ functions:
           method: put
           cors: true
 
+  # Tickets endpoints
+  createTicket:
+    handler: dist/modules/Tickets/handlers/createTicket.handler
+    timeout: 30
+    memorySize: 512
+    events:
+      - http:
+          path: tickets
+          method: post
+          cors: true
+
+  getTicketById:
+    handler: dist/modules/Tickets/handlers/getTicketById.handler
+    timeout: 30
+    memorySize: 512
+    events:
+      - http:
+          path: tickets/{id}
+          method: get
+          cors: true
+
+  getAllTickets:
+    handler: dist/modules/Tickets/handlers/getAllTickets.handler
+    timeout: 30
+    memorySize: 512
+    events:
+      - http:
+          path: tickets
+          method: get
+          cors: true
+
+  getTicketsByReporterId:
+    handler: dist/modules/Tickets/handlers/getTicketsByReporterId.handler
+    timeout: 30
+    memorySize: 512
+    events:
+      - http:
+          path: tickets/reporter
+          method: get
+          cors: true
+
+  getTicketsByAssigneeId:
+    handler: dist/modules/Tickets/handlers/getTicketsByAssigneeId.handler
+    timeout: 30
+    memorySize: 512
+    events:
+      - http:
+          path: tickets/assignee
+          method: get
+          cors: true
+
+  updateTicket:
+    handler: dist/modules/Tickets/handlers/updateTicket.handler
+    timeout: 30
+    memorySize: 512
+    events:
+      - http:
+          path: tickets/{id}
+          method: put
+          cors: true
+
+  deleteTicket:
+    handler: dist/modules/Tickets/handlers/deleteTicket.handler
+    timeout: 30
+    memorySize: 512
+    events:
+      - http:
+          path: tickets/{id}
+          method: delete
+          cors: true
+
+  getPresignedUrl:
+    handler: dist/modules/Tickets/handlers/getPresignedUrl.handler
+    timeout: 30
+    memorySize: 512
+    events:
+      - http:
+          path: tickets/presigned-url
+          method: post
+          cors: true
+
   # WebSocket handlers
   websocketConnect:
     handler: dist/modules/Chat/handlers/websocket/connect.handler
@@ -338,6 +421,36 @@ functions:
     events:
       - websocket:
           route: $disconnect
+
+resources:
+  Outputs:
+    ApiGatewayRestApiId:
+      Description: "API Gateway REST API ID"
+      Value:
+        Ref: ApiGatewayRestApi
+      Export:
+        Name: ${self:service}-${self:provider.stage}-ApiGatewayRestApiId
+    ApiGatewayRestApiRootResourceId:
+      Description: "API Gateway Root Resource ID"
+      Value:
+        Fn::GetAtt:
+          - ApiGatewayRestApi
+          - RootResourceId
+      Export:
+        Name: ${self:service}-${self:provider.stage}-ApiGatewayRestApiRootResourceId
+    ServiceEndpoint:
+      Description: "API Gateway endpoint URL"
+      Value:
+        Fn::Join:
+          - ""
+          - - "https://"
+            - Ref: ApiGatewayRestApi
+            - ".execute-api."
+            - ${self:provider.region}
+            - ".amazonaws.com/"
+            - ${self:provider.stage}
+      Export:
+        Name: ${self:service}-${self:provider.stage}-ServiceEndpoint
 
 custom:
   serverless-offline:

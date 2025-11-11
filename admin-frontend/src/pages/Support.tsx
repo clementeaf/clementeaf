@@ -1,8 +1,10 @@
 import { useState } from 'react';
+import { toast } from 'react-toastify';
 import type { Ticket, TicketType, TicketPriority } from './Support/types';
 import { KanbanBoard } from './Support/KanbanBoard';
 import { CreateTicketModal } from './Support/CreateTicketModal';
 import { TicketDetailsModal } from './Support/TicketDetailsModal';
+import { useAllTickets, useCreateTicket } from '../hooks/useTickets';
 import { Button, PlusIcon } from '../components/commons';
 
 /**
@@ -10,35 +12,40 @@ import { Button, PlusIcon } from '../components/commons';
  * @returns Componente Support
  */
 export const Support = () => {
-  const [tickets, setTickets] = useState<Ticket[]>([]);
+  const { data: ticketsData, isLoading } = useAllTickets(1, 100);
+  const createTicketMutation = useCreateTicket();
+  
   const [isCreateTicketModalOpen, setIsCreateTicketModalOpen] = useState(false);
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
   const [isTicketDetailsModalOpen, setIsTicketDetailsModalOpen] = useState(false);
+
+  const tickets = ticketsData?.data ?? [];
 
   const handleTicketClick = (ticket: Ticket): void => {
     setSelectedTicket(ticket);
     setIsTicketDetailsModalOpen(true);
   };
 
-  const handleCreateTicket = (ticketData: {
+  const handleCreateTicket = async (ticketData: {
     title: string;
     description: string;
     type: TicketType;
     priority: TicketPriority;
-  }): void => {
-    const newTicket: Ticket = {
-      id: Date.now(), // TODO: Usar ID del backend
-      title: ticketData.title,
-      description: ticketData.description,
-      type: ticketData.type,
-      priority: ticketData.priority,
-      status: 'requested',
-      reporterId: 1, // TODO: Usar ID del usuario actual
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
-
-    setTickets([...tickets, newTicket]);
+  }): Promise<void> => {
+    try {
+      await createTicketMutation.mutateAsync({
+        title: ticketData.title,
+        description: ticketData.description,
+        type: ticketData.type,
+        priority: ticketData.priority
+      });
+      
+      toast.success('Ticket creado exitosamente');
+      setIsCreateTicketModalOpen(false);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Error al crear el ticket';
+      toast.error(errorMessage);
+    }
   };
 
   return (
@@ -58,7 +65,13 @@ export const Support = () => {
           </Button>
         </div>
         <div className="flex-1 p-6 overflow-hidden">
-          <KanbanBoard tickets={tickets} onTicketClick={handleTicketClick} />
+          {isLoading ? (
+            <div className="flex items-center justify-center h-full">
+              <div className="text-gray-500">Cargando tickets...</div>
+            </div>
+          ) : (
+            <KanbanBoard tickets={tickets} onTicketClick={handleTicketClick} />
+          )}
         </div>
       </div>
 

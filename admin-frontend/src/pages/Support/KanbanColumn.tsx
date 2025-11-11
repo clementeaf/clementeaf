@@ -11,12 +11,12 @@ interface KanbanColumnProps {
 /**
  * Componente para mostrar una columna en el tablero Kanban
  * @param title - Título de la columna
- * @param status - Estado de los tickets en esta columna
+ * @param status - Estado de los tickets en esta columna (usado para filtrar en el componente padre)
  * @param tickets - Lista de tickets en esta columna
  * @param onTicketClick - Función que se ejecuta al hacer click en un ticket
  * @returns Componente KanbanColumn
  */
-export const KanbanColumn = ({ title, status, tickets, onTicketClick }: KanbanColumnProps) => {
+export const KanbanColumn = ({ title, tickets, onTicketClick }: KanbanColumnProps) => {
   return (
     <div className="flex-1 bg-gray-50 rounded-lg p-4 min-w-[280px] flex flex-col h-full">
       <div className="mb-4 flex-shrink-0">

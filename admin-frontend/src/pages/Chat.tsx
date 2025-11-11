@@ -64,7 +64,7 @@ export const Chat = () => {
   /**
    * Hook de WebSocket para recibir mensajes en tiempo real
    */
-  const { isConnected } = useWebSocket({
+  useWebSocket({
     userId: currentUserId,
     onMessage: handleWebSocketMessage,
     onError: (error: Error) => {
@@ -172,7 +172,6 @@ export const Chat = () => {
         <ContactsList
           conversations={conversations}
           isLoading={isLoadingConversations}
-          isConnected={isConnected}
           selectedConversationId={selectedConversation?.id || null}
           onSelectConversation={setSelectedConversation}
           onStartConversation={() => setIsStartConversationModalOpen(true)}

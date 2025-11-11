@@ -54,6 +54,15 @@ export const endpoints = {
   users: buildEndpoints('users', {
     getAll: '',
     getById: '{id}'
+  }),
+  tickets: buildEndpoints('tickets', {
+    create: '',
+    getById: '{id}',
+    getAll: '',
+    getByReporter: 'reporter',
+    getByAssignee: 'assignee',
+    update: '{id}',
+    delete: '{id}'
   })
 } as const;
 
