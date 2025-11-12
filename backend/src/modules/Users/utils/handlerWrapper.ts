@@ -3,6 +3,18 @@ import { initializeDatabase } from '../../../config/database';
 import { errorResponse, getErrorStatusCode } from './response';
 
 /**
+ * Headers CORS para las respuestas
+ */
+const getCorsHeaders = (): Record<string, string> => {
+  return {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
+    'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
+    'Content-Type': 'application/json'
+  };
+};
+
+/**
  * Wrapper para handlers que maneja inicialización de DB y errores
  * @param handler - Función handler a ejecutar
  * @returns Handler envuelto con manejo de errores
@@ -11,6 +23,15 @@ export const handlerWrapper = (
   handler: (event: APIGatewayProxyEvent) => Promise<APIGatewayProxyResult>
 ) => {
   return async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
+    // Manejar requests OPTIONS (preflight CORS)
+    if (event.httpMethod === 'OPTIONS') {
+      return {
+        statusCode: 200,
+        headers: getCorsHeaders(),
+        body: ''
+      };
+    }
+
     try {
       await initializeDatabase();
       return await handler(event);
