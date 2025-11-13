@@ -66,6 +66,11 @@ export const endpoints = {
     update: '{id}',
     delete: '{id}',
     getPresignedUrl: 'presigned-url'
+  }),
+  products: buildEndpoints('products', {
+    getAll: '',
+    search: 'search',
+    sync: 'sync'
   })
 } as const;
 

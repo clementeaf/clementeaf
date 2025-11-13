@@ -16,14 +16,6 @@ export const SalesOrder = () => {
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  
-  // Mock de productos (temporal, se reemplazará con datos reales)
-  const mockProducts: Product[] = [
-    { id: '1', name: 'Producto A', code: 'PROD-A', price: 10000, stock: 50 },
-    { id: '2', name: 'Producto B', code: 'PROD-B', price: 15000, stock: 30 },
-    { id: '3', name: 'Producto C', code: 'PROD-C', price: 20000, stock: 20 },
-    { id: '4', name: 'Producto D', code: 'PROD-D', price: 25000, stock: 15 }
-  ];
 
   /**
    * Maneja el cambio de un campo del formulario
@@ -154,7 +146,6 @@ export const SalesOrder = () => {
         <ProductSearch
           selectedProduct={selectedProduct}
           onSelectProduct={handleSelectProduct}
-          products={mockProducts}
           label="Producto"
           required
         />

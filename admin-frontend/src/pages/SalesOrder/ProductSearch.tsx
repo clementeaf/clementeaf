@@ -1,8 +1,10 @@
-import { useState, useRef, useEffect, type ChangeEvent } from 'react';
+import { useState, useRef, useEffect, useCallback, type ChangeEvent } from 'react';
 import { Input, SearchIcon } from '../../components/commons';
+import { useSearchProducts } from '../../hooks/useProducts';
+import type { Product as ApiProduct } from '../../services/productService';
 
 /**
- * Interfaz para un producto
+ * Interfaz para un producto (compatible con la API)
  */
 export interface Product {
   id: string;
@@ -11,6 +13,19 @@ export interface Product {
   price?: number;
   stock?: number;
 }
+
+/**
+ * Convierte un producto de la API al formato del componente
+ */
+const mapApiProductToComponent = (apiProduct: ApiProduct): Product => {
+  return {
+    id: apiProduct.nregist.toString(),
+    name: apiProduct.nombre,
+    code: apiProduct.codigo,
+    price: apiProduct.precvta ?? undefined,
+    stock: apiProduct.art_dispon ?? undefined
+  };
+};
 
 /**
  * Props del componente ProductSearch
@@ -24,14 +39,6 @@ interface ProductSearchProps {
    * Función que se ejecuta cuando se selecciona un producto
    */
   onSelectProduct?: (product: Product) => void;
-  /**
-   * Lista de productos disponibles (mock por ahora)
-   */
-  products?: Product[];
-  /**
-   * Si está cargando
-   */
-  isLoading?: boolean;
   /**
    * Label del campo
    */
@@ -54,35 +61,35 @@ interface ProductSearchProps {
 export const ProductSearch = ({
   selectedProduct,
   onSelectProduct,
-  products = [],
-  isLoading = false,
   label = 'Producto',
   required = false,
   error
 }: ProductSearchProps) => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const searchRef = useRef<HTMLDivElement>(null);
 
-  /**
-   * Filtra productos según el término de búsqueda
-   */
+  // Debounce del término de búsqueda
   useEffect(() => {
-    if (!searchTerm.trim()) {
-      setFilteredProducts([]);
-      return;
-    }
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 300);
 
-    const searchLower = searchTerm.toLowerCase();
-    const filtered = products.filter((product) => {
-      const nameMatch = product.name.toLowerCase().includes(searchLower);
-      const codeMatch = product.code?.toLowerCase().includes(searchLower) ?? false;
-      return nameMatch || codeMatch;
-    });
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [searchTerm]);
 
-    setFilteredProducts(filtered);
-  }, [searchTerm, products]);
+  // Buscar productos cuando cambia el término de búsqueda con debounce
+  const { data: products = [], isLoading } = useSearchProducts(
+    debouncedSearchTerm,
+    debouncedSearchTerm.trim().length >= 2,
+    20
+  );
+
+  // Mapear productos de la API al formato del componente
+  const filteredProducts: Product[] = products.map(mapApiProductToComponent);
 
   /**
    * Cierra el dropdown cuando se hace click fuera
@@ -106,42 +113,44 @@ export const ProductSearch = ({
   /**
    * Maneja el cambio en el input de búsqueda
    */
-  const handleSearchChange = (e: ChangeEvent<HTMLInputElement>): void => {
+  const handleSearchChange = useCallback((e: ChangeEvent<HTMLInputElement>): void => {
     const value = e.target.value;
     setSearchTerm(value);
     setIsDropdownOpen(true);
-  };
+  }, []);
 
   /**
    * Maneja la selección de un producto
    */
-  const handleSelectProduct = (product: Product): void => {
+  const handleSelectProduct = useCallback((product: Product): void => {
     if (onSelectProduct) {
       onSelectProduct(product);
     }
     setSearchTerm('');
     setIsDropdownOpen(false);
-  };
+  }, [onSelectProduct]);
 
   /**
    * Maneja el focus del input
    */
-  const handleFocus = (): void => {
+  const handleFocus = useCallback((): void => {
     if (searchTerm.trim() && filteredProducts.length > 0) {
       setIsDropdownOpen(true);
     }
-  };
+  }, [searchTerm, filteredProducts.length]);
 
   /**
    * Limpia la selección
    */
-  const handleClear = (): void => {
+  const handleClear = useCallback((): void => {
     setSearchTerm('');
     setIsDropdownOpen(false);
     if (onSelectProduct) {
       onSelectProduct({ id: '', name: '' });
     }
-  };
+  }, [onSelectProduct]);
+
+  const displayValue = selectedProduct?.name || searchTerm;
 
   return (
     <div ref={searchRef} className="relative">
@@ -149,7 +158,7 @@ export const ProductSearch = ({
         id="product-search"
         label={label}
         type="text"
-        value={selectedProduct?.name || searchTerm}
+        value={displayValue}
         onChange={handleSearchChange}
         onFocus={handleFocus}
         placeholder="Buscar producto por nombre o código..."
@@ -188,21 +197,27 @@ export const ProductSearch = ({
                     {product.code && (
                       <span className="text-xs text-gray-500">Código: {product.code}</span>
                     )}
-                    {product.price !== undefined && (
+                    {product.price !== undefined && product.price !== null && (
                       <span className="text-xs text-gray-500">
-                        ${product.price.toLocaleString('es-CL')}
+                        ${product.price.toLocaleString('es-CL', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                       </span>
                     )}
-                    {product.stock !== undefined && (
-                      <span className="text-xs text-gray-500">Stock: {product.stock}</span>
+                    {product.stock !== undefined && product.stock !== null && (
+                      <span className="text-xs text-gray-500">
+                        Stock: {product.stock.toLocaleString('es-CL', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
+                      </span>
                     )}
                   </div>
                 </button>
               ))}
             </div>
-          ) : searchTerm.trim() ? (
+          ) : searchTerm.trim().length >= 2 ? (
             <div className="p-4 text-center text-gray-500">
               No se encontraron productos con "{searchTerm}"
+            </div>
+          ) : searchTerm.trim().length > 0 ? (
+            <div className="p-4 text-center text-gray-500">
+              Escribe al menos 2 caracteres para buscar
             </div>
           ) : null}
         </div>
@@ -210,4 +225,3 @@ export const ProductSearch = ({
     </div>
   );
 };
-
