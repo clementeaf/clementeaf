@@ -195,6 +195,9 @@ functions:
     handler: dist/modules/Products/handlers/syncProducts.handler
     timeout: 600
     memorySize: 1024
+    vpc:
+      securityGroupIds: []
+      subnetIds: []
     events:
       - http:
           path: products/sync
@@ -218,6 +221,16 @@ functions:
     events:
       - http:
           path: products/search
+          method: get
+          cors: true
+
+  debugProducts:
+    handler: dist/modules/Products/handlers/debugProducts.handler
+    timeout: 30
+    memorySize: 512
+    events:
+      - http:
+          path: products/debug
           method: get
           cors: true
 

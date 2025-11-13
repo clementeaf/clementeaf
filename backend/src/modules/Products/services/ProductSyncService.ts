@@ -162,7 +162,7 @@ export class ProductSyncService {
         reject(new Error(`Error fetching page ${pageNumber}: ${error.message}`));
       });
 
-      req.setTimeout(30000, () => {
+      req.setTimeout(60000, () => {
         req.destroy();
         reject(new Error(`Timeout fetching page ${pageNumber}`));
       });
