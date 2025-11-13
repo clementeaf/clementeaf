@@ -44,18 +44,31 @@ provider:
     S3_BUCKET_NAME: ${env:S3_BUCKET_NAME, 'banados-analytics-data'}
     S3_DATA_KEY: ${env:S3_DATA_KEY, 'Analytics_CtasPorCobrar/combined_data.json'}
 
+package:
+  patterns:
+    - '!node_modules/**'
+    - 'node_modules/typeorm/**'
+    - 'node_modules/pg/**'
+    - 'node_modules/reflect-metadata/**'
+    - 'node_modules/@aws-sdk/**'
+    - 'node_modules/bcryptjs/**'
+    - 'node_modules/jsonwebtoken/**'
+    - 'node_modules/axios/**'
+    - 'dist/**'
+    - 'package.json'
+
 plugins:
   - serverless-offline
 
 
 functions:
-  hello:
-    handler: dist/handlers/hello.handler
-    events:
-      - http:
-          path: hello
-          method: get
-          cors: true
+  # hello:
+  #   handler: dist/handlers/hello.handler
+  #   events:
+  #     - http:
+  #         path: hello
+  #         method: get
+  #         cors: true
 
   runMigrations:
     handler: dist/handlers/runMigrations.handler
@@ -175,6 +188,37 @@ functions:
       - http:
           path: analytics/sync
           method: post
+          cors: true
+
+  # Products endpoints
+  syncProducts:
+    handler: dist/modules/Products/handlers/syncProducts.handler
+    timeout: 600
+    memorySize: 1024
+    events:
+      - http:
+          path: products/sync
+          method: post
+          cors: true
+
+  getAllProducts:
+    handler: dist/modules/Products/handlers/getAllProducts.handler
+    timeout: 30
+    memorySize: 512
+    events:
+      - http:
+          path: products
+          method: get
+          cors: true
+
+  searchProducts:
+    handler: dist/modules/Products/handlers/searchProducts.handler
+    timeout: 30
+    memorySize: 512
+    events:
+      - http:
+          path: products/search
+          method: get
           cors: true
 
   # CheckAuditor endpoints
