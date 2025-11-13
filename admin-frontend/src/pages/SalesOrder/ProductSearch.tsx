@@ -82,14 +82,17 @@ export const ProductSearch = ({
   }, [searchTerm]);
 
   // Buscar productos cuando cambia el término de búsqueda con debounce
-  const { data: products = [], isLoading } = useSearchProducts(
+  const { data: products, isLoading } = useSearchProducts(
     debouncedSearchTerm,
     debouncedSearchTerm.trim().length >= 2,
     20
   );
 
+  // Asegurar que products sea siempre un array
+  const productsArray = Array.isArray(products) ? products : [];
+
   // Mapear productos de la API al formato del componente
-  const filteredProducts: Product[] = products.map(mapApiProductToComponent);
+  const filteredProducts: Product[] = productsArray.map(mapApiProductToComponent);
 
   /**
    * Cierra el dropdown cuando se hace click fuera

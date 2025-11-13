@@ -53,10 +53,10 @@ export const productService = {
    * Busca productos por nombre o código
    */
   async searchProducts(searchTerm: string, limit?: number): Promise<Product[]> {
-    const { data } = await apiClient.get<{ data: Product[] }>(endpoints.products.search, {
+    const { data } = await apiClient.get<{ data: { data: Product[]; total: number } }>(endpoints.products.search, {
       params: { q: searchTerm, limit: limit ?? 20 }
     });
-    return data.data;
+    return data.data.data || [];
   },
 
   /**
