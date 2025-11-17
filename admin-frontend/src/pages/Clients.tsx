@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Table } from '../components/commons';
 import { ClientsHeader } from './Clients/ClientsHeader';
@@ -8,6 +8,7 @@ import { VerifyRutModal } from './Clients/CreateClient/VerifyRutModal';
 import { columns } from './Clients/columns';
 import { useAllClients } from '../hooks/useClients';
 import { routes } from '../routes';
+import { clearClientsCache } from '../utils/clearClientsCache';
 import type { ClientRow } from './Clients/columns';
 
 /**
@@ -22,6 +23,14 @@ export const Clients = () => {
   const limit = 50;
 
   const { data: clientsData, isLoading, error, hasDataChanged } = useAllClients(page, limit);
+
+  // Limpiar caché si hay inconsistencias (datos persistidos diferentes a API)
+  useEffect(() => {
+    if (hasDataChanged && clientsData) {
+      console.log('⚠️ Datos inconsistentes detectados. Limpiando caché...');
+      clearClientsCache();
+    }
+  }, [hasDataChanged, clientsData]);
 
   /**
    * Mapea los datos del API a la estructura esperada por la tabla
@@ -57,7 +66,9 @@ export const Clients = () => {
    * Maneja el click en una fila de la tabla
    */
   const handleRowClick = (row: { original: ClientRow }): void => {
-    navigate(`${routes.clientDetails}/${row.original.id}`);
+    const clientId = row.original.id;
+    console.log('Click en fila - ID del cliente:', clientId, 'Datos completos:', row.original);
+    navigate(`${routes.clientDetails}/${clientId}`);
   };
 
   return (

@@ -105,12 +105,17 @@ export const useCreateClient = () => {
 export const useClientById = (id: number | null) => {
   return useQuery({
     queryKey: ['client', id],
-    queryFn: () => {
+    queryFn: async () => {
       if (!id) throw new Error('ID is required');
-      return clientsService.getClientById(id);
+      console.log('useClientById - Buscando cliente con ID:', id);
+      // El servicio devuelve null si el cliente no existe (404)
+      const client = await clientsService.getClientById(id);
+      console.log('useClientById - Cliente encontrado:', client ? 'Sí' : 'No');
+      return client;
     },
     enabled: !!id,
-    staleTime: 1000 * 60 * 5 // 5 minutos
+    staleTime: 1000 * 60 * 5, // 5 minutos
+    retry: false // No reintentar en caso de 404
   });
 };
 
@@ -226,10 +231,14 @@ export const useAllClients = (page: number = 1, limit: number = 50) => {
     originalPersistedData.current = persistedData;
   }, [persistedData]);
 
+  // Priorizar datos de la API sobre datos persistidos
+  // Si la query tiene datos (de la API), usarlos; si no, usar persistidos solo como fallback inicial
+  const finalData = query.data || (query.isLoading ? persistedData : null);
+  
   return {
     ...query,
     hasDataChanged, // Indica si los datos de la API son diferentes a los persistidos
-    data: query.data || persistedData // Usar datos de API o persistidos como fallback
+    data: finalData // Priorizar datos de API, solo usar persistidos durante carga inicial
   };
 };
 

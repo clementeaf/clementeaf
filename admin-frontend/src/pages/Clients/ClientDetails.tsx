@@ -11,6 +11,8 @@ export const ClientDetails = () => {
   const navigate = useNavigate();
   const clientId = id ? parseInt(id, 10) : null;
 
+  console.log('ClientDetails - ID de la URL:', id, 'ID parseado:', clientId);
+
   const { data: client, isLoading, error } = useClientById(clientId);
 
   /**
@@ -29,17 +31,36 @@ export const ClientDetails = () => {
   }
 
   if (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+    const isNotFound = errorMessage.includes('no encontrado') || errorMessage.includes('not found');
+    
     return (
-      <div className="w-full h-full flex items-center justify-center">
-        <div className="text-lg text-red-500">Error al cargar los detalles del cliente</div>
+      <div className="w-full h-full flex items-center justify-center flex-col gap-4">
+        <div className={`text-lg ${isNotFound ? 'text-gray-500' : 'text-red-500'}`}>
+          {isNotFound ? 'Cliente no encontrado' : 'Error al cargar los detalles del cliente'}
+        </div>
+        {!isNotFound && (
+          <button
+            onClick={handleBack}
+            className="text-blue-600 hover:text-blue-800 font-medium"
+          >
+            ← Volver a Clientes
+          </button>
+        )}
       </div>
     );
   }
 
   if (!client) {
     return (
-      <div className="w-full h-full flex items-center justify-center">
+      <div className="w-full h-full flex items-center justify-center flex-col gap-4">
         <div className="text-lg text-gray-500">Cliente no encontrado</div>
+        <button
+          onClick={handleBack}
+          className="text-blue-600 hover:text-blue-800 font-medium"
+        >
+          ← Volver a Clientes
+        </button>
       </div>
     );
   }

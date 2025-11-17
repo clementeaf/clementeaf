@@ -147,12 +147,31 @@ export const clientsService = {
   /**
    * Obtiene un cliente por su ID
    * @param id - ID del cliente
-   * @returns Cliente encontrado
+   * @returns Cliente encontrado o null si no existe
    */
-  async getClientById(id: number): Promise<Client> {
-    const url = endpoints.clients.getById.replace('{id}', id.toString());
-    const { data } = await apiClient.get<{ data: Client }>(url);
-    return data.data;
+  async getClientById(id: number): Promise<Client | null> {
+    try {
+      const url = endpoints.clients.getById.replace('{id}', id.toString());
+      console.log('clientsService.getClientById - URL:', url, 'ID:', id);
+      const response = await apiClient.get<{ data: Client }>(url);
+      console.log('clientsService.getClientById - Respuesta recibida:', response.data);
+      // El backend devuelve { data: Client } directamente, no { data: { data: Client } }
+      const client = response.data.data;
+      console.log('clientsService.getClientById - Cliente extraído:', client ? `ID ${client.id}` : 'null');
+      return client;
+    } catch (error: unknown) {
+      console.error('clientsService.getClientById - Error:', error);
+      // Si es un error 404 (cliente no encontrado), devolver null en lugar de lanzar error
+      if (error && typeof error === 'object' && 'response' in error) {
+        const axiosError = error as { response?: { status?: number; data?: { error?: string } } };
+        if (axiosError.response?.status === 404) {
+          console.log('clientsService.getClientById - Cliente no encontrado (404)');
+          return null;
+        }
+      }
+      // Para otros errores, lanzar el error normalmente
+      throw error;
+    }
   },
 
   /**

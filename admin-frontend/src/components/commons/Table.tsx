@@ -160,6 +160,14 @@ export const Table = <TData,>({
   const table = useReactTable({
     data,
     columns,
+    getRowId: (row: TData) => {
+      // Si el objeto tiene un campo 'id', usarlo como identificador
+      if (row && typeof row === 'object' && 'id' in row) {
+        return String(row.id);
+      }
+      // Si no, usar el índice (comportamiento por defecto)
+      return undefined;
+    },
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: enableSorting ? getSortedRowModel() : undefined,
     getFilteredRowModel: enableFiltering ? getFilteredRowModel() : undefined,
