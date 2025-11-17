@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { endpoints } from '../api/endpoints';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://z9hjvrr8b3.execute-api.us-east-1.amazonaws.com/dev';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://7ebampwqf4.execute-api.us-east-1.amazonaws.com/dev';
 
 // Cliente axios sin interceptor de autenticación para presigned URLs
 const apiClientWithoutAuth = axios.create({

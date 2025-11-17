@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Table } from '../components/commons';
 import { ClientsHeader } from './Clients/ClientsHeader';
 import { ClientsFilters } from './Clients/ClientsFilters';
@@ -6,6 +7,7 @@ import { ClientsSearchBar } from './Clients/ClientsSearchBar';
 import { VerifyRutModal } from './Clients/CreateClient/VerifyRutModal';
 import { columns } from './Clients/columns';
 import { useAllClients } from '../hooks/useClients';
+import { routes } from '../routes';
 import type { ClientRow } from './Clients/columns';
 
 /**
@@ -13,6 +15,7 @@ import type { ClientRow } from './Clients/columns';
  * @returns Componente Clients
  */
 export const Clients = () => {
+  const navigate = useNavigate();
   const [searchValue, setSearchValue] = useState('');
   const [isRutModalOpen, setIsRutModalOpen] = useState(false);
   const [page] = useState(1);
@@ -50,6 +53,13 @@ export const Clients = () => {
     setSearchValue(value);
   };
 
+  /**
+   * Maneja el click en una fila de la tabla
+   */
+  const handleRowClick = (row: { original: ClientRow }): void => {
+    navigate(`${routes.clientDetails}/${row.original.id}`);
+  };
+
   return (
     <>
       <div className="w-full h-full flex flex-col p-4">
@@ -80,6 +90,7 @@ export const Clients = () => {
                   headerCellClassName="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider"
                   bodyRowClassName="border-b border-gray-200 hover:bg-gray-50 transition-colors duration-150"
                   bodyCellClassName="px-4 py-3 text-sm text-gray-900"
+                  onRowClick={handleRowClick}
                 />
               )}
             </div>

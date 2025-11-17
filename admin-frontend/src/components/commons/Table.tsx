@@ -115,6 +115,10 @@ export interface TableProps<TData> {
    * Número de filas skeleton a mostrar cuando está cargando
    */
   skeletonRowCount?: number;
+  /**
+   * Callback cuando se hace click en una fila
+   */
+  onRowClick?: (row: TableRow<TData>) => void;
 }
 
 /**
@@ -145,7 +149,8 @@ export const Table = <TData,>({
   initialSorting = [],
   initialColumnFilters = [],
   isLoading = false,
-  skeletonRowCount = 5
+  skeletonRowCount = 5,
+  onRowClick
 }: TableProps<TData>): React.ReactElement => {
   const [sorting, setSorting] = useState<SortingState>(initialSorting);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(initialColumnFilters);
@@ -327,7 +332,19 @@ export const Table = <TData,>({
               }
 
               return (
-                <tr key={row.id} className={bodyRowClassName}>
+                <tr 
+                  key={row.id} 
+                  className={bodyRowClassName}
+                  onClick={(e) => {
+                    // Evitar navegación si el click fue en el checkbox o en botones de acción
+                    const target = e.target as HTMLElement;
+                    if (target.closest('input[type="checkbox"]') || target.closest('button')) {
+                      return;
+                    }
+                    onRowClick?.(row);
+                  }}
+                  style={onRowClick ? { cursor: 'pointer' } : undefined}
+                >
                   {row.getVisibleCells().map((cell) => {
                     if (renderBodyCell) {
                       return <React.Fragment key={cell.id}>{renderBodyCell(cell)}</React.Fragment>;

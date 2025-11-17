@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://z9hjvrr8b3.execute-api.us-east-1.amazonaws.com/dev';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://7ebampwqf4.execute-api.us-east-1.amazonaws.com/dev';
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,

@@ -9,6 +9,7 @@ import { Components } from './pages/Components';
 import { Sells } from './pages/Sells';
 import { Clients } from './pages/Clients';
 import { CreateClient } from './pages/Clients/CreateClient';
+import { ClientDetails } from './pages/Clients/ClientDetails';
 import { Quotes } from './pages/Quotes';
 import { SalesOrder } from './pages/SalesOrder';
 import { Analytics } from './pages/Analytics';
@@ -32,6 +33,7 @@ function App(): React.ReactNode {
           <Route path={routes.sells} element={<Sells />} />
           <Route path={routes.clients} element={<Clients />} />
           <Route path={routes.createClient} element={<CreateClient />} />
+          <Route path={`${routes.clientDetails}/:id`} element={<ClientDetails />} />
           <Route path={routes.quotes} element={<Quotes />} />
           <Route path={routes.salesOrder} element={<SalesOrder />} />
           <Route path={routes.analytics} element={<Analytics />} />

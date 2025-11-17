@@ -66,7 +66,7 @@ export const errorResponse = (
 export const getErrorStatusCode = (errorMessage: string): number => {
   if (errorMessage.includes('already exists')) return 409;
   if (errorMessage.includes('Invalid credentials') || errorMessage.includes('Invalid token')) return 401;
-  if (errorMessage.includes('not found')) return 404;
+  if (errorMessage.includes('not found') || errorMessage.includes('no encontrado') || errorMessage.includes('No encontrado')) return 404;
   if (errorMessage.includes('required') || errorMessage.includes('invalid')) return 400;
   return 500;
 };

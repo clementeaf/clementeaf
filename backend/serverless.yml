@@ -7,6 +7,7 @@ provider:
   runtime: nodejs20.x
   stage: ${opt:stage, 'dev'}
   region: ${opt:region, 'us-east-1'}
+  versionFunctions: false
   vpc:
     securityGroupIds:
       - ${env:LAMBDA_SECURITY_GROUP_ID, 'sg-07008cd2c332f0575'}
@@ -43,6 +44,54 @@ provider:
     CHECKAUDITOR_BASE_URL: ${env:CHECKAUDITOR_BASE_URL, 'https://app.checkauditor.com'}
     S3_BUCKET_NAME: ${env:S3_BUCKET_NAME, 'banados-analytics-data'}
     S3_DATA_KEY: ${env:S3_DATA_KEY, 'Analytics_CtasPorCobrar/combined_data.json'}
+
+package:
+  patterns:
+    - '!node_modules/**'
+    - '!node_modules/.bin/**'
+    - '!node_modules/@types/**'
+    - '!node_modules/typescript/**'
+    - '!node_modules/eslint/**'
+    - '!node_modules/@typescript-eslint/**'
+    - '!node_modules/ws/**'
+    - '!node_modules/serverless/**'
+    - '!node_modules/serverless-offline/**'
+    - '!node_modules/serverless-plugin-typescript/**'
+    - 'node_modules/typeorm/**'
+    - 'node_modules/pg/**'
+    - 'node_modules/reflect-metadata/**'
+    - 'node_modules/@aws-sdk/client-s3/**'
+    - 'node_modules/@aws-sdk/s3-request-presigner/**'
+    - 'node_modules/@aws-sdk/client-apigatewaymanagementapi/**'
+    - 'node_modules/@aws-sdk/client-dynamodb/**'
+    - 'node_modules/@aws-sdk/lib-dynamodb/**'
+    - 'node_modules/@aws-sdk/util-*/**'
+    - 'node_modules/@aws-sdk/middleware-*/**'
+    - 'node_modules/@aws-sdk/protocol-http/**'
+    - 'node_modules/@aws-sdk/smithy-client/**'
+    - 'node_modules/@aws-sdk/config-resolver/**'
+    - 'node_modules/@aws-sdk/credential-providers/**'
+    - 'node_modules/@aws-sdk/region-config-resolver/**'
+    - 'node_modules/@aws-sdk/signature-v4/**'
+    - 'node_modules/@aws-sdk/url-parser/**'
+    - 'node_modules/@aws-sdk/querystring-parser/**'
+    - 'node_modules/@aws-sdk/abort-controller/**'
+    - 'node_modules/@aws-sdk/fetch-http-handler/**'
+    - 'node_modules/@aws-sdk/node-http-handler/**'
+    - 'node_modules/@aws-sdk/hash-node/**'
+    - 'node_modules/@aws-sdk/hash-stream-node/**'
+    - 'node_modules/@aws-sdk/stream-collector-node/**'
+    - 'node_modules/@aws-sdk/util-base64-node/**'
+    - 'node_modules/@aws-sdk/util-body-length-node/**'
+    - 'node_modules/@aws-sdk/util-user-agent-node/**'
+    - 'node_modules/@aws-sdk/util-utf8-node/**'
+    - 'node_modules/@aws-sdk/types/**'
+    - 'node_modules/bcryptjs/**'
+    - 'node_modules/jsonwebtoken/**'
+    - 'node_modules/axios/**'
+    - 'dist/**'
+    - 'package.json'
+  excludeDevDependencies: true
 
 plugins:
   - serverless-offline

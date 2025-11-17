@@ -10,6 +10,7 @@ export const routes = {
   sells: '/sells',
   clients: '/sells/clients',
   createClient: '/sells/clients/create',
+  clientDetails: '/sells/clients/details',
   quotes: '/sells/quotes',
   salesOrder: '/sells/sales-order',
   analytics: '/analytics',
