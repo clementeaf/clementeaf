@@ -28,7 +28,7 @@ export const BillingSection = ({ client }: BillingSectionProps): React.ReactElem
 
   return (
     <div className="h-full flex flex-col">
-      <h3 className="text-lg font-semibold text-gray-800 border-b pb-2 mb-4 flex-shrink-0">Datos de facturación</h3>
+      <h3 className="text-lg font-semibold text-gray-800 pb-2 mb-4 flex-shrink-0">Datos de facturación</h3>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1 content-start">
         <div>

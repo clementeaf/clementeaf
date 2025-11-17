@@ -21,7 +21,7 @@ export const AddressSection = ({ client }: AddressSectionProps): React.ReactElem
 
   return (
     <div className="space-y-6">
-      <h3 className="text-lg font-semibold text-gray-800 border-b pb-2">Direcciones</h3>
+      <h3 className="text-lg font-semibold text-gray-800 pb-2">Direcciones</h3>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Dirección de Facturación */}

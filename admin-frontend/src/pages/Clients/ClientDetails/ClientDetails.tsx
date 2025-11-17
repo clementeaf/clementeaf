@@ -2,10 +2,9 @@ import { useState, useMemo, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useClientById } from '../../../hooks/useClients';
 import { routes } from '../../../routes';
-import { Tabs, type TabItem, ChevronRightIcon } from '../../../components/commons';
+import { type TabItem, ChevronRightIcon } from '../../../components/commons';
 import { ClientSidebar } from './ClientSidebar';
 import {
-  ClientInfoSection,
   SegmentationSection,
   BillingSection,
   ContactSection,
@@ -106,13 +105,34 @@ export const ClientDetails = (): React.ReactElement => {
     if (mainTab === 'info') {
       return (
         <div className="p-6 flex-1 flex flex-col min-h-0 overflow-hidden">
-          <Tabs
-            tabs={infoTabs}
-            activeTab={infoTab}
-            onTabChange={setInfoTab}
-            containerClassName="h-full flex flex-col"
-            tabsListClassName="mb-6 flex-shrink-0"
-          />
+          {/* Tabs secundarios con estilo especial */}
+          <div className="mb-6 flex-shrink-0">
+            <div className="border border-gray-200 rounded-lg bg-white w-[80%]">
+              <div className="flex">
+                {infoTabs.map((tab, index) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setInfoTab(tab.id)}
+                    className={`
+                      flex-1 px-4 py-2 text-sm font-medium transition-all duration-200 relative
+                      ${tab.id === infoTab
+                        ? 'bg-[#E6EEFA] text-[#0052C9]'
+                        : 'bg-white text-gray-700 hover:bg-gray-50'
+                      }
+                      ${index > 0 && tab.id !== infoTab ? 'border-l border-gray-200' : ''}
+                    `}
+                  >
+                    <p>{tab.label}</p>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+          
+          {/* Contenido del tab activo */}
+          <div className="flex-1 overflow-hidden min-h-0 px-[120px]">
+            {infoTabs.find(tab => tab.id === infoTab)?.content}
+          </div>
         </div>
       );
     }
