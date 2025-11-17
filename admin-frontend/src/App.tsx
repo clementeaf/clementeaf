@@ -9,7 +9,7 @@ import { Components } from './pages/Components';
 import { Sells } from './pages/Sells';
 import { Clients } from './pages/Clients';
 import { CreateClient } from './pages/Clients/CreateClient';
-import { ClientDetails } from './pages/Clients/ClientDetails';
+import { ClientDetails } from './pages/Clients/ClientDetails/ClientDetails';
 import { Quotes } from './pages/Quotes';
 import { SalesOrder } from './pages/SalesOrder';
 import { Analytics } from './pages/Analytics';

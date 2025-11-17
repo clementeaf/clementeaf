@@ -23,6 +23,8 @@ export type { CountrySelectorProps } from './CountrySelector';
 export type { Country } from './countries';
 export { Modal } from './Modal';
 export type { ModalProps } from './Modal';
+export { Tabs } from './Tabs';
+export type { TabsProps, TabItem } from './Tabs';
 export {
   CheckIcon,
   DropdownIcon,
