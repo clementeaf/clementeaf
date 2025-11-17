@@ -119,13 +119,13 @@ export const Tabs = ({
 
   return (
     <div className={`flex flex-col h-full ${containerClassName}`}>
-      <div className={`flex border-b border-gray-200 flex-shrink-0 ${tabsListClassName}`}>
+      <div className={`flex border-b border-gray-200 flex-shrink-0 w-full ${tabsListClassName}`}>
         {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => onTabChange(tab.id)}
             className={`
-              px-4 py-3 text-sm font-medium transition-colors duration-200 relative
+              px-4 py-3 text-sm font-medium transition-colors duration-200 relative flex-1
               ${tab.id === activeTab 
                 ? `text-[#004BB7] ${activeTabClassName}` 
                 : 'text-gray-600 hover:text-gray-900'
@@ -133,7 +133,7 @@ export const Tabs = ({
               ${tabClassName}
             `}
           >
-            <div className="flex items-center gap-2">
+            <div className="flex items-center justify-center gap-2">
               {tab.icon && <span className="flex-shrink-0">{tab.icon}</span>}
               <span>{tab.label}</span>
               {tab.badge && (
@@ -148,7 +148,7 @@ export const Tabs = ({
           </button>
         ))}
       </div>
-      <div className="flex-1 overflow-hidden mt-4 min-h-0">
+      <div className="flex-1 overflow-hidden min-h-0">
         {activeTabContent}
       </div>
     </div>

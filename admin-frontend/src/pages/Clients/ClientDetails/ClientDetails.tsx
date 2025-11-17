@@ -26,7 +26,7 @@ export const ClientDetails = (): React.ReactElement => {
 
   // Estado para tabs principales
   const [mainTab, setMainTab] = useState<string>('info');
-  
+
   // Estado para sub-tabs de información
   const [infoTab, setInfoTab] = useState<string>('all');
 
@@ -57,96 +57,94 @@ export const ClientDetails = (): React.ReactElement => {
   // IMPORTANTE: Todos los hooks deben estar antes de cualquier return condicional
   const infoTabs = useMemo((): TabItem[] => {
     if (!client) return [];
-    
+
     return [
-    {
-      id: 'all',
-      label: 'Ver todo',
-      content: (
-        <div className="h-full flex flex-col gap-6 overflow-hidden">
-          <div className="flex-1 overflow-hidden">
-            <SegmentationSection client={client} />
+      {
+        id: 'all',
+        label: 'Ver todo',
+        content: (
+          <div className="h-full flex flex-col gap-6 overflow-hidden">
+            <div className="flex-1 overflow-hidden">
+              <SegmentationSection client={client} />
+            </div>
+            <div className="flex-1 overflow-hidden">
+              <BillingSection client={client} />
+            </div>
           </div>
-          <div className="flex-1 overflow-hidden">
-            <BillingSection client={client} />
-          </div>
-        </div>
-      )
-    },
-    {
-      id: 'segmentation',
-      label: 'Segmentación',
-      content: <SegmentationSection client={client} />
-    },
-    {
-      id: 'billing',
-      label: 'Facturación',
-      content: <BillingSection client={client} />
-    },
-    {
-      id: 'contact',
-      label: 'Contacto',
-      content: <ContactSection client={client} />
-    },
-    {
-      id: 'address',
-      label: 'Dirección',
-      content: <AddressSection client={client} />
-    },
-    {
-      id: 'branches',
-      label: 'Sucursales',
-      content: <BranchesSection clientId={client.id} />
-    }
+        )
+      },
+      {
+        id: 'segmentation',
+        label: 'Segmentación',
+        content: <SegmentationSection client={client} />
+      },
+      {
+        id: 'billing',
+        label: 'Facturación',
+        content: <BillingSection client={client} />
+      },
+      {
+        id: 'contact',
+        label: 'Contacto',
+        content: <ContactSection client={client} />
+      },
+      {
+        id: 'address',
+        label: 'Dirección',
+        content: <AddressSection client={client} />
+      },
+      {
+        id: 'branches',
+        label: 'Sucursales',
+        content: <BranchesSection clientId={client.id} />
+      }
     ];
   }, [client]);
 
-  // Tabs principales
-  const mainTabs = useMemo((): TabItem[] => {
-    if (!client) return [];
-    
-    return [
-    {
-      id: 'info',
-      label: 'Información del cliente',
-      content: (
-        <div>
-          {/* Sub-tabs de información */}
+  // Contenido de cada tab principal
+  const renderMainTabContent = (): React.ReactNode => {
+    if (mainTab === 'info') {
+      return (
+        <div className="p-6 flex-1 flex flex-col min-h-0 overflow-hidden">
           <Tabs
             tabs={infoTabs}
             activeTab={infoTab}
             onTabChange={setInfoTab}
-            containerClassName="mb-6"
+            containerClassName="h-full flex flex-col"
+            tabsListClassName="mb-6 flex-shrink-0"
           />
         </div>
-      )
-    },
-    {
-      id: 'quotes',
-      label: 'Cotizaciones',
-      content: (
-        <div className="text-center py-12 text-gray-500">
-          <p>No hay cotizaciones registradas</p>
-          <button
-            onClick={handleCreateQuote}
-            className="mt-4 text-[#004BB7] hover:text-[#003a94] text-sm font-medium"
-          >
-            Crear cotización
-          </button>
-        </div>
-      )
-    },
-    {
-      id: 'history',
-      label: 'Historial de compras',
-      content: (
-        <div className="text-center py-12 text-gray-500">
-          <p>No hay historial de compras</p>
-        </div>
-      )
+      );
     }
-    ];
-  }, [infoTabs, infoTab, handleCreateQuote, client]);
+
+    if (mainTab === 'quotes') {
+      return (
+        <div className="p-6 flex-1 flex flex-col min-h-0 overflow-hidden">
+          <div className="text-center py-12 text-gray-500">
+            <p>No hay cotizaciones registradas</p>
+            <button
+              onClick={handleCreateQuote}
+              className="mt-4 text-[#004BB7] hover:text-[#003a94] text-sm font-medium"
+            >
+              Crear cotización
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    if (mainTab === 'history') {
+      return (
+        <div className="p-6 flex-1 flex flex-col min-h-0 overflow-hidden">
+          <div className="text-center py-12 text-gray-500">
+            <p>No hay historial de compras</p>
+          </div>
+        </div>
+      );
+    }
+
+    return null;
+  };
 
   // Renderizar estados de carga/error DESPUÉS de todos los hooks
   if (isLoading) {
@@ -160,7 +158,7 @@ export const ClientDetails = (): React.ReactElement => {
   if (error) {
     const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
     const isNotFound = errorMessage.includes('no encontrado') || errorMessage.includes('not found');
-    
+
     return (
       <div className="w-full h-full flex items-center justify-center flex-col gap-4">
         <div className={`text-lg ${isNotFound ? 'text-gray-500' : 'text-red-500'}`}>
@@ -211,7 +209,7 @@ export const ClientDetails = (): React.ReactElement => {
       {/* Contenido principal */}
       <div className="flex-1 flex gap-6 p-6 min-h-0 overflow-hidden">
         {/* Sidebar izquierdo */}
-        <div className="flex-shrink-0 h-full">
+        <div className="flex-shrink-0 h-full border border-gray-200 rounded-lg shadow-sm">
           <ClientSidebar
             client={client}
             onCreateQuote={handleCreateQuote}
@@ -220,16 +218,90 @@ export const ClientDetails = (): React.ReactElement => {
         </div>
 
         {/* Área principal con tabs */}
-        <div className="flex-1 bg-white rounded-lg shadow-sm flex flex-col min-h-0 overflow-hidden h-full">
-          <div className="p-6 flex-1 flex flex-col min-h-0 overflow-hidden">
-            <Tabs
-              tabs={mainTabs}
-              activeTab={mainTab}
-              onTabChange={setMainTab}
-              containerClassName="h-full flex flex-col"
-              tabsListClassName="mb-6 flex-shrink-0"
-            />
+        <div className="w-full h-full bg-white border border-gray-200 rounded-lg shadow-sm flex flex-col min-h-0 overflow-hidden">
+          {/* Tabs principales y búsqueda en la misma línea */}
+          <div className="flex w-full items-center justify-between border-b border-[#95A1B3] relative">
+            {/* Tabs a la izquierda */}
+            <div className="flex w-2/4">
+              <button
+                onClick={() => setMainTab('info')}
+                className={`
+                    px-4 py-3 text-sm font-medium transition-colors duration-200 relative
+                    ${mainTab === 'info'
+                    ? 'text-[#004BB7]'
+                    : 'text-gray-600 hover:text-gray-900'
+                  }
+                  `}
+              >
+                <div className="flex items-center justify-center gap-2">
+                  <span>Información del cliente</span>
+                </div>
+                {mainTab === 'info' && (
+                  <div className="absolute bottom-[-1px] left-0 right-0 h-[2px] bg-[#004BB7] z-10" />
+                )}
+              </button>
+              <button
+                onClick={() => setMainTab('quotes')}
+                className={`
+                    flex-1 px-4 py-3 text-sm font-medium transition-colors duration-200 relative
+                    ${mainTab === 'quotes'
+                    ? 'text-[#004BB7]'
+                    : 'text-gray-600 hover:text-gray-900'
+                  }
+                  `}
+              >
+                <div className="flex items-center justify-center gap-2">
+                  <span>Cotizaciones</span>
+                </div>
+                {mainTab === 'quotes' && (
+                  <div className="absolute bottom-[-1px] left-0 right-0 h-[2px] bg-[#004BB7] z-10" />
+                )}
+              </button>
+              <button
+                onClick={() => setMainTab('history')}
+                className={`
+                    flex-1 px-4 py-3 text-sm font-medium transition-colors duration-200 relative
+                    ${mainTab === 'history'
+                    ? 'text-[#004BB7]'
+                    : 'text-gray-600 hover:text-gray-900'
+                  }
+                  `}
+              >
+                <div className="flex items-center justify-center gap-2">
+                  <span>Historial de compras</span>
+                </div>
+                {mainTab === 'history' && (
+                  <div className="absolute bottom-[-1px] left-0 right-0 h-[2px] bg-[#004BB7] z-10" />
+                )}
+              </button>
+            </div>
+
+            {/* Input de búsqueda a la derecha */}
+            <div className="flex items-center w-[40%]">
+              <svg
+                className="w-5 h-5 text-gray-400 absolute transform -translate-y-1/2 right-[490px] top-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
+              </svg>
+              <input
+                type="text"
+                placeholder="Busca aquí..."
+                className="w-full px-14 py-2"
+              />
+            </div>
           </div>
+
+          {/* Contenido con padding */}
+          {renderMainTabContent()}
         </div>
       </div>
     </div>
