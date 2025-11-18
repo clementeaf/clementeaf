@@ -18,8 +18,8 @@ export const Collections = () => {
   const tableContainerRef = useRef<HTMLDivElement>(null);
   const [filters, setFilters] = useState<Omit<QueryFilters, 'page' | 'limit'>>({});
   const [isAutomationModalOpen, setIsAutomationModalOpen] = useState(false);
-  const [selectedCompanies, setSelectedCompanies] = useState<string[]>([]);
-  const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
+  // Estado principal: empresas seleccionadas por RUT (sincronizado entre tabla y modal)
+  const [selectedCompanies, setSelectedCompanies] = useState<Set<string>>(new Set());
 
   const { data: estadisticas, isLoading: loadingStats } = useEstadisticas();
   const {
@@ -141,35 +141,77 @@ export const Collections = () => {
   };
 
   /**
-   * Maneja la selección/deselección de una fila
+   * Obtiene todas las empresas únicas (RUTs) de las deudas visibles
    */
-  const handleRowToggle = (rowId: string): void => {
-    setSelectedRows(prev => {
+  const uniqueCompanyRuts = useMemo(() => {
+    const ruts = new Set<string>();
+    allDeudas.forEach(deuda => {
+      if (deuda.rut) {
+        ruts.add(deuda.rut);
+      }
+    });
+    return Array.from(ruts);
+  }, [allDeudas]);
+
+  /**
+   * Verifica si una fila está seleccionada (basado en si su empresa está seleccionada)
+   */
+  const isRowSelected = (deuda: CtasPorCobrar): boolean => {
+    return deuda.rut ? selectedCompanies.has(deuda.rut) : false;
+  };
+
+  /**
+   * Maneja la selección/deselección de una fila en la tabla
+   * Agrega o quita la empresa (RUT) de las seleccionadas
+   */
+  const handleRowToggle = (deuda: CtasPorCobrar): void => {
+    if (!deuda.rut) return;
+
+    setSelectedCompanies(prev => {
       const newSet = new Set(prev);
-      if (newSet.has(rowId)) {
-        newSet.delete(rowId);
+      if (newSet.has(deuda.rut!)) {
+        newSet.delete(deuda.rut!);
       } else {
-        newSet.add(rowId);
+        newSet.add(deuda.rut!);
       }
       return newSet;
     });
   };
 
   /**
-   * Maneja la selección/deselección de todas las filas
+   * Maneja la selección/deselección de todas las empresas visibles
    */
   const handleSelectAll = (): void => {
-    if (selectedRows.size === allDeudas.length) {
-      setSelectedRows(new Set());
+    const allRutsSelected = uniqueCompanyRuts.every(rut => selectedCompanies.has(rut));
+    
+    if (allRutsSelected) {
+      // Deseleccionar todas las empresas visibles
+      setSelectedCompanies(prev => {
+        const newSet = new Set(prev);
+        uniqueCompanyRuts.forEach(rut => newSet.delete(rut));
+        return newSet;
+      });
     } else {
-      setSelectedRows(new Set(allDeudas.map(deuda => getRowId(deuda))));
+      // Seleccionar todas las empresas visibles
+      setSelectedCompanies(prev => {
+        const newSet = new Set(prev);
+        uniqueCompanyRuts.forEach(rut => newSet.add(rut));
+        return newSet;
+      });
     }
   };
 
   /**
-   * Verifica si todas las filas están seleccionadas
+   * Verifica si todas las empresas visibles están seleccionadas
    */
-  const isAllSelected = allDeudas.length > 0 && selectedRows.size === allDeudas.length;
+  const isAllSelected = uniqueCompanyRuts.length > 0 && uniqueCompanyRuts.every(rut => selectedCompanies.has(rut));
+
+  /**
+   * Maneja el cambio de selección de empresas desde el modal
+   */
+  const handleCompaniesSelectionChange = (companyRuts: string[]): void => {
+    setSelectedCompanies(new Set(companyRuts));
+  };
 
   if (loadingStats) {
     return (
@@ -228,7 +270,14 @@ export const Collections = () => {
         {/* Tabla de Cuentas por Cobrar */}
         <div className="bg-white p-6 rounded-lg shadow flex flex-col flex-1 min-h-0 overflow-hidden">
           <div className="flex justify-between items-center mb-4 flex-shrink-0">
-            <h2 className="text-xl font-bold text-gray-800">Cuentas por Cobrar</h2>
+            <div className="flex items-center gap-4">
+              <h2 className="text-xl font-bold text-gray-800">Cuentas por Cobrar</h2>
+              {selectedCompanies.size > 0 && (
+                <div className="text-sm text-blue-600 font-medium">
+                  {selectedCompanies.size} empresa{selectedCompanies.size !== 1 ? 's' : ''} seleccionada{selectedCompanies.size !== 1 ? 's' : ''}
+                </div>
+              )}
+            </div>
             <div className="flex items-center gap-4">
               {allDeudas.length > 0 && (
                 <div className="text-sm text-gray-500">
@@ -296,14 +345,14 @@ export const Collections = () => {
               <tbody className="bg-white divide-y divide-gray-200">
                 {allDeudas.map((deuda) => {
                   const rowId = getRowId(deuda);
-                  const isSelected = selectedRows.has(rowId);
+                  const isSelected = isRowSelected(deuda);
                   return (
                     <tr key={rowId} className={`hover:bg-gray-50 ${isSelected ? 'bg-blue-50' : ''}`}>
                       <td className="px-4 py-3 text-center">
                         <div className="flex justify-center">
                           <Checkbox
                             checked={isSelected}
-                            onChange={() => handleRowToggle(rowId)}
+                            onChange={() => handleRowToggle(deuda)}
                             containerClassName=""
                           />
                         </div>
@@ -404,7 +453,7 @@ export const Collections = () => {
         isOpen={isAutomationModalOpen}
         onClose={() => {
           setIsAutomationModalOpen(false);
-          setSelectedCompanies([]);
+          // No limpiar selecciones al cerrar - mantener sincronización
         }}
         contentClassName="max-w-4xl"
       >
@@ -414,7 +463,7 @@ export const Collections = () => {
             <button
               onClick={() => {
                 setIsAutomationModalOpen(false);
-                setSelectedCompanies([]);
+                // No limpiar selecciones al cerrar - mantener sincronización
               }}
               className="text-gray-400 hover:text-gray-600 transition-colors"
               aria-label="Cerrar"
@@ -433,8 +482,8 @@ export const Collections = () => {
             {/* Buscador de empresas */}
             <AutomationCompanySearch
               deudasData={allDeudas}
-              selectedCompanies={selectedCompanies}
-              onSelectionChange={setSelectedCompanies}
+              selectedCompanies={Array.from(selectedCompanies)}
+              onSelectionChange={handleCompaniesSelectionChange}
             />
           </div>
 
@@ -442,7 +491,7 @@ export const Collections = () => {
             <button
               onClick={() => {
                 setIsAutomationModalOpen(false);
-                setSelectedCompanies([]);
+                // No limpiar selecciones al cerrar - mantener sincronización
               }}
               className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors"
             >

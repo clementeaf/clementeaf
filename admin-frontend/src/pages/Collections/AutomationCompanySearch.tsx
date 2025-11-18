@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { SearchIcon } from '../../components/commons/icons';
+import { SearchIcon, DropdownIcon, ChevronUpIcon } from '../../components/commons/icons';
 import { Select } from '../../components/commons';
 import type { SelectOption } from '../../components/commons';
 import type { CtasPorCobrar } from '../../types/analytics';
@@ -54,6 +54,7 @@ export const AutomationCompanySearch = ({
     searchTerm: '',
     filterType: 'all'
   });
+  const [isExpanded, setIsExpanded] = useState(false);
 
   /**
    * Opciones de filtro
@@ -170,6 +171,44 @@ export const AutomationCompanySearch = ({
     }
   };
 
+  /**
+   * Obtiene las deudas de las empresas seleccionadas
+   */
+  const selectedCompaniesDebts = useMemo(() => {
+    return deudasData.filter(deuda => 
+      deuda.rut && selectedCompanies.includes(deuda.rut)
+    );
+  }, [deudasData, selectedCompanies]);
+
+  /**
+   * Formatea un valor numérico como moneda chilena
+   */
+  const formatCurrency = (value: number): string => {
+    return new Intl.NumberFormat('es-CL', {
+      style: 'currency',
+      currency: 'CLP'
+    }).format(value);
+  };
+
+  /**
+   * Formatea una fecha a formato chileno
+   */
+  const formatDate = (dateString: string): string => {
+    return new Date(dateString).toLocaleDateString('es-CL');
+  };
+
+  /**
+   * Determina el estado de pago basado en días vencidos
+   */
+  const getPaymentStatus = (diasVencidos: number | null): string => {
+    if (diasVencidos === null || diasVencidos === undefined) return 'Pendiente';
+    if (diasVencidos < 0) return 'Por vencer';
+    if (diasVencidos === 0) return 'Vence hoy';
+    if (diasVencidos <= 30) return 'Vencido';
+    if (diasVencidos <= 60) return 'Vencido 30-60 días';
+    return 'Vencido +60 días';
+  };
+
   return (
     <div className="space-y-4">
       <div>
@@ -251,12 +290,66 @@ export const AutomationCompanySearch = ({
         </div>
       </div>
 
-      {/* Resumen de selección */}
+      {/* Resumen de selección con acordeón */}
       {selectedCompanies.length > 0 && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-          <p className="text-sm text-blue-800">
-            <span className="font-medium">{selectedCompanies.length}</span> empresa{selectedCompanies.length !== 1 ? 's' : ''} seleccionada{selectedCompanies.length !== 1 ? 's' : ''}
-          </p>
+        <div className="bg-blue-50 border border-blue-200 rounded-lg">
+          <button
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="w-full flex items-center justify-between p-3 text-left hover:bg-blue-100 transition-colors rounded-lg"
+          >
+            <p className="text-sm text-blue-800">
+              <span className="font-medium">{selectedCompanies.length}</span> empresa{selectedCompanies.length !== 1 ? 's' : ''} seleccionada{selectedCompanies.length !== 1 ? 's' : ''}
+            </p>
+            <div className="flex-shrink-0">
+              {isExpanded ? (
+                <ChevronUpIcon color="#1E40AF" />
+              ) : (
+                <DropdownIcon color="#1E40AF" />
+              )}
+            </div>
+          </button>
+          
+          {isExpanded && (
+            <div className="px-3 pb-3 space-y-2 max-h-96 overflow-y-auto">
+              {selectedCompaniesDebts.map((deuda, index) => (
+                <div
+                  key={`${deuda.td}-${deuda.numdocto}-${index}`}
+                  className="bg-white border border-blue-200 rounded-lg p-3"
+                >
+                  <div className="mb-2">
+                    <p className="font-medium text-gray-900 text-sm">{deuda.razsoc || '-'}</p>
+                    <p className="text-xs text-gray-500">RUT: {deuda.rut || '-'}</p>
+                  </div>
+                  
+                  <div className="grid grid-cols-3 gap-3 text-xs">
+                    <div>
+                      <p className="text-gray-500 mb-1">Fecha y Monto Factura</p>
+                      <p className="font-medium text-gray-900 text-xs">
+                        {deuda.fecha ? formatDate(deuda.fecha) : '-'}
+                      </p>
+                      <p className="font-semibold text-red-600 text-xs">
+                        {formatCurrency(deuda.deuda || 0)}
+                      </p>
+                    </div>
+                    
+                    <div>
+                      <p className="text-gray-500 mb-1">Fecha Vencimiento</p>
+                      <p className="font-medium text-gray-900 text-xs">
+                        {deuda.vencimiento ? formatDate(deuda.vencimiento) : '-'}
+                      </p>
+                    </div>
+                    
+                    <div>
+                      <p className="text-gray-500 mb-1">Estado de Pago</p>
+                      <p className="font-medium text-gray-900 text-xs">
+                        {getPaymentStatus(deuda.dias_vencidos)}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>
