@@ -1,8 +1,10 @@
-import { useEffect, useRef, useCallback, useMemo } from 'react';
+import { useEffect, useRef, useCallback, useMemo, useState } from 'react';
 import {
   useEstadisticas,
   useDeudasActivasInfinite
 } from '../hooks/useAnalytics';
+import { CollectionsFilters } from './Collections/CollectionsFilters';
+import type { QueryFilters } from '../types/analytics';
 
 /**
  * Página de Cuentas por Cobrar
@@ -11,6 +13,7 @@ import {
 export const Collections = () => {
   const limit = 10;
   const tableContainerRef = useRef<HTMLDivElement>(null);
+  const [filters, setFilters] = useState<Omit<QueryFilters, 'page' | 'limit'>>({});
 
   const { data: estadisticas, isLoading: loadingStats } = useEstadisticas();
   const {
@@ -19,7 +22,16 @@ export const Collections = () => {
     isFetchingNextPage,
     hasNextPage,
     fetchNextPage
-  } = useDeudasActivasInfinite(limit);
+  } = useDeudasActivasInfinite(limit, filters);
+
+  /**
+   * Efecto para resetear el scroll cuando cambian los filtros
+   */
+  useEffect(() => {
+    if (tableContainerRef.current) {
+      tableContainerRef.current.scrollTop = 0;
+    }
+  }, [filters]);
 
   /**
    * Obtiene todas las deudas de todas las páginas cargadas
@@ -160,16 +172,25 @@ export const Collections = () => {
         </div>
       )}
 
-      {/* Tabla de Cuentas por Cobrar */}
-      <div className="bg-white p-6 rounded-lg shadow flex flex-col flex-1 min-h-0 overflow-hidden">
-        <div className="flex justify-between items-center mb-4 flex-shrink-0">
-          <h2 className="text-xl font-bold text-gray-800">Cuentas por Cobrar</h2>
-          {allDeudas.length > 0 && (
-            <div className="text-sm text-gray-500">
-              Mostrando {allDeudas.length} de {deudasActivasData?.pages[0]?.total || 0} registros
-            </div>
-          )}
-        </div>
+      {/* Contenedor principal con filtros y tabla */}
+      <div className="flex-1 flex gap-6 min-h-0 overflow-hidden">
+        {/* Panel de Filtros */}
+        <CollectionsFilters
+          filters={filters}
+          onFiltersChange={setFilters}
+          className="flex-shrink-0"
+        />
+
+        {/* Tabla de Cuentas por Cobrar */}
+        <div className="bg-white p-6 rounded-lg shadow flex flex-col flex-1 min-h-0 overflow-hidden">
+          <div className="flex justify-between items-center mb-4 flex-shrink-0">
+            <h2 className="text-xl font-bold text-gray-800">Cuentas por Cobrar</h2>
+            {allDeudas.length > 0 && (
+              <div className="text-sm text-gray-500">
+                Mostrando {allDeudas.length} de {deudasActivasData?.pages[0]?.total || 0} registros
+              </div>
+            )}
+          </div>
         {loadingDeudas && allDeudas.length === 0 ? (
           <div className="flex items-center justify-center py-12 flex-1">
             <div className="text-gray-500">Cargando...</div>
@@ -291,6 +312,7 @@ export const Collections = () => {
             )}
           </div>
         )}
+        </div>
       </div>
     </div>
   );

@@ -12,6 +12,12 @@ const getDeudasActivasHandler = async (event: APIGatewayProxyEvent) => {
   const filters = {
     rut: queryParams.rut,
     codvend: queryParams.codvend ? parseInt(queryParams.codvend) : undefined,
+    diasVencidosMin: queryParams.diasVencidosMin ? parseInt(queryParams.diasVencidosMin) : undefined,
+    diasVencidosMax: queryParams.diasVencidosMax ? parseInt(queryParams.diasVencidosMax) : undefined,
+    deudaMin: queryParams.deudaMin ? parseFloat(queryParams.deudaMin) : undefined,
+    deudaMax: queryParams.deudaMax ? parseFloat(queryParams.deudaMax) : undefined,
+    fechaDesde: queryParams.fechaDesde,
+    fechaHasta: queryParams.fechaHasta,
     page: queryParams.page ? parseInt(queryParams.page) : 1,
     limit: queryParams.limit ? parseInt(queryParams.limit) : 10,
   };

@@ -229,23 +229,63 @@ export class AnalyticsService {
     // Obtener total (sin los campos adicionales para el count)
     const countQueryBuilder = repository.createQueryBuilder('ctas')
       .where('ctas.deuda > 0');
+    
+    // Aplicar todos los filtros al count
     if (filters.rut) {
       countQueryBuilder.andWhere('ctas.rut = :rut', { rut: filters.rut });
     }
     if (filters.codvend) {
       countQueryBuilder.andWhere('ctas.codvend = :codvend', { codvend: filters.codvend });
     }
+    if (filters.diasVencidosMin !== undefined) {
+      countQueryBuilder.andWhere('ctas.dias_vencidos >= :diasVencidosMin', { diasVencidosMin: filters.diasVencidosMin });
+    }
+    if (filters.diasVencidosMax !== undefined) {
+      countQueryBuilder.andWhere('ctas.dias_vencidos <= :diasVencidosMax', { diasVencidosMax: filters.diasVencidosMax });
+    }
+    if (filters.deudaMin !== undefined) {
+      countQueryBuilder.andWhere('ctas.deuda >= :deudaMin', { deudaMin: filters.deudaMin });
+    }
+    if (filters.deudaMax !== undefined) {
+      countQueryBuilder.andWhere('ctas.deuda <= :deudaMax', { deudaMax: filters.deudaMax });
+    }
+    if (filters.fechaDesde) {
+      countQueryBuilder.andWhere('ctas.fecha >= :fechaDesde', { fechaDesde: filters.fechaDesde });
+    }
+    if (filters.fechaHasta) {
+      countQueryBuilder.andWhere('ctas.fecha <= :fechaHasta', { fechaHasta: filters.fechaHasta });
+    }
+    
     const total = await countQueryBuilder.getCount();
 
     // Primero obtener los registros paginados SIN el JOIN para asegurar la paginación correcta
     const baseQuery = repository.createQueryBuilder('ctas')
       .where('ctas.deuda > 0');
     
+    // Aplicar todos los filtros a la query principal
     if (filters.rut) {
       baseQuery.andWhere('ctas.rut = :rut', { rut: filters.rut });
     }
     if (filters.codvend) {
       baseQuery.andWhere('ctas.codvend = :codvend', { codvend: filters.codvend });
+    }
+    if (filters.diasVencidosMin !== undefined) {
+      baseQuery.andWhere('ctas.dias_vencidos >= :diasVencidosMin', { diasVencidosMin: filters.diasVencidosMin });
+    }
+    if (filters.diasVencidosMax !== undefined) {
+      baseQuery.andWhere('ctas.dias_vencidos <= :diasVencidosMax', { diasVencidosMax: filters.diasVencidosMax });
+    }
+    if (filters.deudaMin !== undefined) {
+      baseQuery.andWhere('ctas.deuda >= :deudaMin', { deudaMin: filters.deudaMin });
+    }
+    if (filters.deudaMax !== undefined) {
+      baseQuery.andWhere('ctas.deuda <= :deudaMax', { deudaMax: filters.deudaMax });
+    }
+    if (filters.fechaDesde) {
+      baseQuery.andWhere('ctas.fecha >= :fechaDesde', { fechaDesde: filters.fechaDesde });
+    }
+    if (filters.fechaHasta) {
+      baseQuery.andWhere('ctas.fecha <= :fechaHasta', { fechaHasta: filters.fechaHasta });
     }
     
     baseQuery.orderBy('ctas.vencimiento', 'ASC')
