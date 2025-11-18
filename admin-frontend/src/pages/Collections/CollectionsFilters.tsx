@@ -148,6 +148,17 @@ export const CollectionsFilters = ({
               <div>
                 <Input
                   type="text"
+                  label="Nombre Cliente"
+                  labelClassName="text-xs text-gray-600"
+                  placeholder="Ej: CLINICA ASTRA"
+                  value={filters.razsoc || ''}
+                  onChange={(e) => updateFilter('razsoc', e.target.value)}
+                  inputClassName="w-full"
+                />
+              </div>
+              <div>
+                <Input
+                  type="text"
                   label="RUT"
                   labelClassName="text-xs text-gray-600"
                   placeholder="Ej: 12345678-9"

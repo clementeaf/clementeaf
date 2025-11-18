@@ -71,6 +71,7 @@ export interface Estadisticas {
 
 export interface QueryFilters {
   rut?: string;
+  razsoc?: string;
   codvend?: number;
   team?: string;
   diasVencidosMin?: number;

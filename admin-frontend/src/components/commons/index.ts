@@ -25,6 +25,8 @@ export { Modal } from './Modal';
 export type { ModalProps } from './Modal';
 export { Tabs } from './Tabs';
 export type { TabsProps, TabItem } from './Tabs';
+export { ActionsMenu } from './ActionsMenu';
+export type { ActionsMenuProps, ActionMenuItem } from './ActionsMenu';
 export {
   CheckIcon,
   DropdownIcon,
@@ -40,6 +42,7 @@ export {
   BuildingIcon,
   PersonIcon,
   LocationIcon,
-  ChevronRightIcon
+  ChevronRightIcon,
+  EmailIcon
 } from './icons';
 

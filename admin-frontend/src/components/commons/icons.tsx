@@ -227,3 +227,27 @@ export const ChevronRightIcon = ({ color = 'currentColor' }: { color?: string })
     <path d="M6 4L10 8L6 12" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
   </svg>
 );
+
+/**
+ * Componente de ícono de email/correo
+ * @param color - Color del ícono
+ * @returns Componente EmailIcon
+ */
+export const EmailIcon = ({ color = 'currentColor' }: { color?: string }) => (
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path
+      d="M2 4H14C14.6 4 15 4.4 15 5V11C15 11.6 14.6 12 14 12H2C1.4 12 1 11.6 1 11V5C1 4.4 1.4 4 2 4Z"
+      stroke={color}
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M15 5L8 9L1 5"
+      stroke={color}
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);

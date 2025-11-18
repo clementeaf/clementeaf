@@ -4,6 +4,7 @@ import { CtasPorCobrar } from '../entities/CtasPorCobrar.entity';
 
 export interface QueryFilters {
   rut?: string;
+  razsoc?: string;
   codvend?: number;
   team?: string;
   diasVencidosMin?: number;
@@ -234,6 +235,9 @@ export class AnalyticsService {
     if (filters.rut) {
       countQueryBuilder.andWhere('ctas.rut = :rut', { rut: filters.rut });
     }
+    if (filters.razsoc) {
+      countQueryBuilder.andWhere('LOWER(ctas.razsoc) LIKE LOWER(:razsoc)', { razsoc: `%${filters.razsoc}%` });
+    }
     if (filters.codvend) {
       countQueryBuilder.andWhere('ctas.codvend = :codvend', { codvend: filters.codvend });
     }
@@ -265,6 +269,9 @@ export class AnalyticsService {
     // Aplicar todos los filtros a la query principal
     if (filters.rut) {
       baseQuery.andWhere('ctas.rut = :rut', { rut: filters.rut });
+    }
+    if (filters.razsoc) {
+      baseQuery.andWhere('LOWER(ctas.razsoc) LIKE LOWER(:razsoc)', { razsoc: `%${filters.razsoc}%` });
     }
     if (filters.codvend) {
       baseQuery.andWhere('ctas.codvend = :codvend', { codvend: filters.codvend });

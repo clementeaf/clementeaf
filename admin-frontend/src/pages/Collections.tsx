@@ -4,6 +4,7 @@ import {
   useDeudasActivasInfinite
 } from '../hooks/useAnalytics';
 import { CollectionsFilters } from './Collections/CollectionsFilters';
+import { ActionsMenu, EyeIcon, EmailIcon } from '../components/commons';
 import type { QueryFilters } from '../types/analytics';
 
 /**
@@ -265,21 +266,11 @@ export const Collections = () => {
                       </span>
                     </td>
                     <td className="px-4 py-3 text-sm">
-                      <div className="flex items-center gap-2">
-                        {deuda.cliente_email ? (
-                          <>
-                            <span className="text-gray-900">{deuda.cliente_email}</span>
-                            <button
-                              className="text-blue-600 hover:text-blue-800 text-xs font-medium"
-                              title="Enviar correo"
-                            >
-                              Enviar
-                            </button>
-                          </>
-                        ) : (
-                          <span className="text-gray-400 italic">No disponible</span>
-                        )}
-                      </div>
+                      {deuda.cliente_email ? (
+                        <span className="text-gray-900">{deuda.cliente_email}</span>
+                      ) : (
+                        <span className="text-gray-400 italic">No disponible</span>
+                      )}
                     </td>
                     <td className="px-4 py-3 text-sm">
                       {deuda.cliente_telefono ? (
@@ -289,12 +280,26 @@ export const Collections = () => {
                       )}
                     </td>
                     <td className="px-4 py-3 text-sm text-center">
-                      <button
-                        className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-xs font-medium transition-colors"
-                        title="Enviar recordatorio"
-                      >
-                        Enviar
-                      </button>
+                      <ActionsMenu
+                        items={[
+                          {
+                            id: 'enviar-mail',
+                            label: 'Enviar mail',
+                            onClick: () => {
+                              console.log('Enviar mail a:', deuda.cliente_email);
+                            },
+                            icon: <EmailIcon color="#6B7280" />
+                          },
+                          {
+                            id: 'ver-detalle',
+                            label: 'Ver detalle',
+                            onClick: () => {
+                              console.log('Ver detalle de:', deuda);
+                            },
+                            icon: <EyeIcon color="#6B7280" />
+                          }
+                        ]}
+                      />
                     </td>
                   </tr>
                 ))}
