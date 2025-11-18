@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { SearchIcon, DropdownIcon, ChevronUpIcon } from '../../components/commons/icons';
-import { Select, Toggle } from '../../components/commons';
+import { Select, Toggle, Input } from '../../components/commons';
 import type { SelectOption } from '../../components/commons';
 import type { CtasPorCobrar } from '../../types/analytics';
 
@@ -25,6 +25,34 @@ export interface CompanySearchFilters {
 /**
  * Props del componente AutomationCompanySearch
  */
+/**
+ * Configuración de automatización de envío
+ */
+export interface AutomationConfig {
+  /**
+   * Envío automático habilitado
+   */
+  autoSendEnabled: boolean;
+  /**
+   * Enviar N días previos a la fecha de vencimiento
+   */
+  sendDaysBefore: {
+    enabled: boolean;
+    days: number;
+  };
+  /**
+   * Enviar N días posteriores a la fecha de vencimiento
+   */
+  sendDaysAfter: {
+    enabled: boolean;
+    days: number;
+  };
+  /**
+   * Enviar en la fecha de vencimiento
+   */
+  sendOnDueDate: boolean;
+}
+
 export interface AutomationCompanySearchProps {
   /**
    * Datos de cuentas por cobrar para extraer empresas únicas
@@ -39,13 +67,13 @@ export interface AutomationCompanySearchProps {
    */
   onSelectionChange: (companyRuts: string[]) => void;
   /**
-   * Estado del toggle de envío automático
+   * Configuración de automatización
    */
-  autoSendEnabled: boolean;
+  automationConfig: AutomationConfig;
   /**
-   * Función para manejar el cambio del toggle de envío automático
+   * Función para manejar el cambio de configuración de automatización
    */
-  onAutoSendChange: (enabled: boolean) => void;
+  onAutomationConfigChange: (config: AutomationConfig) => void;
 }
 
 /**
@@ -57,8 +85,8 @@ export const AutomationCompanySearch = ({
   deudasData,
   selectedCompanies,
   onSelectionChange,
-  autoSendEnabled,
-  onAutoSendChange
+  automationConfig,
+  onAutomationConfigChange
 }: AutomationCompanySearchProps): React.ReactElement => {
   const [filters, setFilters] = useState<CompanySearchFilters>({
     searchTerm: '',
@@ -363,14 +391,115 @@ export const AutomationCompanySearch = ({
         </div>
       )}
 
-      {/* Toggle de envío automático */}
-      <div className="pt-2">
+      {/* Toggles de configuración de automatización */}
+      <div className="pt-2 space-y-4">
         <Toggle
           label="Enviar email automáticamente"
-          checked={autoSendEnabled}
-          onChange={(e) => onAutoSendChange(e.target.checked)}
+          checked={automationConfig.autoSendEnabled}
+          onChange={(e) => {
+            onAutomationConfigChange({
+              ...automationConfig,
+              autoSendEnabled: e.target.checked
+            });
+          }}
           containerClassName="w-full"
         />
+
+        {automationConfig.autoSendEnabled && (
+          <div className="space-y-3 pl-4 border-l-2 border-blue-200">
+            <div className="flex items-center gap-3">
+              <Toggle
+                checked={automationConfig.sendDaysBefore.enabled}
+                onChange={(e) => {
+                  onAutomationConfigChange({
+                    ...automationConfig,
+                    sendDaysBefore: {
+                      ...automationConfig.sendDaysBefore,
+                      enabled: e.target.checked
+                    }
+                  });
+                }}
+                containerClassName="flex-shrink-0"
+              />
+              <div className="flex-1 flex items-center gap-2">
+                <span className="text-sm text-gray-700 whitespace-nowrap">Enviar</span>
+                <Input
+                  type="number"
+                  value={automationConfig.sendDaysBefore.days > 0 ? automationConfig.sendDaysBefore.days : ''}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    const days = value === '' ? 0 : parseInt(value, 10) || 0;
+                    onAutomationConfigChange({
+                      ...automationConfig,
+                      sendDaysBefore: {
+                        ...automationConfig.sendDaysBefore,
+                        days
+                      }
+                    });
+                  }}
+                  disabled={!automationConfig.sendDaysBefore.enabled}
+                  inputClassName="w-20 h-[32px]"
+                  placeholder="0"
+                  min="0"
+                />
+                <span className="text-sm text-gray-700 whitespace-nowrap">días previos a la fecha de vencimiento</span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <Toggle
+                checked={automationConfig.sendDaysAfter.enabled}
+                onChange={(e) => {
+                  onAutomationConfigChange({
+                    ...automationConfig,
+                    sendDaysAfter: {
+                      ...automationConfig.sendDaysAfter,
+                      enabled: e.target.checked
+                    }
+                  });
+                }}
+                containerClassName="flex-shrink-0"
+              />
+              <div className="flex-1 flex items-center gap-2">
+                <span className="text-sm text-gray-700 whitespace-nowrap">Enviar</span>
+                <Input
+                  type="number"
+                  value={automationConfig.sendDaysAfter.days > 0 ? automationConfig.sendDaysAfter.days : ''}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    const days = value === '' ? 0 : parseInt(value, 10) || 0;
+                    onAutomationConfigChange({
+                      ...automationConfig,
+                      sendDaysAfter: {
+                        ...automationConfig.sendDaysAfter,
+                        days
+                      }
+                    });
+                  }}
+                  disabled={!automationConfig.sendDaysAfter.enabled}
+                  inputClassName="w-20 h-[32px]"
+                  placeholder="0"
+                  min="0"
+                />
+                <span className="text-sm text-gray-700 whitespace-nowrap">días posteriores a la fecha de vencimiento</span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <Toggle
+                label="Enviar en la fecha de vencimiento"
+                checked={automationConfig.sendOnDueDate}
+                onChange={(e) => {
+                  onAutomationConfigChange({
+                    ...automationConfig,
+                    sendOnDueDate: e.target.checked
+                  });
+                }}
+                containerClassName="w-full"
+              />
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

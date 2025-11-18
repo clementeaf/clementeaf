@@ -8,6 +8,7 @@ import { ActionsMenu, EyeIcon, EmailIcon, AutomationIcon, Modal, Checkbox } from
 import { AutomationCompanySearch } from './Collections/AutomationCompanySearch';
 import type { QueryFilters } from '../types/analytics';
 import type { CtasPorCobrar } from '../types/analytics';
+import type { AutomationConfig } from './Collections/AutomationCompanySearch';
 
 /**
  * Página de Cuentas por Cobrar
@@ -20,7 +21,18 @@ export const Collections = () => {
   const [isAutomationModalOpen, setIsAutomationModalOpen] = useState(false);
   // Estado principal: empresas seleccionadas por RUT (sincronizado entre tabla y modal)
   const [selectedCompanies, setSelectedCompanies] = useState<Set<string>>(new Set());
-  const [autoSendEnabled, setAutoSendEnabled] = useState(false);
+  const [automationConfig, setAutomationConfig] = useState<AutomationConfig>({
+    autoSendEnabled: false,
+    sendDaysBefore: {
+      enabled: false,
+      days: 0
+    },
+    sendDaysAfter: {
+      enabled: false,
+      days: 0
+    },
+    sendOnDueDate: false
+  });
 
   const { data: estadisticas, isLoading: loadingStats } = useEstadisticas();
   const {
@@ -485,8 +497,8 @@ export const Collections = () => {
               deudasData={allDeudas}
               selectedCompanies={Array.from(selectedCompanies)}
               onSelectionChange={handleCompaniesSelectionChange}
-              autoSendEnabled={autoSendEnabled}
-              onAutoSendChange={setAutoSendEnabled}
+              automationConfig={automationConfig}
+              onAutomationConfigChange={setAutomationConfig}
             />
           </div>
 
