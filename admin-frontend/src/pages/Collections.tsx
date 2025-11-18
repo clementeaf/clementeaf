@@ -4,7 +4,7 @@ import {
   useDeudasActivasInfinite
 } from '../hooks/useAnalytics';
 import { CollectionsFilters } from './Collections/CollectionsFilters';
-import { ActionsMenu, EyeIcon, EmailIcon } from '../components/commons';
+import { ActionsMenu, EyeIcon, EmailIcon, AutomationIcon } from '../components/commons';
 import type { QueryFilters } from '../types/analytics';
 
 /**
@@ -186,11 +186,25 @@ export const Collections = () => {
         <div className="bg-white p-6 rounded-lg shadow flex flex-col flex-1 min-h-0 overflow-hidden">
           <div className="flex justify-between items-center mb-4 flex-shrink-0">
             <h2 className="text-xl font-bold text-gray-800">Cuentas por Cobrar</h2>
-            {allDeudas.length > 0 && (
-              <div className="text-sm text-gray-500">
-                Mostrando {allDeudas.length} de {deudasActivasData?.pages[0]?.total || 0} registros
-              </div>
-            )}
+            <div className="flex items-center gap-4">
+              {allDeudas.length > 0 && (
+                <div className="text-sm text-gray-500">
+                  Mostrando {allDeudas.length} de {deudasActivasData?.pages[0]?.total || 0} registros
+                </div>
+              )}
+              <ActionsMenu
+                items={[
+                  {
+                    id: 'automatizar-cobros',
+                    label: 'Automatizar cobros',
+                    onClick: () => {
+                      console.log('Automatizar cobros');
+                    },
+                    icon: <AutomationIcon color="#6B7280" />
+                  }
+                ]}
+              />
+            </div>
           </div>
         {loadingDeudas && allDeudas.length === 0 ? (
           <div className="flex items-center justify-center py-12 flex-1">

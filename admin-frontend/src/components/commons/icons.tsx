@@ -251,3 +251,34 @@ export const EmailIcon = ({ color = 'currentColor' }: { color?: string }) => (
     />
   </svg>
 );
+
+/**
+ * Componente de ícono de automatización/engranaje
+ * @param color - Color del ícono
+ * @returns Componente AutomationIcon
+ */
+export const AutomationIcon = ({ color = 'currentColor' }: { color?: string }) => (
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path
+      d="M8 11C9.7 11 11 9.7 11 8C11 6.3 9.7 5 8 5C6.3 5 5 6.3 5 8C5 9.7 6.3 11 8 11Z"
+      stroke={color}
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M10.5 2.5L11.5 4.5L13.5 5.5L11.5 6.5L10.5 8.5L9.5 6.5L7.5 5.5L9.5 4.5L10.5 2.5Z"
+      stroke={color}
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M5.5 7.5L4.5 9.5L2.5 10.5L4.5 11.5L5.5 13.5L6.5 11.5L8.5 10.5L6.5 9.5L5.5 7.5Z"
+      stroke={color}
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);

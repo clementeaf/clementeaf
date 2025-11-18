@@ -43,6 +43,7 @@ export {
   PersonIcon,
   LocationIcon,
   ChevronRightIcon,
-  EmailIcon
+  EmailIcon,
+  AutomationIcon
 } from './icons';
 
