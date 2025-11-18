@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { SearchIcon, DropdownIcon, ChevronUpIcon } from '../../components/commons/icons';
-import { Select } from '../../components/commons';
+import { Select, Toggle } from '../../components/commons';
 import type { SelectOption } from '../../components/commons';
 import type { CtasPorCobrar } from '../../types/analytics';
 
@@ -38,6 +38,14 @@ export interface AutomationCompanySearchProps {
    * Función para manejar la selección de empresas
    */
   onSelectionChange: (companyRuts: string[]) => void;
+  /**
+   * Estado del toggle de envío automático
+   */
+  autoSendEnabled: boolean;
+  /**
+   * Función para manejar el cambio del toggle de envío automático
+   */
+  onAutoSendChange: (enabled: boolean) => void;
 }
 
 /**
@@ -48,7 +56,9 @@ export interface AutomationCompanySearchProps {
 export const AutomationCompanySearch = ({
   deudasData,
   selectedCompanies,
-  onSelectionChange
+  onSelectionChange,
+  autoSendEnabled,
+  onAutoSendChange
 }: AutomationCompanySearchProps): React.ReactElement => {
   const [filters, setFilters] = useState<CompanySearchFilters>({
     searchTerm: '',
@@ -352,6 +362,16 @@ export const AutomationCompanySearch = ({
           )}
         </div>
       )}
+
+      {/* Toggle de envío automático */}
+      <div className="pt-2">
+        <Toggle
+          label="Enviar email automáticamente"
+          checked={autoSendEnabled}
+          onChange={(e) => onAutoSendChange(e.target.checked)}
+          containerClassName="w-full"
+        />
+      </div>
     </div>
   );
 };

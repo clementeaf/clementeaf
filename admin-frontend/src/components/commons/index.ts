@@ -27,6 +27,8 @@ export { Tabs } from './Tabs';
 export type { TabsProps, TabItem } from './Tabs';
 export { ActionsMenu } from './ActionsMenu';
 export type { ActionsMenuProps, ActionMenuItem } from './ActionsMenu';
+export { Toggle } from './Toggle';
+export type { ToggleProps } from './Toggle';
 export {
   CheckIcon,
   DropdownIcon,

@@ -20,6 +20,7 @@ export const Collections = () => {
   const [isAutomationModalOpen, setIsAutomationModalOpen] = useState(false);
   // Estado principal: empresas seleccionadas por RUT (sincronizado entre tabla y modal)
   const [selectedCompanies, setSelectedCompanies] = useState<Set<string>>(new Set());
+  const [autoSendEnabled, setAutoSendEnabled] = useState(false);
 
   const { data: estadisticas, isLoading: loadingStats } = useEstadisticas();
   const {
@@ -484,6 +485,8 @@ export const Collections = () => {
               deudasData={allDeudas}
               selectedCompanies={Array.from(selectedCompanies)}
               onSelectionChange={handleCompaniesSelectionChange}
+              autoSendEnabled={autoSendEnabled}
+              onAutoSendChange={setAutoSendEnabled}
             />
           </div>
 
