@@ -13,7 +13,7 @@ const getDeudasActivasHandler = async (event: APIGatewayProxyEvent) => {
     rut: queryParams.rut,
     codvend: queryParams.codvend ? parseInt(queryParams.codvend) : undefined,
     page: queryParams.page ? parseInt(queryParams.page) : 1,
-    limit: queryParams.limit ? parseInt(queryParams.limit) : 50,
+    limit: queryParams.limit ? parseInt(queryParams.limit) : 10,
   };
 
   const analyticsService = new AnalyticsService();

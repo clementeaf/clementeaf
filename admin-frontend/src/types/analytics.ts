@@ -31,6 +31,8 @@ export interface CtasPorCobrar {
   created_at: string;
   updated_at: string;
   sync_date: string | null;
+  cliente_email: string | null;
+  cliente_telefono: string | null;
 }
 
 export interface PaginatedResponse<T> {
