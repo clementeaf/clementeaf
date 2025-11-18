@@ -4,7 +4,7 @@ import {
   useDeudasActivasInfinite
 } from '../hooks/useAnalytics';
 import { CollectionsFilters } from './Collections/CollectionsFilters';
-import { ActionsMenu, EyeIcon, EmailIcon, AutomationIcon } from '../components/commons';
+import { ActionsMenu, EyeIcon, EmailIcon, AutomationIcon, Modal } from '../components/commons';
 import type { QueryFilters } from '../types/analytics';
 
 /**
@@ -15,6 +15,7 @@ export const Collections = () => {
   const limit = 10;
   const tableContainerRef = useRef<HTMLDivElement>(null);
   const [filters, setFilters] = useState<Omit<QueryFilters, 'page' | 'limit'>>({});
+  const [isAutomationModalOpen, setIsAutomationModalOpen] = useState(false);
 
   const { data: estadisticas, isLoading: loadingStats } = useEstadisticas();
   const {
@@ -198,7 +199,7 @@ export const Collections = () => {
                     id: 'automatizar-cobros',
                     label: 'Automatizar cobros',
                     onClick: () => {
-                      console.log('Automatizar cobros');
+                      setIsAutomationModalOpen(true);
                     },
                     icon: <AutomationIcon color="#6B7280" />
                   }
@@ -333,6 +334,59 @@ export const Collections = () => {
         )}
         </div>
       </div>
+
+      {/* Modal de Automatizar Cobros */}
+      <Modal
+        isOpen={isAutomationModalOpen}
+        onClose={() => setIsAutomationModalOpen(false)}
+        contentClassName="max-w-2xl"
+      >
+        <div className="p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold text-gray-800">Automatizar Cobros</h2>
+            <button
+              onClick={() => setIsAutomationModalOpen(false)}
+              className="text-gray-400 hover:text-gray-600 transition-colors"
+              aria-label="Cerrar"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          <div className="space-y-4">
+            <p className="text-gray-600">
+              Configura la automatización de cobros para enviar recordatorios de forma automática según las reglas que definas.
+            </p>
+            
+            {/* Aquí se puede agregar el contenido del formulario de automatización */}
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <p className="text-sm text-gray-500">
+                El formulario de configuración de automatización se implementará aquí.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-3 mt-6 pt-6 border-t border-gray-200">
+            <button
+              onClick={() => setIsAutomationModalOpen(false)}
+              className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={() => {
+                console.log('Guardar automatización');
+                setIsAutomationModalOpen(false);
+              }}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Guardar
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };
