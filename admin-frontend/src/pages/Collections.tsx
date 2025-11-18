@@ -4,8 +4,10 @@ import {
   useDeudasActivasInfinite
 } from '../hooks/useAnalytics';
 import { CollectionsFilters } from './Collections/CollectionsFilters';
-import { ActionsMenu, EyeIcon, EmailIcon, AutomationIcon, Modal } from '../components/commons';
+import { ActionsMenu, EyeIcon, EmailIcon, AutomationIcon, Modal, Checkbox } from '../components/commons';
+import { AutomationCompanySearch } from './Collections/AutomationCompanySearch';
 import type { QueryFilters } from '../types/analytics';
+import type { CtasPorCobrar } from '../types/analytics';
 
 /**
  * Página de Cuentas por Cobrar
@@ -16,6 +18,8 @@ export const Collections = () => {
   const tableContainerRef = useRef<HTMLDivElement>(null);
   const [filters, setFilters] = useState<Omit<QueryFilters, 'page' | 'limit'>>({});
   const [isAutomationModalOpen, setIsAutomationModalOpen] = useState(false);
+  const [selectedCompanies, setSelectedCompanies] = useState<string[]>([]);
+  const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
 
   const { data: estadisticas, isLoading: loadingStats } = useEstadisticas();
   const {
@@ -129,6 +133,44 @@ export const Collections = () => {
     return 'bg-red-200 text-red-900';
   };
 
+  /**
+   * Obtiene el ID único de una fila
+   */
+  const getRowId = (deuda: CtasPorCobrar): string => {
+    return `${deuda.td}-${deuda.numdocto}`;
+  };
+
+  /**
+   * Maneja la selección/deselección de una fila
+   */
+  const handleRowToggle = (rowId: string): void => {
+    setSelectedRows(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(rowId)) {
+        newSet.delete(rowId);
+      } else {
+        newSet.add(rowId);
+      }
+      return newSet;
+    });
+  };
+
+  /**
+   * Maneja la selección/deselección de todas las filas
+   */
+  const handleSelectAll = (): void => {
+    if (selectedRows.size === allDeudas.length) {
+      setSelectedRows(new Set());
+    } else {
+      setSelectedRows(new Set(allDeudas.map(deuda => getRowId(deuda))));
+    }
+  };
+
+  /**
+   * Verifica si todas las filas están seleccionadas
+   */
+  const isAllSelected = allDeudas.length > 0 && selectedRows.size === allDeudas.length;
+
   if (loadingStats) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -219,6 +261,15 @@ export const Collections = () => {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50 sticky top-0 z-10">
                 <tr>
+                  <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-12">
+                    <div className="flex justify-center">
+                      <Checkbox
+                        checked={isAllSelected}
+                        onChange={() => handleSelectAll()}
+                        containerClassName=""
+                      />
+                    </div>
+                  </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Nombre Cliente
                   </th>
@@ -243,9 +294,21 @@ export const Collections = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {allDeudas.map((deuda) => (
-                  <tr key={`${deuda.td}-${deuda.numdocto}`} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 text-sm">
+                {allDeudas.map((deuda) => {
+                  const rowId = getRowId(deuda);
+                  const isSelected = selectedRows.has(rowId);
+                  return (
+                    <tr key={rowId} className={`hover:bg-gray-50 ${isSelected ? 'bg-blue-50' : ''}`}>
+                      <td className="px-4 py-3 text-center">
+                        <div className="flex justify-center">
+                          <Checkbox
+                            checked={isSelected}
+                            onChange={() => handleRowToggle(rowId)}
+                            containerClassName=""
+                          />
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-sm">
                       <div>
                         <p className="font-medium text-gray-900">{deuda.razsoc || '-'}</p>
                         <p className="text-xs text-gray-500">RUT: {deuda.rut || '-'}</p>
@@ -317,7 +380,8 @@ export const Collections = () => {
                       />
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
             {isFetchingNextPage && (
@@ -338,14 +402,20 @@ export const Collections = () => {
       {/* Modal de Automatizar Cobros */}
       <Modal
         isOpen={isAutomationModalOpen}
-        onClose={() => setIsAutomationModalOpen(false)}
-        contentClassName="max-w-2xl"
+        onClose={() => {
+          setIsAutomationModalOpen(false);
+          setSelectedCompanies([]);
+        }}
+        contentClassName="max-w-4xl"
       >
         <div className="p-6">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold text-gray-800">Automatizar Cobros</h2>
             <button
-              onClick={() => setIsAutomationModalOpen(false)}
+              onClick={() => {
+                setIsAutomationModalOpen(false);
+                setSelectedCompanies([]);
+              }}
               className="text-gray-400 hover:text-gray-600 transition-colors"
               aria-label="Cerrar"
             >
@@ -355,22 +425,25 @@ export const Collections = () => {
             </button>
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-6">
             <p className="text-gray-600">
               Configura la automatización de cobros para enviar recordatorios de forma automática según las reglas que definas.
             </p>
             
-            {/* Aquí se puede agregar el contenido del formulario de automatización */}
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <p className="text-sm text-gray-500">
-                El formulario de configuración de automatización se implementará aquí.
-              </p>
-            </div>
+            {/* Buscador de empresas */}
+            <AutomationCompanySearch
+              deudasData={allDeudas}
+              selectedCompanies={selectedCompanies}
+              onSelectionChange={setSelectedCompanies}
+            />
           </div>
 
           <div className="flex justify-end gap-3 mt-6 pt-6 border-t border-gray-200">
             <button
-              onClick={() => setIsAutomationModalOpen(false)}
+              onClick={() => {
+                setIsAutomationModalOpen(false);
+                setSelectedCompanies([]);
+              }}
               className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors"
             >
               Cancelar
