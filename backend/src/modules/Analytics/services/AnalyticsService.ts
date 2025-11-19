@@ -45,14 +45,28 @@ export interface CtasPorCobrarConCliente extends CtasPorCobrar {
 }
 
 /**
- * Interfaz para empresa con sus documentos agrupados
+ * Interfaz para sucursal con sus documentos
+ */
+export interface SucursalConDocumentos {
+  rut: string;
+  razsoc: string | null;
+  ultimos_digitos?: string;
+  documentos: CtasPorCobrar[];
+  total_deuda: number;
+  total_documentos: number;
+  vencimientoMasReciente?: string | null;
+}
+
+/**
+ * Interfaz para empresa con sus documentos agrupados (puede tener sucursales o documentos directos)
  */
 export interface EmpresaConDocumentos {
-  rut: string;
+  rut: string; // rutpadre (empresa principal)
   razsoc: string;
   cliente_email: string | null;
   cliente_telefono: string | null;
-  documentos: CtasPorCobrar[];
+  sucursal?: SucursalConDocumentos[]; // Array de sucursales (si existen)
+  documentos?: CtasPorCobrar[]; // Documentos directos (si no hay sucursales)
   total_deuda: number;
   total_documentos: number;
   vencimientoMasReciente?: string | null;
@@ -304,41 +318,44 @@ export class AnalyticsService {
     const limit = filters.limit || 10;
     const skip = (page - 1) * limit;
 
-    // Obtener RUTs únicos que cumplen los filtros (para contar empresas)
-    const uniqueRutsQuery = repository.createQueryBuilder('ctas')
-      .select('ctas.rut', 'rut')
-      .addSelect('ctas.razsoc', 'razsoc')
+    // Obtener rutpadre únicos que cumplen los filtros (para contar empresas principales)
+    const uniqueRutPadresQuery = repository.createQueryBuilder('ctas')
+      .select('COALESCE(ctas.rutpadre, ctas.rut)', 'rutpadre')
+      .addSelect('COALESCE(ctas.razsoc_padre, ctas.razsoc)', 'razsoc')
       .where('ctas.deuda > 0')
+      .andWhere('(ctas.rutpadre IS NOT NULL OR ctas.rut IS NOT NULL)')
       .distinct(true);
     
     // Aplicar todos los filtros
     if (filters.rut) {
-      uniqueRutsQuery.andWhere('ctas.rut = :rut', { rut: filters.rut });
+      uniqueRutPadresQuery.andWhere('(ctas.rut = :rut OR ctas.rutpadre = :rut)', { rut: filters.rut });
     }
     if (filters.razsoc) {
-      uniqueRutsQuery.andWhere('LOWER(ctas.razsoc) LIKE LOWER(:razsoc)', { razsoc: `%${filters.razsoc}%` });
+      uniqueRutPadresQuery.andWhere('(LOWER(ctas.razsoc) LIKE LOWER(:razsoc) OR LOWER(ctas.razsoc_padre) LIKE LOWER(:razsoc))', { razsoc: `%${filters.razsoc}%` });
     }
     if (filters.codvend) {
-      uniqueRutsQuery.andWhere('ctas.codvend = :codvend', { codvend: filters.codvend });
+      uniqueRutPadresQuery.andWhere('ctas.codvend = :codvend', { codvend: filters.codvend });
     }
-    this.applyDiasVencidosFilter(uniqueRutsQuery, filters);
+    this.applyDiasVencidosFilter(uniqueRutPadresQuery, filters);
     if (filters.deudaMin !== undefined) {
-      uniqueRutsQuery.andWhere('ctas.deuda >= :deudaMin', { deudaMin: filters.deudaMin });
+      uniqueRutPadresQuery.andWhere('ctas.deuda >= :deudaMin', { deudaMin: filters.deudaMin });
     }
     if (filters.deudaMax !== undefined) {
-      uniqueRutsQuery.andWhere('ctas.deuda <= :deudaMax', { deudaMax: filters.deudaMax });
+      uniqueRutPadresQuery.andWhere('ctas.deuda <= :deudaMax', { deudaMax: filters.deudaMax });
     }
     if (filters.fechaDesde) {
-      uniqueRutsQuery.andWhere('ctas.fecha >= :fechaDesde', { fechaDesde: filters.fechaDesde });
+      uniqueRutPadresQuery.andWhere('ctas.fecha >= :fechaDesde', { fechaDesde: filters.fechaDesde });
     }
     if (filters.fechaHasta) {
-      uniqueRutsQuery.andWhere('ctas.fecha <= :fechaHasta', { fechaHasta: filters.fechaHasta });
+      uniqueRutPadresQuery.andWhere('ctas.fecha <= :fechaHasta', { fechaHasta: filters.fechaHasta });
     }
     
     // No aplicar ordenamiento aquí, se hará después de agrupar
-    const uniqueRuts = await uniqueRutsQuery.getRawMany();
-    const allRuts = uniqueRuts.map((row: { rut: string }) => row.rut).filter(Boolean);
-    const totalEmpresas = allRuts.length;
+    const uniqueRutPadres = await uniqueRutPadresQuery.getRawMany();
+    const allRutPadres = uniqueRutPadres
+      .map((row: { rutpadre: string }) => row.rutpadre)
+      .filter(Boolean);
+    const totalEmpresas = allRutPadres.length;
 
     // Si no hay empresas, retornar vacío
     if (totalEmpresas === 0) {
@@ -351,14 +368,14 @@ export class AnalyticsService {
       };
     }
 
-    // Obtener todos los documentos de todas las empresas que cumplen los filtros
+    // Obtener todos los documentos de todas las empresas principales que cumplen los filtros
     const documentosQuery = repository.createQueryBuilder('ctas')
       .where('ctas.deuda > 0')
-      .andWhere('ctas.rut IN (:...ruts)', { ruts: allRuts });
+      .andWhere('(COALESCE(ctas.rutpadre, ctas.rut) IN (:...rutPadres))', { rutPadres: allRutPadres });
     
     // Aplicar los mismos filtros a los documentos
     if (filters.razsoc) {
-      documentosQuery.andWhere('LOWER(ctas.razsoc) LIKE LOWER(:razsoc)', { razsoc: `%${filters.razsoc}%` });
+      documentosQuery.andWhere('(LOWER(ctas.razsoc) LIKE LOWER(:razsoc) OR LOWER(ctas.razsoc_padre) LIKE LOWER(:razsoc))', { razsoc: `%${filters.razsoc}%` });
     }
     if (filters.codvend) {
       documentosQuery.andWhere('ctas.codvend = :codvend', { codvend: filters.codvend });
@@ -381,17 +398,17 @@ export class AnalyticsService {
     
     const allDocumentos = await documentosQuery.getMany();
     
-    // Obtener los datos de clientes para esos RUTs
+    // Obtener los datos de clientes para los rutpadre
     let clientsData: Array<{ rut: string; cliente_email: string; cliente_telefono: string }> = [];
     
-    if (allRuts.length > 0) {
+    if (allRutPadres.length > 0) {
       const dataSource = await this.getDataSource();
-      const placeholders = allRuts.map((_, index) => `$${index + 1}`).join(',');
+      const placeholders = allRutPadres.map((_, index) => `$${index + 1}`).join(',');
       clientsData = await dataSource.query(
         `SELECT rut, "contactoCorreoElectronico" as cliente_email, "contactoTelefono" as cliente_telefono 
          FROM clients 
          WHERE rut IN (${placeholders})`,
-        allRuts
+        allRutPadres
       );
     }
     
@@ -408,53 +425,146 @@ export class AnalyticsService {
       ])
     );
 
-    // Agrupar documentos por RUT
-    const documentosPorRut = new Map<string, CtasPorCobrar[]>();
+    // Agrupar documentos por rutpadre primero, luego por rut (sucursal)
+    // Estructura: Map<rutpadre, Map<rut, documentos[]>>
+    const documentosPorEmpresa = new Map<string, Map<string, CtasPorCobrar[]>>();
     
     allDocumentos.forEach(doc => {
-      if (doc.rut) {
-        if (!documentosPorRut.has(doc.rut)) {
-          documentosPorRut.set(doc.rut, []);
-        }
-        documentosPorRut.get(doc.rut)!.push(doc);
+      const rutPadre = doc.rutpadre || doc.rut;
+      const rut = doc.rut;
+      
+      if (!rutPadre || !rut) return;
+      
+      if (!documentosPorEmpresa.has(rutPadre)) {
+        documentosPorEmpresa.set(rutPadre, new Map());
       }
+      
+      const sucursalesMap = documentosPorEmpresa.get(rutPadre)!;
+      if (!sucursalesMap.has(rut)) {
+        sucursalesMap.set(rut, []);
+      }
+      
+      sucursalesMap.get(rut)!.push(doc);
     });
 
-    // Crear la estructura de respuesta agrupada por empresa
-    const allEmpresas: EmpresaConDocumentos[] = uniqueRuts
-      .filter((row: { rut: string }) => row.rut && documentosPorRut.has(row.rut))
-      .map((row: { rut: string; razsoc: string }) => {
-        const rut = row.rut;
-        const documentos = documentosPorRut.get(rut) || [];
-        const clientData: ClientData = clientsMap.get(rut) || { email: null, telefono: null };
+    /**
+     * Extrae los últimos dígitos de una sucursal (después del dígito verificador del rutpadre)
+     * Ejemplo: rutpadre "76833720-9", rut "76833720-9521" -> "521"
+     */
+    const extractUltimosDigitos = (rut: string, rutpadre: string): string | undefined => {
+      if (rut === rutpadre) return undefined; // No es sucursal
+      
+      // Extraer la parte después del guión (dígito verificador + últimos dígitos)
+      const rutParts = rut.split('-');
+      const rutPadreParts = rutpadre.split('-');
+      
+      if (rutParts.length !== 2 || rutPadreParts.length !== 2) return undefined;
+      
+      const rutDigitoVerificador = rutParts[1]; // "9521" en el ejemplo
+      const rutPadreDigitoVerificador = rutPadreParts[1]; // "9" en el ejemplo
+      
+      // Si el dígito verificador de la sucursal empieza con el del rutpadre
+      if (rutDigitoVerificador.startsWith(rutPadreDigitoVerificador)) {
+        // Extraer los dígitos después del dígito verificador del rutpadre
+        const ultimosDigitos = rutDigitoVerificador.substring(rutPadreDigitoVerificador.length);
+        return ultimosDigitos.length > 0 ? ultimosDigitos : undefined;
+      }
+      
+      return undefined;
+    };
+
+    // Crear la estructura de respuesta agrupada por empresa principal (rutpadre)
+    const allEmpresas: EmpresaConDocumentos[] = uniqueRutPadres
+      .filter((row: { rutpadre: string }) => row.rutpadre && documentosPorEmpresa.has(row.rutpadre))
+      .map((row: { rutpadre: string; razsoc: string }) => {
+        const rutPadre = row.rutpadre;
+        const sucursalesMap = documentosPorEmpresa.get(rutPadre)!;
+        const clientData: ClientData = clientsMap.get(rutPadre) || { email: null, telefono: null };
         
-        // Calcular total de deuda y total de documentos
-        const total_deuda = documentos.reduce((sum, doc) => {
-          // Convertir deuda a número si es string, o usar 0 si es null/undefined
+        // Separar documentos de empresa principal (rut === rutpadre) de sucursales
+        const documentosEmpresa: CtasPorCobrar[] = [];
+        const sucursales: Array<{
+          rut: string;
+          razsoc: string | null;
+          ultimos_digitos?: string;
+          documentos: CtasPorCobrar[];
+          total_deuda: number;
+          total_documentos: number;
+          vencimientoMasReciente: string | null;
+        }> = [];
+        
+        sucursalesMap.forEach((documentos, rut) => {
+          if (rut === rutPadre) {
+            // Es la empresa principal, no una sucursal
+            documentosEmpresa.push(...documentos);
+          } else {
+            // Es una sucursal
+            const total_deuda = documentos.reduce((sum, doc) => {
+              const deudaValue = typeof doc.deuda === 'string' ? parseFloat(doc.deuda) || 0 : (doc.deuda ?? 0);
+              return sum + (isNaN(deudaValue) ? 0 : deudaValue);
+            }, 0);
+            
+            const fechasVencimiento = documentos
+              .map(doc => doc.vencimiento ? new Date(doc.vencimiento) : null)
+              .filter((date): date is Date => date !== null);
+            
+            const vencimientoMasReciente = fechasVencimiento.length > 0
+              ? fechasVencimiento.sort((a, b) => b.getTime() - a.getTime())[0]
+              : null;
+            
+            sucursales.push({
+              rut,
+              razsoc: documentos[0]?.razsoc || null,
+              ultimos_digitos: extractUltimosDigitos(rut, rutPadre),
+              documentos,
+              total_deuda,
+              total_documentos: documentos.length,
+              vencimientoMasReciente: vencimientoMasReciente?.toISOString() || null
+            });
+          }
+        });
+        
+        // Calcular totales de la empresa (incluyendo sucursales)
+        const todosDocumentos = [
+          ...documentosEmpresa,
+          ...sucursales.flatMap(s => s.documentos)
+        ];
+        
+        const total_deuda = todosDocumentos.reduce((sum, doc) => {
           const deudaValue = typeof doc.deuda === 'string' ? parseFloat(doc.deuda) || 0 : (doc.deuda ?? 0);
           return sum + (isNaN(deudaValue) ? 0 : deudaValue);
         }, 0);
-        const total_documentos = documentos.length;
-
-        // Encontrar la fecha de vencimiento más reciente
-        const fechasVencimiento = documentos
+        
+        const total_documentos = todosDocumentos.length;
+        
+        // Encontrar la fecha de vencimiento más reciente de toda la empresa
+        const fechasVencimiento = todosDocumentos
           .map(doc => doc.vencimiento ? new Date(doc.vencimiento) : null)
           .filter((date): date is Date => date !== null);
         
         const vencimientoMasReciente = fechasVencimiento.length > 0
           ? fechasVencimiento.sort((a, b) => b.getTime() - a.getTime())[0]
           : null;
-
-        return {
-          rut,
-          razsoc: row.razsoc || documentos[0]?.razsoc || '',
+        
+        // Construir la respuesta
+        const empresa: EmpresaConDocumentos = {
+          rut: rutPadre,
+          razsoc: row.razsoc || documentosEmpresa[0]?.razsoc_padre || documentosEmpresa[0]?.razsoc || '',
           cliente_email: clientData.email,
           cliente_telefono: clientData.telefono,
-          documentos,
           total_deuda,
           total_documentos,
           vencimientoMasReciente: vencimientoMasReciente?.toISOString() || null
         };
+        
+        // Si hay sucursales, agregarlas; si no, agregar documentos directos
+        if (sucursales.length > 0) {
+          empresa.sucursal = sucursales;
+        } else if (documentosEmpresa.length > 0) {
+          empresa.documentos = documentosEmpresa;
+        }
+        
+        return empresa;
       });
 
     // Aplicar ordenamiento

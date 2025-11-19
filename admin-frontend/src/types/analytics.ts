@@ -36,14 +36,28 @@ export interface CtasPorCobrar {
 }
 
 /**
- * Interfaz para empresa con sus documentos agrupados
+ * Interfaz para sucursal con sus documentos
+ */
+export interface SucursalConDocumentos {
+  rut: string;
+  razsoc: string | null;
+  ultimos_digitos?: string;
+  documentos: CtasPorCobrar[];
+  total_deuda: number;
+  total_documentos: number;
+  vencimientoMasReciente?: string | null;
+}
+
+/**
+ * Interfaz para empresa con sus documentos agrupados (puede tener sucursales o documentos directos)
  */
 export interface EmpresaConDocumentos {
-  rut: string;
+  rut: string; // rutpadre (empresa principal)
   razsoc: string;
   cliente_email: string | null;
   cliente_telefono: string | null;
-  documentos: CtasPorCobrar[];
+  sucursal?: SucursalConDocumentos[]; // Array de sucursales (si existen)
+  documentos?: CtasPorCobrar[]; // Documentos directos (si no hay sucursales)
   total_deuda: number;
   total_documentos: number;
   vencimientoMasReciente?: string | null;
