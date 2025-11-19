@@ -24,8 +24,27 @@ export const analyticsService = {
    * Obtiene deudas activas (deuda > 0) agrupadas por empresa
    */
   async getDeudasActivas(filters?: QueryFilters): Promise<PaginatedResponse<EmpresaConDocumentos>> {
+    // Serializar diasVencidosRanges como JSON string si está presente
+    const params: Record<string, string | number> = {};
+    
+    // Filtrar solo los parámetros que tienen valor (no undefined)
+    if (filters) {
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          if (key === 'diasVencidosRanges' && Array.isArray(value)) {
+            params[key] = JSON.stringify(value);
+          } else {
+            params[key] = value as string | number;
+          }
+        }
+      });
+    }
+    
+    // Debug: verificar qué parámetros se están enviando
+    console.log('AnalyticsService - Enviando parámetros:', params);
+    
     const { data } = await apiClient.get<{ data: PaginatedResponse<EmpresaConDocumentos> }>('/analytics/deudas-activas', {
-      params: filters
+      params
     });
     return data.data;
   },

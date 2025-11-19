@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { DropdownIcon, ChevronUpIcon } from '../../components/commons/icons';
-import { Input } from '../../components/commons';
+import { Input, Checkbox } from '../../components/commons';
 import type { QueryFilters } from '../../types/analytics';
 
 /**
@@ -38,6 +38,73 @@ export const CollectionsFilters = ({
   const [daysExpanded, setDaysExpanded] = useState(false);
 
   /**
+   * Estados de pago disponibles
+   */
+  const statusOptions = [
+    { id: 'por-vencer', label: 'Por vencer', min: undefined, max: -1 },
+    { id: 'vence-hoy', label: 'Vence hoy', min: 0, max: 0 },
+    { id: 'vencido-30', label: 'Vencido (1-30 días)', min: 1, max: 30 },
+    { id: 'vencido-60', label: 'Vencido (31-60 días)', min: 31, max: 60 },
+    { id: 'vencido-60-plus', label: 'Vencido (+60 días)', min: 61, max: undefined }
+  ] as const;
+
+  /**
+   * Determina qué estados están seleccionados basándose en los filtros actuales
+   */
+  const selectedStatuses = useMemo(() => {
+    const selected = new Set<string>();
+    
+    // Si hay múltiples rangos, verificar cada uno
+    const ranges = (filters as any)?.diasVencidosRanges;
+    if (Array.isArray(ranges) && ranges.length > 0) {
+      ranges.forEach((range: { min?: number; max?: number }) => {
+        statusOptions.forEach(option => {
+          let matches = false;
+          
+          if (option.min === undefined && option.max === -1) {
+            matches = range.min === undefined && range.max === -1;
+          } else if (option.min === 0 && option.max === 0) {
+            matches = range.min === 0 && range.max === 0;
+          } else if (option.min === 1 && option.max === 30) {
+            matches = range.min === 1 && range.max === 30;
+          } else if (option.min === 31 && option.max === 60) {
+            matches = range.min === 31 && range.max === 60;
+          } else if (option.min === 61 && option.max === undefined) {
+            matches = range.min === 61 && range.max === undefined;
+          }
+          
+          if (matches) {
+            selected.add(option.id);
+          }
+        });
+      });
+    } else if (filters.diasVencidosMin !== undefined || filters.diasVencidosMax !== undefined) {
+      // Si hay filtros de días vencidos en formato antiguo, determinar qué estados coinciden
+      statusOptions.forEach(option => {
+        let matches = false;
+        
+        if (option.min === undefined && option.max === -1) {
+          matches = filters.diasVencidosMax === -1;
+        } else if (option.min === 0 && option.max === 0) {
+          matches = filters.diasVencidosMin === 0 && filters.diasVencidosMax === 0;
+        } else if (option.min === 1 && option.max === 30) {
+          matches = filters.diasVencidosMin === 1 && filters.diasVencidosMax === 30;
+        } else if (option.min === 31 && option.max === 60) {
+          matches = filters.diasVencidosMin === 31 && filters.diasVencidosMax === 60;
+        } else if (option.min === 61 && option.max === undefined) {
+          matches = filters.diasVencidosMin === 61 && filters.diasVencidosMax === undefined;
+        }
+        
+        if (matches) {
+          selected.add(option.id);
+        }
+      });
+    }
+    
+    return selected;
+  }, [filters.diasVencidosMin, filters.diasVencidosMax, (filters as any)?.diasVencidosRanges]);
+
+  /**
    * Actualiza un filtro específico
    */
   const updateFilter = (key: keyof Omit<QueryFilters, 'page' | 'limit'>, value: string | number | undefined): void => {
@@ -55,59 +122,46 @@ export const CollectionsFilters = ({
   };
 
   /**
-   * Obtiene el estado de pago basado en días vencidos
+   * Maneja el cambio de selección de un estado de pago
    */
-  const getStatusFromDays = (diasVencidos: number | null | undefined): string => {
-    if (diasVencidos === null || diasVencidos === undefined) return '';
-    if (diasVencidos < 0) return 'por-vencer';
-    if (diasVencidos === 0) return 'vence-hoy';
-    if (diasVencidos <= 30) return 'vencido-30';
-    if (diasVencidos <= 60) return 'vencido-60';
-    return 'vencido-60-plus';
-  };
-
-  /**
-   * Establece el rango de días vencidos basado en el estado de pago
-   */
-  const setStatusFilter = (status: string): void => {
-    const newFilters = { ...filters };
+  const handleStatusToggle = (statusId: string): void => {
+    const newSelectedStatuses = new Set(selectedStatuses);
     
-    // Si se hace click en el mismo estado, limpiar el filtro
-    const currentStatus = getStatusFromDays(
-      filters.diasVencidosMin !== undefined && filters.diasVencidosMax !== undefined
-        ? filters.diasVencidosMin === filters.diasVencidosMax ? filters.diasVencidosMin : null
-        : filters.diasVencidosMax === -1 ? -1 : null
-    );
+    if (newSelectedStatuses.has(statusId)) {
+      newSelectedStatuses.delete(statusId);
+    } else {
+      newSelectedStatuses.add(statusId);
+    }
     
-    if (currentStatus === status) {
+    // Si no hay estados seleccionados, limpiar el filtro
+    if (newSelectedStatuses.size === 0) {
+      const newFilters = { ...filters };
       newFilters.diasVencidosMin = undefined;
       newFilters.diasVencidosMax = undefined;
+      onFiltersChange(newFilters);
+      return;
+    }
+    
+    // Convertir los estados seleccionados en rangos de días vencidos
+    const ranges = Array.from(newSelectedStatuses)
+      .map(statusId => statusOptions.find(opt => opt.id === statusId))
+      .filter((opt): opt is typeof statusOptions[0] => opt !== undefined)
+      .map(opt => ({
+        min: opt.min,
+        max: opt.max
+      }));
+    
+    const newFilters = { ...filters };
+    
+    // Si solo hay un rango, usar el formato antiguo para compatibilidad
+    if (ranges.length === 1) {
+      newFilters.diasVencidosMin = ranges[0].min;
+      newFilters.diasVencidosMax = ranges[0].max;
     } else {
-      switch (status) {
-        case 'por-vencer':
-          newFilters.diasVencidosMin = undefined;
-          newFilters.diasVencidosMax = -1;
-          break;
-        case 'vence-hoy':
-          newFilters.diasVencidosMin = 0;
-          newFilters.diasVencidosMax = 0;
-          break;
-        case 'vencido-30':
-          newFilters.diasVencidosMin = 1;
-          newFilters.diasVencidosMax = 30;
-          break;
-        case 'vencido-60':
-          newFilters.diasVencidosMin = 31;
-          newFilters.diasVencidosMax = 60;
-          break;
-        case 'vencido-60-plus':
-          newFilters.diasVencidosMin = 61;
-          newFilters.diasVencidosMax = undefined;
-          break;
-        default:
-          newFilters.diasVencidosMin = undefined;
-          newFilters.diasVencidosMax = undefined;
-      }
+      // Si hay múltiples rangos, usar el nuevo formato
+      newFilters.diasVencidosMin = undefined;
+      newFilters.diasVencidosMax = undefined;
+      (newFilters as any).diasVencidosRanges = ranges;
     }
     
     onFiltersChange(newFilters);
@@ -266,46 +320,23 @@ export const CollectionsFilters = ({
           </button>
           {statusExpanded && (
             <div className="mt-2 space-y-2">
-              <button
-                onClick={() => setStatusFilter('por-vencer')}
-                className={`w-full text-left px-3 py-2 text-sm rounded transition-colors ${
-                  filters.diasVencidosMax === -1 ? 'bg-blue-50 text-blue-700' : 'hover:bg-gray-50'
-                }`}
-              >
-                Por vencer
-              </button>
-              <button
-                onClick={() => setStatusFilter('vence-hoy')}
-                className={`w-full text-left px-3 py-2 text-sm rounded transition-colors ${
-                  filters.diasVencidosMin === 0 && filters.diasVencidosMax === 0 ? 'bg-yellow-50 text-yellow-700' : 'hover:bg-gray-50'
-                }`}
-              >
-                Vence hoy
-              </button>
-              <button
-                onClick={() => setStatusFilter('vencido-30')}
-                className={`w-full text-left px-3 py-2 text-sm rounded transition-colors ${
-                  filters.diasVencidosMin === 1 && filters.diasVencidosMax === 30 ? 'bg-orange-50 text-orange-700' : 'hover:bg-gray-50'
-                }`}
-              >
-                Vencido (1-30 días)
-              </button>
-              <button
-                onClick={() => setStatusFilter('vencido-60')}
-                className={`w-full text-left px-3 py-2 text-sm rounded transition-colors ${
-                  filters.diasVencidosMin === 31 && filters.diasVencidosMax === 60 ? 'bg-red-50 text-red-700' : 'hover:bg-gray-50'
-                }`}
-              >
-                Vencido (31-60 días)
-              </button>
-              <button
-                onClick={() => setStatusFilter('vencido-60-plus')}
-                className={`w-full text-left px-3 py-2 text-sm rounded transition-colors ${
-                  filters.diasVencidosMin === 61 ? 'bg-red-100 text-red-800' : 'hover:bg-gray-50'
-                }`}
-              >
-                Vencido (+60 días)
-              </button>
+              {statusOptions.map((option) => {
+                const isSelected = selectedStatuses.has(option.id);
+                return (
+                  <div
+                    key={option.id}
+                    className="flex items-center px-3 py-2 rounded transition-colors hover:bg-gray-50"
+                  >
+                    <Checkbox
+                      checked={isSelected}
+                      onChange={() => handleStatusToggle(option.id)}
+                      label={option.label}
+                      containerClassName="w-full"
+                      className="text-blue-600 focus:ring-blue-500"
+                    />
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>

@@ -46,6 +46,7 @@ export interface EmpresaConDocumentos {
   documentos: CtasPorCobrar[];
   total_deuda: number;
   total_documentos: number;
+  vencimientoMasReciente?: string | null;
 }
 
 export interface PaginatedResponse<T> {
@@ -82,6 +83,9 @@ export interface Estadisticas {
   ultima_sincronizacion: string;
 }
 
+export type SortOrder = 'asc' | 'desc';
+export type SortField = 'razsoc' | 'total_deuda' | 'vencimiento' | 'deuda';
+
 export interface QueryFilters {
   rut?: string;
   razsoc?: string;
@@ -95,4 +99,6 @@ export interface QueryFilters {
   fechaHasta?: string;
   page?: number;
   limit?: number;
+  sortBy?: SortField;
+  sortOrder?: SortOrder;
 }

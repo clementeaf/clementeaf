@@ -2,6 +2,14 @@ import { Repository, DataSource } from 'typeorm';
 import { initializeDatabase } from '../../../config/database';
 import { CtasPorCobrar } from '../entities/CtasPorCobrar.entity';
 
+export interface DiasVencidosRange {
+  min?: number;
+  max?: number;
+}
+
+export type SortOrder = 'asc' | 'desc';
+export type SortField = 'razsoc' | 'total_deuda' | 'vencimiento' | 'deuda';
+
 export interface QueryFilters {
   rut?: string;
   razsoc?: string;
@@ -9,12 +17,15 @@ export interface QueryFilters {
   team?: string;
   diasVencidosMin?: number;
   diasVencidosMax?: number;
+  diasVencidosRanges?: DiasVencidosRange[];
   deudaMin?: number;
   deudaMax?: number;
   fechaDesde?: string;
   fechaHasta?: string;
   page?: number;
   limit?: number;
+  sortBy?: SortField;
+  sortOrder?: SortOrder;
 }
 
 export interface PaginatedResponse<T> {
@@ -44,6 +55,7 @@ export interface EmpresaConDocumentos {
   documentos: CtasPorCobrar[];
   total_deuda: number;
   total_documentos: number;
+  vencimientoMasReciente?: string | null;
 }
 
 export interface ResumenCliente {
@@ -230,6 +242,58 @@ export class AnalyticsService {
   }
 
   /**
+   * Aplica filtros de días vencidos a una consulta
+   * Soporta múltiples rangos usando OR
+   */
+  private applyDiasVencidosFilter(
+    queryBuilder: any,
+    filters: QueryFilters
+  ): void {
+    // Si hay múltiples rangos, usar OR
+    if (filters.diasVencidosRanges && filters.diasVencidosRanges.length > 0) {
+      const conditions: string[] = [];
+      const params: Record<string, number> = {};
+      
+      filters.diasVencidosRanges.forEach((range, index) => {
+        const minParam = `diasVencidosMin${index}`;
+        const maxParam = `diasVencidosMax${index}`;
+        
+        // Caso especial: "Por vencer" (max === -1 significa dias_vencidos < 0)
+        if (range.max === -1) {
+          conditions.push('ctas.dias_vencidos < 0');
+        } else if (range.min !== undefined && range.max !== undefined) {
+          conditions.push(`(ctas.dias_vencidos >= :${minParam} AND ctas.dias_vencidos <= :${maxParam})`);
+          params[minParam] = range.min;
+          params[maxParam] = range.max;
+        } else if (range.min !== undefined) {
+          conditions.push(`ctas.dias_vencidos >= :${minParam}`);
+          params[minParam] = range.min;
+        } else if (range.max !== undefined) {
+          conditions.push(`ctas.dias_vencidos <= :${maxParam}`);
+          params[maxParam] = range.max;
+        }
+      });
+      
+      if (conditions.length > 0) {
+        queryBuilder.andWhere(`(${conditions.join(' OR ')})`, params);
+      }
+    } else if (filters.diasVencidosMin !== undefined || filters.diasVencidosMax !== undefined) {
+      // Mantener compatibilidad con el formato anterior
+      // Caso especial: "Por vencer" (max === -1 significa dias_vencidos < 0)
+      if (filters.diasVencidosMax === -1) {
+        queryBuilder.andWhere('ctas.dias_vencidos < 0');
+      } else {
+        if (filters.diasVencidosMin !== undefined) {
+          queryBuilder.andWhere('ctas.dias_vencidos >= :diasVencidosMin', { diasVencidosMin: filters.diasVencidosMin });
+        }
+        if (filters.diasVencidosMax !== undefined) {
+          queryBuilder.andWhere('ctas.dias_vencidos <= :diasVencidosMax', { diasVencidosMax: filters.diasVencidosMax });
+        }
+      }
+    }
+  }
+
+  /**
    * Obtiene las deudas activas (deuda > 0) agrupadas por empresa
    * Incluye email y teléfono del cliente mediante JOIN
    */
@@ -257,12 +321,7 @@ export class AnalyticsService {
     if (filters.codvend) {
       uniqueRutsQuery.andWhere('ctas.codvend = :codvend', { codvend: filters.codvend });
     }
-    if (filters.diasVencidosMin !== undefined) {
-      uniqueRutsQuery.andWhere('ctas.dias_vencidos >= :diasVencidosMin', { diasVencidosMin: filters.diasVencidosMin });
-    }
-    if (filters.diasVencidosMax !== undefined) {
-      uniqueRutsQuery.andWhere('ctas.dias_vencidos <= :diasVencidosMax', { diasVencidosMax: filters.diasVencidosMax });
-    }
+    this.applyDiasVencidosFilter(uniqueRutsQuery, filters);
     if (filters.deudaMin !== undefined) {
       uniqueRutsQuery.andWhere('ctas.deuda >= :deudaMin', { deudaMin: filters.deudaMin });
     }
@@ -276,10 +335,10 @@ export class AnalyticsService {
       uniqueRutsQuery.andWhere('ctas.fecha <= :fechaHasta', { fechaHasta: filters.fechaHasta });
     }
     
-    uniqueRutsQuery.orderBy('ctas.razsoc', 'ASC');
-    
+    // No aplicar ordenamiento aquí, se hará después de agrupar
     const uniqueRuts = await uniqueRutsQuery.getRawMany();
-    const totalEmpresas = uniqueRuts.length;
+    const allRuts = uniqueRuts.map((row: { rut: string }) => row.rut).filter(Boolean);
+    const totalEmpresas = allRuts.length;
 
     // Si no hay empresas, retornar vacío
     if (totalEmpresas === 0) {
@@ -292,25 +351,10 @@ export class AnalyticsService {
       };
     }
 
-    // Paginar los RUTs únicos
-    const paginatedRuts = uniqueRuts.slice(skip, skip + limit);
-    const ruts = paginatedRuts.map((row: { rut: string }) => row.rut).filter(Boolean);
-
-    // Si no hay RUTs en esta página, retornar vacío
-    if (ruts.length === 0) {
-      return {
-        data: [],
-        total: totalEmpresas,
-        page,
-        limit,
-        totalPages: Math.ceil(totalEmpresas / limit)
-      };
-    }
-    
-    // Obtener todos los documentos de las empresas en esta página que cumplen los filtros
+    // Obtener todos los documentos de todas las empresas que cumplen los filtros
     const documentosQuery = repository.createQueryBuilder('ctas')
       .where('ctas.deuda > 0')
-      .andWhere('ctas.rut IN (:...ruts)', { ruts });
+      .andWhere('ctas.rut IN (:...ruts)', { ruts: allRuts });
     
     // Aplicar los mismos filtros a los documentos
     if (filters.razsoc) {
@@ -319,12 +363,7 @@ export class AnalyticsService {
     if (filters.codvend) {
       documentosQuery.andWhere('ctas.codvend = :codvend', { codvend: filters.codvend });
     }
-    if (filters.diasVencidosMin !== undefined) {
-      documentosQuery.andWhere('ctas.dias_vencidos >= :diasVencidosMin', { diasVencidosMin: filters.diasVencidosMin });
-    }
-    if (filters.diasVencidosMax !== undefined) {
-      documentosQuery.andWhere('ctas.dias_vencidos <= :diasVencidosMax', { diasVencidosMax: filters.diasVencidosMax });
-    }
+    this.applyDiasVencidosFilter(documentosQuery, filters);
     if (filters.deudaMin !== undefined) {
       documentosQuery.andWhere('ctas.deuda >= :deudaMin', { deudaMin: filters.deudaMin });
     }
@@ -345,14 +384,14 @@ export class AnalyticsService {
     // Obtener los datos de clientes para esos RUTs
     let clientsData: Array<{ rut: string; cliente_email: string; cliente_telefono: string }> = [];
     
-    if (ruts.length > 0) {
+    if (allRuts.length > 0) {
       const dataSource = await this.getDataSource();
-      const placeholders = ruts.map((_, index) => `$${index + 1}`).join(',');
+      const placeholders = allRuts.map((_, index) => `$${index + 1}`).join(',');
       clientsData = await dataSource.query(
         `SELECT rut, "contactoCorreoElectronico" as cliente_email, "contactoTelefono" as cliente_telefono 
          FROM clients 
          WHERE rut IN (${placeholders})`,
-        ruts
+        allRuts
       );
     }
     
@@ -382,7 +421,7 @@ export class AnalyticsService {
     });
 
     // Crear la estructura de respuesta agrupada por empresa
-    const data: EmpresaConDocumentos[] = paginatedRuts
+    const allEmpresas: EmpresaConDocumentos[] = uniqueRuts
       .filter((row: { rut: string }) => row.rut && documentosPorRut.has(row.rut))
       .map((row: { rut: string; razsoc: string }) => {
         const rut = row.rut;
@@ -397,6 +436,15 @@ export class AnalyticsService {
         }, 0);
         const total_documentos = documentos.length;
 
+        // Encontrar la fecha de vencimiento más reciente
+        const fechasVencimiento = documentos
+          .map(doc => doc.vencimiento ? new Date(doc.vencimiento) : null)
+          .filter((date): date is Date => date !== null);
+        
+        const vencimientoMasReciente = fechasVencimiento.length > 0
+          ? fechasVencimiento.sort((a, b) => b.getTime() - a.getTime())[0]
+          : null;
+
         return {
           rut,
           razsoc: row.razsoc || documentos[0]?.razsoc || '',
@@ -404,12 +452,72 @@ export class AnalyticsService {
           cliente_telefono: clientData.telefono,
           documentos,
           total_deuda,
-          total_documentos
+          total_documentos,
+          vencimientoMasReciente: vencimientoMasReciente?.toISOString() || null
         };
       });
 
+    // Aplicar ordenamiento
+    const sortBy = filters.sortBy || 'razsoc';
+    const sortOrder = filters.sortOrder || 'asc';
+    
+    // Debug: verificar que los parámetros se están recibiendo correctamente
+    console.log('Backend - Aplicando ordenamiento:', { 
+      sortBy: filters.sortBy, 
+      sortOrder: filters.sortOrder,
+      sortByFinal: sortBy,
+      sortOrderFinal: sortOrder,
+      totalEmpresas: allEmpresas.length,
+      primeros3Antes: allEmpresas.slice(0, 3).map(e => e.razsoc || e.rut)
+    });
+    
+    allEmpresas.sort((a, b) => {
+      let comparison = 0;
+      
+      switch (sortBy) {
+        case 'razsoc':
+          // Ordenamiento alfabético
+          comparison = (a.razsoc || '').localeCompare(b.razsoc || '');
+          break;
+        case 'total_deuda':
+        case 'deuda':
+          // Ordenamiento por monto (más alto a más bajo)
+          comparison = a.total_deuda - b.total_deuda;
+          break;
+        case 'vencimiento':
+          // Ordenamiento por fecha (más reciente a más antigua)
+          const fechaA = a.vencimientoMasReciente ? new Date(a.vencimientoMasReciente).getTime() : 0;
+          const fechaB = b.vencimientoMasReciente ? new Date(b.vencimientoMasReciente).getTime() : 0;
+          comparison = fechaB - fechaA; // Más reciente primero (desc por defecto)
+          break;
+        default:
+          comparison = 0;
+      }
+      
+      return sortOrder === 'asc' ? comparison : -comparison;
+    });
+
+    // Debug: verificar el orden después de ordenar
+    console.log('Backend - Después de ordenar:', {
+      sortBy,
+      sortOrder,
+      primeros3Despues: allEmpresas.slice(0, 3).map(e => e.razsoc || e.rut)
+    });
+
+    // Paginar después del ordenamiento
+    const paginatedEmpresas = allEmpresas.slice(skip, skip + limit);
+    
+    // Debug: verificar el orden después de paginar
+    console.log('Backend - Después de paginar:', {
+      page,
+      limit,
+      skip,
+      totalPaginated: paginatedEmpresas.length,
+      primeros3Paginated: paginatedEmpresas.slice(0, 3).map(e => e.razsoc || e.rut)
+    });
+
     return {
-      data,
+      data: paginatedEmpresas,
       total: totalEmpresas,
       page,
       limit,

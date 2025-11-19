@@ -1,4 +1,5 @@
 import { useEffect, useRef, useCallback, useMemo, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   useEstadisticas,
   useDeudasActivasInfinite
@@ -6,9 +7,10 @@ import {
 import { CollectionsFilters } from './Collections/CollectionsFilters';
 import { ActionsMenu, EyeIcon, EmailIcon, AutomationIcon, Modal, Checkbox } from '../components/commons';
 import { AutomationCompanySearch } from './Collections/AutomationCompanySearch';
-import type { QueryFilters } from '../types/analytics';
+import type { QueryFilters, SortField, SortOrder } from '../types/analytics';
 import type { CtasPorCobrar } from '../types/analytics';
 import type { AutomationConfig } from './Collections/AutomationCompanySearch';
+import { DropdownIcon, ChevronUpIcon } from '../components/commons/icons';
 
 /**
  * Página de Cuentas por Cobrar
@@ -17,7 +19,10 @@ import type { AutomationConfig } from './Collections/AutomationCompanySearch';
 export const Collections = () => {
   const limit = 10;
   const tableContainerRef = useRef<HTMLDivElement>(null);
+  const queryClient = useQueryClient();
   const [filters, setFilters] = useState<Omit<QueryFilters, 'page' | 'limit'>>({});
+  const [sortBy, setSortBy] = useState<SortField | undefined>(undefined);
+  const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
   const [isAutomationModalOpen, setIsAutomationModalOpen] = useState(false);
   // Estado principal: empresas seleccionadas por RUT (sincronizado entre tabla y modal)
   const [selectedCompanies, setSelectedCompanies] = useState<Set<string>>(new Set());
@@ -35,22 +40,58 @@ export const Collections = () => {
   });
 
   const { data: estadisticas, isLoading: loadingStats } = useEstadisticas();
+  // Combinar filtros con ordenamiento
+  const filtersWithSort = useMemo(() => {
+    const result = {
+      ...filters,
+      sortBy,
+      sortOrder: sortBy ? sortOrder : undefined
+    };
+    // Debug: verificar que los parámetros se están pasando correctamente
+    if (sortBy) {
+      console.log('Ordenamiento activo:', { sortBy, sortOrder: result.sortOrder, filters: result });
+    }
+    return result;
+  }, [filters, sortBy, sortOrder]);
+
   const {
     data: deudasActivasData,
     isLoading: loadingDeudas,
+    isFetching: isFetchingDeudas,
     isFetchingNextPage,
     hasNextPage,
     fetchNextPage
-  } = useDeudasActivasInfinite(limit, filters);
+  } = useDeudasActivasInfinite(limit, filtersWithSort);
 
   /**
-   * Efecto para resetear el scroll cuando cambian los filtros
+   * Maneja el cambio de ordenamiento
+   */
+  const handleSort = (field: SortField): void => {
+    const newSortBy = sortBy === field ? sortBy : field;
+    const newSortOrder = sortBy === field 
+      ? (sortOrder === 'asc' ? 'desc' : 'asc')
+      : 'asc';
+    
+    // Actualizar el estado primero
+    setSortBy(newSortBy);
+    setSortOrder(newSortOrder);
+    
+    // Resetear y refetch las queries cuando cambia el ordenamiento
+    // Esto fuerza a React Query a recargar desde la página 1 con el nuevo ordenamiento
+    queryClient.resetQueries({ 
+      queryKey: ['deudas-activas-infinite'],
+      exact: false
+    });
+  };
+
+  /**
+   * Efecto para resetear el scroll cuando cambian los filtros o el ordenamiento
    */
   useEffect(() => {
     if (tableContainerRef.current) {
       tableContainerRef.current.scrollTop = 0;
     }
-  }, [filters]);
+  }, [filters, sortBy, sortOrder]);
 
   /**
    * Obtiene todas las empresas de todas las páginas cargadas
@@ -62,10 +103,22 @@ export const Collections = () => {
     }
     
     // Obtener todos los datos de todas las páginas
+    // IMPORTANTE: El backend ya ordena los datos, así que solo necesitamos combinarlos
     const allData = deudasActivasData.pages.flatMap(page => page.data || []);
     
     if (allData.length === 0) {
       return [];
+    }
+    
+    // Debug: verificar el orden de los datos recibidos
+    if (sortBy && allData.length > 0) {
+      console.log('Frontend - Datos recibidos:', {
+        sortBy,
+        sortOrder,
+        totalPages: deudasActivasData.pages.length,
+        firstPageCount: deudasActivasData.pages[0]?.data?.length || 0,
+        first3Razsoc: allData.slice(0, 3).map((e: any) => e.razsoc || e.rut)
+      });
     }
     
     // Verificar si la primera entrada tiene la estructura de EmpresaConDocumentos (tiene 'documentos')
@@ -73,7 +126,8 @@ export const Collections = () => {
     const isEmpresaStructure = firstItem && typeof firstItem === 'object' && 'documentos' in firstItem;
     
     if (isEmpresaStructure) {
-      // Estructura nueva: ya viene agrupada por empresa
+      // Estructura nueva: ya viene agrupada por empresa y ordenada del backend
+      // NO reordenar aquí, el backend ya lo hizo
       return allData as Array<{
         rut: string;
         razsoc: string;
@@ -82,6 +136,7 @@ export const Collections = () => {
         documentos: CtasPorCobrar[];
         total_deuda: number;
         total_documentos: number;
+        vencimientoMasReciente?: string | null;
       }>;
     } else {
       // Estructura antigua: lista de documentos, necesitamos agrupar por empresa
@@ -93,6 +148,7 @@ export const Collections = () => {
         documentos: CtasPorCobrar[];
         total_deuda: number;
         total_documentos: number;
+        vencimientoMasReciente: string | null;
       }>();
       
       (allData as unknown as CtasPorCobrar[]).forEach((doc: CtasPorCobrar) => {
@@ -106,7 +162,8 @@ export const Collections = () => {
             cliente_telefono: doc.cliente_telefono || null,
             documentos: [],
             total_deuda: 0,
-            total_documentos: 0
+            total_documentos: 0,
+            vencimientoMasReciente: null
           });
         }
         
@@ -118,7 +175,21 @@ export const Collections = () => {
         empresa.total_documentos += 1;
       });
       
-      return Array.from(empresasMap.values());
+      // Calcular vencimientoMasReciente para cada empresa
+      return Array.from(empresasMap.values()).map(empresa => {
+        const fechasVencimiento = empresa.documentos
+          .map(doc => doc.vencimiento ? new Date(doc.vencimiento) : null)
+          .filter((date): date is Date => date !== null);
+        
+        const vencimientoMasReciente = fechasVencimiento.length > 0
+          ? fechasVencimiento.sort((a, b) => b.getTime() - a.getTime())[0].toISOString()
+          : null;
+        
+        return {
+          ...empresa,
+          vencimientoMasReciente
+        };
+      });
     }
   }, [deudasActivasData?.pages]);
 
@@ -316,7 +387,6 @@ export const Collections = () => {
         <div className="bg-white p-6 rounded-lg shadow flex flex-col flex-1 min-h-0 overflow-hidden">
           <div className="flex justify-between items-center mb-4 flex-shrink-0">
             <div className="flex items-center gap-4">
-              <h2 className="text-xl font-bold text-gray-800">Cuentas por Cobrar</h2>
               {selectedCompanies.size > 0 && (
                 <div className="text-sm text-blue-600 font-medium">
                   {selectedCompanies.size} empresa{selectedCompanies.size !== 1 ? 's' : ''} seleccionada{selectedCompanies.size !== 1 ? 's' : ''}
@@ -343,11 +413,73 @@ export const Collections = () => {
               />
             </div>
           </div>
-        {loadingDeudas && allEmpresas.length === 0 ? (
-          <div className="flex items-center justify-center py-12 flex-1">
-            <div className="text-gray-500">Cargando...</div>
+        {(loadingDeudas || (isFetchingDeudas && allEmpresas.length === 0)) ? (
+          <div
+            ref={tableContainerRef}
+            className="flex-1 overflow-y-auto overflow-x-auto min-h-0"
+          >
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50 sticky top-0 z-10">
+                <tr>
+                  <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-12">
+                    <div className="flex justify-center">
+                      <div className="w-4 h-4 bg-gray-200 rounded animate-pulse" />
+                    </div>
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Nombre Cliente
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Total Facturado
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Fecha Vencimiento
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Deuda
+                  </th>
+                  <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Acciones
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {Array.from({ length: 10 }).map((_, index) => (
+                  <tr key={`skeleton-${index}`} className="animate-pulse">
+                    <td className="px-4 py-3 text-center">
+                      <div className="flex justify-center">
+                        <div className="w-4 h-4 bg-gray-200 rounded" />
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="space-y-2">
+                        <div className="h-4 bg-gray-200 rounded w-3/4" />
+                        <div className="h-3 bg-gray-100 rounded w-1/2" />
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="h-4 bg-gray-200 rounded w-24" />
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="h-4 bg-gray-200 rounded w-28" />
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="space-y-2">
+                        <div className="h-4 bg-gray-200 rounded w-24" />
+                        <div className="h-3 bg-gray-100 rounded w-16" />
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <div className="flex justify-center">
+                        <div className="w-6 h-6 bg-gray-200 rounded" />
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-        ) : allEmpresas.length === 0 && !loadingDeudas ? (
+        ) : allEmpresas.length === 0 && !loadingDeudas && !isFetchingDeudas ? (
           <div className="flex items-center justify-center py-12 flex-1">
             <div className="text-gray-500">No hay empresas para mostrar</div>
             <div className="text-xs text-gray-400 mt-2">
@@ -371,17 +503,73 @@ export const Collections = () => {
                       />
                     </div>
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Nombre Cliente
+                  <th 
+                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
+                    onClick={() => handleSort('razsoc')}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span>Nombre Cliente</span>
+                      {sortBy === 'razsoc' ? (
+                        sortOrder === 'asc' ? (
+                          <ChevronUpIcon color="#6B7280" />
+                        ) : (
+                          <DropdownIcon color="#6B7280" />
+                        )
+                      ) : (
+                        <DropdownIcon color="#9CA3AF" />
+                      )}
+                    </div>
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Total Facturado
+                  <th 
+                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
+                    onClick={() => handleSort('total_deuda')}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span>Total Facturado</span>
+                      {sortBy === 'total_deuda' ? (
+                        sortOrder === 'asc' ? (
+                          <ChevronUpIcon color="#6B7280" />
+                        ) : (
+                          <DropdownIcon color="#6B7280" />
+                        )
+                      ) : (
+                        <DropdownIcon color="#9CA3AF" />
+                      )}
+                    </div>
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Fecha Vencimiento
+                  <th 
+                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
+                    onClick={() => handleSort('vencimiento')}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span>Fecha Vencimiento</span>
+                      {sortBy === 'vencimiento' ? (
+                        sortOrder === 'asc' ? (
+                          <ChevronUpIcon color="#6B7280" />
+                        ) : (
+                          <DropdownIcon color="#6B7280" />
+                        )
+                      ) : (
+                        <DropdownIcon color="#9CA3AF" />
+                      )}
+                    </div>
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Deuda
+                  <th 
+                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
+                    onClick={() => handleSort('deuda')}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span>Deuda</span>
+                      {sortBy === 'deuda' ? (
+                        sortOrder === 'asc' ? (
+                          <ChevronUpIcon color="#6B7280" />
+                        ) : (
+                          <DropdownIcon color="#6B7280" />
+                        )
+                      ) : (
+                        <DropdownIcon color="#9CA3AF" />
+                      )}
+                    </div>
                   </th>
                   <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Acciones
@@ -398,21 +586,10 @@ export const Collections = () => {
                     return null;
                   }
                   
-                  // Encontrar la fecha de vencimiento más reciente (la más cercana en el futuro, o si todas están vencidas, la más reciente)
-                  const fechaVencimientoMasReciente = documentos
-                    .map(doc => doc.vencimiento ? new Date(doc.vencimiento) : null)
-                    .filter((date): date is Date => date !== null)
-                    .sort((a, b) => {
-                      // Ordenar: primero las fechas futuras (más cercanas primero), luego las pasadas (más recientes primero)
-                      const now = new Date();
-                      const aIsFuture = a > now;
-                      const bIsFuture = b > now;
-                      
-                      if (aIsFuture && !bIsFuture) return -1;
-                      if (!aIsFuture && bIsFuture) return 1;
-                      if (aIsFuture && bIsFuture) return a.getTime() - b.getTime(); // Futuras: más cercanas primero
-                      return b.getTime() - a.getTime(); // Pasadas: más recientes primero
-                    })[0];
+                  // Usar la fecha de vencimiento más reciente del backend si está disponible
+                  const fechaVencimientoMasReciente = empresa.vencimientoMasReciente 
+                    ? new Date(empresa.vencimientoMasReciente)
+                    : null;
                   
                   // Determinar si la empresa tiene documentos "Por vencer" o "Vencido"
                   // Si hay al menos un documento con dias_vencidos < 0, es "Por vencer"
