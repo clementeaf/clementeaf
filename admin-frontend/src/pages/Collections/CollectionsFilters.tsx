@@ -31,7 +31,6 @@ export const CollectionsFilters = ({
   onFiltersChange,
   className = ''
 }: CollectionsFiltersProps) => {
-  const [clientExpanded, setClientExpanded] = useState(false);
   const [datesExpanded, setDatesExpanded] = useState(false);
   const [amountExpanded, setAmountExpanded] = useState(false);
   const [statusExpanded, setStatusExpanded] = useState(false);
@@ -184,45 +183,32 @@ export const CollectionsFilters = ({
       </div>
       
       <div className="flex flex-col gap-4 flex-1 overflow-y-auto">
-        {/* Filtro por Cliente/RUT */}
+        {/* Filtro por Cliente/RUT - Siempre visible */}
         <div>
-          <button
-            onClick={() => setClientExpanded(!clientExpanded)}
-            className="w-full flex items-center justify-between text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors duration-200"
-          >
-            <span>Cliente</span>
-            {clientExpanded ? (
-              <ChevronUpIcon color="#6B7280" />
-            ) : (
-              <DropdownIcon color="#6B7280" />
-            )}
-          </button>
-          {clientExpanded && (
-            <div className="mt-2 space-y-3">
-              <div>
-                <Input
-                  type="text"
-                  label="Nombre Cliente"
-                  labelClassName="text-xs text-gray-600"
-                  placeholder="Ej: CLINICA ASTRA"
-                  value={filters.razsoc || ''}
-                  onChange={(e) => updateFilter('razsoc', e.target.value)}
-                  inputClassName="w-full"
-                />
-              </div>
-              <div>
-                <Input
-                  type="text"
-                  label="RUT"
-                  labelClassName="text-xs text-gray-600"
-                  placeholder="Ej: 12345678-9"
-                  value={filters.rut || ''}
-                  onChange={(e) => updateFilter('rut', e.target.value)}
-                  inputClassName="w-full"
-                />
-              </div>
+          <div className="space-y-3">
+            <div>
+              <Input
+                type="text"
+                label="Nombre Cliente"
+                labelClassName="text-xs text-gray-600"
+                placeholder="Ej: CLINICA ASTRA"
+                value={filters.razsoc || ''}
+                onChange={(e) => updateFilter('razsoc', e.target.value)}
+                inputClassName="w-full"
+              />
             </div>
-          )}
+            <div>
+              <Input
+                type="text"
+                label="RUT"
+                labelClassName="text-xs text-gray-600"
+                placeholder="Ej: 12345678-9"
+                value={filters.rut || ''}
+                onChange={(e) => updateFilter('rut', e.target.value)}
+                inputClassName="w-full"
+              />
+            </div>
+          </div>
         </div>
 
         {/* Filtro por Fechas */}

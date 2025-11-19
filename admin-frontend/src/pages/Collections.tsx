@@ -500,14 +500,16 @@ export const Collections = () => {
                       <div className="w-4 h-4 bg-gray-200 rounded animate-pulse" />
                     </div>
                   </th>
+                  <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-12">
+                  </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Nombre Cliente
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Total Facturado
+                    Fecha Vencimiento
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Fecha Vencimiento
+                    Total Facturado
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Deuda
@@ -525,6 +527,8 @@ export const Collections = () => {
                         <div className="w-4 h-4 bg-gray-200 rounded" />
                       </div>
                     </td>
+                    <td className="px-4 py-3 text-center">
+                    </td>
                     <td className="px-4 py-3">
                       <div className="space-y-2">
                         <div className="h-4 bg-gray-200 rounded w-3/4" />
@@ -532,10 +536,10 @@ export const Collections = () => {
                       </div>
                     </td>
                     <td className="px-4 py-3">
-                      <div className="h-4 bg-gray-200 rounded w-24" />
+                      <div className="h-4 bg-gray-200 rounded w-28" />
                     </td>
                     <td className="px-4 py-3">
-                      <div className="h-4 bg-gray-200 rounded w-28" />
+                      <div className="h-4 bg-gray-200 rounded w-24" />
                     </td>
                     <td className="px-4 py-3">
                       <div className="space-y-2">
@@ -598,11 +602,11 @@ export const Collections = () => {
                   </th>
                   <th 
                     className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
-                    onClick={() => handleSort('total_deuda')}
+                    onClick={() => handleSort('vencimiento')}
                   >
                     <div className="flex items-center gap-2">
-                      <span>Total Facturado</span>
-                      {sortBy === 'total_deuda' ? (
+                      <span>Fecha Vencimiento</span>
+                      {sortBy === 'vencimiento' ? (
                         sortOrder === 'asc' ? (
                           <ChevronUpIcon color="#6B7280" />
                         ) : (
@@ -615,11 +619,11 @@ export const Collections = () => {
                   </th>
                   <th 
                     className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
-                    onClick={() => handleSort('vencimiento')}
+                    onClick={() => handleSort('total_deuda')}
                   >
                     <div className="flex items-center gap-2">
-                      <span>Fecha Vencimiento</span>
-                      {sortBy === 'vencimiento' ? (
+                      <span>Total Facturado</span>
+                      {sortBy === 'total_deuda' ? (
                         sortOrder === 'asc' ? (
                           <ChevronUpIcon color="#6B7280" />
                         ) : (
@@ -729,13 +733,13 @@ export const Collections = () => {
                           </div>
                         </td>
                         <td className="px-4 py-3 text-sm">
-                          <p className="font-semibold text-gray-900">
-                            {formatCurrency(empresa.total_deuda)}
+                          <p className="font-medium text-gray-900">
+                            {fechaVencimientoMasReciente ? formatDate(fechaVencimientoMasReciente.toISOString()) : '-'}
                           </p>
                         </td>
                         <td className="px-4 py-3 text-sm">
-                          <p className="font-medium text-gray-900">
-                            {fechaVencimientoMasReciente ? formatDate(fechaVencimientoMasReciente.toISOString()) : '-'}
+                          <p className="font-semibold text-gray-900">
+                            {formatCurrency(empresa.total_deuda)}
                           </p>
                         </td>
                         <td className="px-4 py-3 text-sm">
@@ -823,13 +827,13 @@ export const Collections = () => {
                                 </div>
                               </td>
                               <td className="px-4 py-3 text-sm">
-                                <p className="font-semibold text-gray-700">
-                                  {formatCurrency(sucursal.total_deuda)}
+                                <p className="font-medium text-gray-700">
+                                  {sucursalFechaVencimiento ? formatDate(sucursalFechaVencimiento.toISOString()) : '-'}
                                 </p>
                               </td>
                               <td className="px-4 py-3 text-sm">
-                                <p className="font-medium text-gray-700">
-                                  {sucursalFechaVencimiento ? formatDate(sucursalFechaVencimiento.toISOString()) : '-'}
+                                <p className="font-semibold text-gray-700">
+                                  {formatCurrency(sucursal.total_deuda)}
                                 </p>
                               </td>
                               <td className="px-4 py-3 text-sm">
@@ -865,12 +869,12 @@ export const Collections = () => {
                                   </td>
                                   <td className="px-4 py-3 text-sm">
                                     <p className="font-medium text-gray-600">
-                                      {formatCurrency(doc.deuda)}
+                                      {docFechaVencimiento ? formatDate(docFechaVencimiento.toISOString()) : '-'}
                                     </p>
                                   </td>
                                   <td className="px-4 py-3 text-sm">
                                     <p className="font-medium text-gray-600">
-                                      {docFechaVencimiento ? formatDate(docFechaVencimiento.toISOString()) : '-'}
+                                      {formatCurrency(doc.deuda)}
                                     </p>
                                   </td>
                                   <td className="px-4 py-3 text-sm">
@@ -911,12 +915,12 @@ export const Collections = () => {
                             </td>
                             <td className="px-4 py-3 text-sm">
                               <p className="font-medium text-gray-600">
-                                {formatCurrency(doc.deuda)}
+                                {docFechaVencimiento ? formatDate(docFechaVencimiento.toISOString()) : '-'}
                               </p>
                             </td>
                             <td className="px-4 py-3 text-sm">
                               <p className="font-medium text-gray-600">
-                                {docFechaVencimiento ? formatDate(docFechaVencimiento.toISOString()) : '-'}
+                                {formatCurrency(doc.deuda)}
                               </p>
                             </td>
                             <td className="px-4 py-3 text-sm">
