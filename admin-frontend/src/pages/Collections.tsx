@@ -5,7 +5,7 @@ import {
   useDeudasActivasInfinite
 } from '../hooks/useAnalytics';
 import { CollectionsFilters } from './Collections/CollectionsFilters';
-import { ActionsMenu, EyeIcon, EmailIcon, AutomationIcon, Modal, Checkbox } from '../components/commons';
+import { ActionsMenu, EyeIcon, EmailIcon, AutomationIcon, Modal, Checkbox, Button } from '../components/commons';
 import { AutomationCompanySearch } from './Collections/AutomationCompanySearch';
 import type { QueryFilters, SortField, SortOrder } from '../types/analytics';
 import type { CtasPorCobrar } from '../types/analytics';
@@ -24,6 +24,8 @@ export const Collections = () => {
   const [sortBy, setSortBy] = useState<SortField | undefined>(undefined);
   const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
   const [isAutomationModalOpen, setIsAutomationModalOpen] = useState(false);
+  const [isQuickActionsMenuOpen, setIsQuickActionsMenuOpen] = useState(false);
+  const quickActionsMenuRef = useRef<HTMLDivElement>(null);
   // Estado principal: empresas seleccionadas por RUT (sincronizado entre tabla y modal)
   const [selectedCompanies, setSelectedCompanies] = useState<Set<string>>(new Set());
   const [automationConfig, setAutomationConfig] = useState<AutomationConfig>({
@@ -92,6 +94,25 @@ export const Collections = () => {
       tableContainerRef.current.scrollTop = 0;
     }
   }, [filters, sortBy, sortOrder]);
+
+  /**
+   * Cierra el menú de acciones rápidas cuando se hace click fuera
+   */
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent): void => {
+      if (quickActionsMenuRef.current && !quickActionsMenuRef.current.contains(event.target as Node)) {
+        setIsQuickActionsMenuOpen(false);
+      }
+    };
+
+    if (isQuickActionsMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isQuickActionsMenuOpen]);
 
   /**
    * Obtiene todas las empresas de todas las páginas cargadas
@@ -394,23 +415,35 @@ export const Collections = () => {
               )}
             </div>
             <div className="flex items-center gap-4">
+              <div className="relative" ref={quickActionsMenuRef}>
+                <Button
+                  onClick={() => setIsQuickActionsMenuOpen(!isQuickActionsMenuOpen)}
+                  className="bg-blue-600 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                  rightIcon={<DropdownIcon color="#FFFFFF" />}
+                >
+                  Acciones rápidas
+                </Button>
+                {isQuickActionsMenuOpen && (
+                  <div className="absolute right-0 mt-1 w-56 bg-white border border-gray-300 rounded-lg shadow-lg z-50">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsAutomationModalOpen(true);
+                        setIsQuickActionsMenuOpen(false);
+                      }}
+                      className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 focus:bg-gray-100 focus:outline-none flex items-center gap-2 transition-colors whitespace-nowrap"
+                    >
+                      <AutomationIcon color="#6B7280" />
+                      <span className="whitespace-nowrap">Automatizar notificación/es</span>
+                    </button>
+                  </div>
+                )}
+              </div>
               {allEmpresas.length > 0 && (
                 <div className="text-sm text-gray-500">
                   Mostrando {allEmpresas.length} de {deudasActivasData?.pages[0]?.total || 0} empresas
                 </div>
               )}
-              <ActionsMenu
-                items={[
-                  {
-                    id: 'automatizar-cobros',
-                    label: 'Automatizar cobros',
-                    onClick: () => {
-                      setIsAutomationModalOpen(true);
-                    },
-                    icon: <AutomationIcon color="#6B7280" />
-                  }
-                ]}
-              />
             </div>
           </div>
         {(loadingDeudas || (isFetchingDeudas && allEmpresas.length === 0)) ? (
@@ -658,6 +691,17 @@ export const Collections = () => {
                                 console.log('Ver detalle de empresa:', empresa);
                               },
                               icon: <EyeIcon color="#6B7280" />
+                            },
+                            {
+                              id: 'automatizar-notificacion',
+                              label: 'Automatizar notificación',
+                              onClick: () => {
+                                // Seleccionar automáticamente la empresa de esta fila
+                                setSelectedCompanies(new Set([empresa.rut]));
+                                // Abrir el modal de automatización
+                                setIsAutomationModalOpen(true);
+                              },
+                              icon: <AutomationIcon color="#6B7280" />
                             }
                           ]}
                         />
@@ -682,7 +726,7 @@ export const Collections = () => {
         </div>
       </div>
 
-      {/* Modal de Automatizar Cobros */}
+      {/* Modal de Automatizar notificación/es */}
       <Modal
         isOpen={isAutomationModalOpen}
         onClose={() => {
@@ -693,7 +737,7 @@ export const Collections = () => {
       >
         <div className="p-6">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-gray-800">Automatizar Cobros</h2>
+            <h2 className="text-2xl font-bold text-gray-800">Automatizar notificación/es</h2>
             <button
               onClick={() => {
                 setIsAutomationModalOpen(false);
