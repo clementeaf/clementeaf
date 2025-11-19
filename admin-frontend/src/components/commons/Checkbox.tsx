@@ -28,15 +28,21 @@ export const Checkbox = ({
 }: CheckboxProps): React.ReactElement => {
   return (
     <div className={`flex items-center ${containerClassName}`}>
-      <input
-        type="checkbox"
-        className={`w-4 h-4 rounded border-gray-300 ${className}`}
-        {...htmlInputProps}
-      />
-      {label && (
-        <label htmlFor={htmlInputProps.id} className="ml-2 text-sm text-gray-700">
-          {label}
+      {label ? (
+        <label className="flex items-center cursor-pointer">
+          <input
+            type="checkbox"
+            className={`w-4 h-4 rounded border-gray-300 ${className}`}
+            {...htmlInputProps}
+          />
+          <span className="ml-2 text-sm text-gray-700">{label}</span>
         </label>
+      ) : (
+        <input
+          type="checkbox"
+          className={`w-4 h-4 rounded border-gray-300 ${className}`}
+          {...htmlInputProps}
+        />
       )}
     </div>
   );
