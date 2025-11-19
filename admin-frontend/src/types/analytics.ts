@@ -35,6 +35,19 @@ export interface CtasPorCobrar {
   cliente_telefono: string | null;
 }
 
+/**
+ * Interfaz para empresa con sus documentos agrupados
+ */
+export interface EmpresaConDocumentos {
+  rut: string;
+  razsoc: string;
+  cliente_email: string | null;
+  cliente_telefono: string | null;
+  documentos: CtasPorCobrar[];
+  total_deuda: number;
+  total_documentos: number;
+}
+
 export interface PaginatedResponse<T> {
   data: T[];
   total: number;

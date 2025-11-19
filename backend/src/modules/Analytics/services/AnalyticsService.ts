@@ -33,6 +33,19 @@ export interface CtasPorCobrarConCliente extends CtasPorCobrar {
   cliente_telefono: string | null;
 }
 
+/**
+ * Interfaz para empresa con sus documentos agrupados
+ */
+export interface EmpresaConDocumentos {
+  rut: string;
+  razsoc: string;
+  cliente_email: string | null;
+  cliente_telefono: string | null;
+  documentos: CtasPorCobrar[];
+  total_deuda: number;
+  total_documentos: number;
+}
+
 export interface ResumenCliente {
   rut: string;
   razsoc: string;
@@ -217,110 +230,123 @@ export class AnalyticsService {
   }
 
   /**
-   * Obtiene las deudas activas (deuda > 0)
+   * Obtiene las deudas activas (deuda > 0) agrupadas por empresa
    * Incluye email y teléfono del cliente mediante JOIN
    */
-  async getDeudasActivas(filters: QueryFilters = {}): Promise<PaginatedResponse<CtasPorCobrarConCliente>> {
+  async getDeudasActivas(filters: QueryFilters = {}): Promise<PaginatedResponse<EmpresaConDocumentos>> {
     const repository = await this.getRepository();
     
     const page = filters.page || 1;
     const limit = filters.limit || 10;
     const skip = (page - 1) * limit;
 
-    // Obtener total (sin los campos adicionales para el count)
-    const countQueryBuilder = repository.createQueryBuilder('ctas')
-      .where('ctas.deuda > 0');
+    // Obtener RUTs únicos que cumplen los filtros (para contar empresas)
+    const uniqueRutsQuery = repository.createQueryBuilder('ctas')
+      .select('ctas.rut', 'rut')
+      .addSelect('ctas.razsoc', 'razsoc')
+      .where('ctas.deuda > 0')
+      .distinct(true);
     
-    // Aplicar todos los filtros al count
+    // Aplicar todos los filtros
     if (filters.rut) {
-      countQueryBuilder.andWhere('ctas.rut = :rut', { rut: filters.rut });
+      uniqueRutsQuery.andWhere('ctas.rut = :rut', { rut: filters.rut });
     }
     if (filters.razsoc) {
-      countQueryBuilder.andWhere('LOWER(ctas.razsoc) LIKE LOWER(:razsoc)', { razsoc: `%${filters.razsoc}%` });
+      uniqueRutsQuery.andWhere('LOWER(ctas.razsoc) LIKE LOWER(:razsoc)', { razsoc: `%${filters.razsoc}%` });
     }
     if (filters.codvend) {
-      countQueryBuilder.andWhere('ctas.codvend = :codvend', { codvend: filters.codvend });
+      uniqueRutsQuery.andWhere('ctas.codvend = :codvend', { codvend: filters.codvend });
     }
     if (filters.diasVencidosMin !== undefined) {
-      countQueryBuilder.andWhere('ctas.dias_vencidos >= :diasVencidosMin', { diasVencidosMin: filters.diasVencidosMin });
+      uniqueRutsQuery.andWhere('ctas.dias_vencidos >= :diasVencidosMin', { diasVencidosMin: filters.diasVencidosMin });
     }
     if (filters.diasVencidosMax !== undefined) {
-      countQueryBuilder.andWhere('ctas.dias_vencidos <= :diasVencidosMax', { diasVencidosMax: filters.diasVencidosMax });
+      uniqueRutsQuery.andWhere('ctas.dias_vencidos <= :diasVencidosMax', { diasVencidosMax: filters.diasVencidosMax });
     }
     if (filters.deudaMin !== undefined) {
-      countQueryBuilder.andWhere('ctas.deuda >= :deudaMin', { deudaMin: filters.deudaMin });
+      uniqueRutsQuery.andWhere('ctas.deuda >= :deudaMin', { deudaMin: filters.deudaMin });
     }
     if (filters.deudaMax !== undefined) {
-      countQueryBuilder.andWhere('ctas.deuda <= :deudaMax', { deudaMax: filters.deudaMax });
+      uniqueRutsQuery.andWhere('ctas.deuda <= :deudaMax', { deudaMax: filters.deudaMax });
     }
     if (filters.fechaDesde) {
-      countQueryBuilder.andWhere('ctas.fecha >= :fechaDesde', { fechaDesde: filters.fechaDesde });
+      uniqueRutsQuery.andWhere('ctas.fecha >= :fechaDesde', { fechaDesde: filters.fechaDesde });
     }
     if (filters.fechaHasta) {
-      countQueryBuilder.andWhere('ctas.fecha <= :fechaHasta', { fechaHasta: filters.fechaHasta });
+      uniqueRutsQuery.andWhere('ctas.fecha <= :fechaHasta', { fechaHasta: filters.fechaHasta });
     }
     
-    const total = await countQueryBuilder.getCount();
+    uniqueRutsQuery.orderBy('ctas.razsoc', 'ASC');
+    
+    const uniqueRuts = await uniqueRutsQuery.getRawMany();
+    const totalEmpresas = uniqueRuts.length;
 
-    // Primero obtener los registros paginados SIN el JOIN para asegurar la paginación correcta
-    const baseQuery = repository.createQueryBuilder('ctas')
-      .where('ctas.deuda > 0');
-    
-    // Aplicar todos los filtros a la query principal
-    if (filters.rut) {
-      baseQuery.andWhere('ctas.rut = :rut', { rut: filters.rut });
-    }
-    if (filters.razsoc) {
-      baseQuery.andWhere('LOWER(ctas.razsoc) LIKE LOWER(:razsoc)', { razsoc: `%${filters.razsoc}%` });
-    }
-    if (filters.codvend) {
-      baseQuery.andWhere('ctas.codvend = :codvend', { codvend: filters.codvend });
-    }
-    if (filters.diasVencidosMin !== undefined) {
-      baseQuery.andWhere('ctas.dias_vencidos >= :diasVencidosMin', { diasVencidosMin: filters.diasVencidosMin });
-    }
-    if (filters.diasVencidosMax !== undefined) {
-      baseQuery.andWhere('ctas.dias_vencidos <= :diasVencidosMax', { diasVencidosMax: filters.diasVencidosMax });
-    }
-    if (filters.deudaMin !== undefined) {
-      baseQuery.andWhere('ctas.deuda >= :deudaMin', { deudaMin: filters.deudaMin });
-    }
-    if (filters.deudaMax !== undefined) {
-      baseQuery.andWhere('ctas.deuda <= :deudaMax', { deudaMax: filters.deudaMax });
-    }
-    if (filters.fechaDesde) {
-      baseQuery.andWhere('ctas.fecha >= :fechaDesde', { fechaDesde: filters.fechaDesde });
-    }
-    if (filters.fechaHasta) {
-      baseQuery.andWhere('ctas.fecha <= :fechaHasta', { fechaHasta: filters.fechaHasta });
-    }
-    
-    baseQuery.orderBy('ctas.vencimiento', 'ASC')
-      .skip(skip)
-      .take(limit);
-    
-    const paginatedEntities = await baseQuery.getMany();
-    
-    // Si no hay registros, retornar vacío
-    if (paginatedEntities.length === 0) {
+    // Si no hay empresas, retornar vacío
+    if (totalEmpresas === 0) {
       return {
         data: [],
-        total,
+        total: 0,
         page,
         limit,
-        totalPages: Math.ceil(total / limit)
+        totalPages: 0
+      };
+    }
+
+    // Paginar los RUTs únicos
+    const paginatedRuts = uniqueRuts.slice(skip, skip + limit);
+    const ruts = paginatedRuts.map((row: { rut: string }) => row.rut).filter(Boolean);
+
+    // Si no hay RUTs en esta página, retornar vacío
+    if (ruts.length === 0) {
+      return {
+        data: [],
+        total: totalEmpresas,
+        page,
+        limit,
+        totalPages: Math.ceil(totalEmpresas / limit)
       };
     }
     
-    // Obtener los RUTs únicos de los registros paginados
-    const ruts = [...new Set(paginatedEntities.map(e => e.rut).filter(Boolean))];
+    // Obtener todos los documentos de las empresas en esta página que cumplen los filtros
+    const documentosQuery = repository.createQueryBuilder('ctas')
+      .where('ctas.deuda > 0')
+      .andWhere('ctas.rut IN (:...ruts)', { ruts });
+    
+    // Aplicar los mismos filtros a los documentos
+    if (filters.razsoc) {
+      documentosQuery.andWhere('LOWER(ctas.razsoc) LIKE LOWER(:razsoc)', { razsoc: `%${filters.razsoc}%` });
+    }
+    if (filters.codvend) {
+      documentosQuery.andWhere('ctas.codvend = :codvend', { codvend: filters.codvend });
+    }
+    if (filters.diasVencidosMin !== undefined) {
+      documentosQuery.andWhere('ctas.dias_vencidos >= :diasVencidosMin', { diasVencidosMin: filters.diasVencidosMin });
+    }
+    if (filters.diasVencidosMax !== undefined) {
+      documentosQuery.andWhere('ctas.dias_vencidos <= :diasVencidosMax', { diasVencidosMax: filters.diasVencidosMax });
+    }
+    if (filters.deudaMin !== undefined) {
+      documentosQuery.andWhere('ctas.deuda >= :deudaMin', { deudaMin: filters.deudaMin });
+    }
+    if (filters.deudaMax !== undefined) {
+      documentosQuery.andWhere('ctas.deuda <= :deudaMax', { deudaMax: filters.deudaMax });
+    }
+    if (filters.fechaDesde) {
+      documentosQuery.andWhere('ctas.fecha >= :fechaDesde', { fechaDesde: filters.fechaDesde });
+    }
+    if (filters.fechaHasta) {
+      documentosQuery.andWhere('ctas.fecha <= :fechaHasta', { fechaHasta: filters.fechaHasta });
+    }
+    
+    documentosQuery.orderBy('ctas.vencimiento', 'ASC');
+    
+    const allDocumentos = await documentosQuery.getMany();
     
     // Obtener los datos de clientes para esos RUTs
     let clientsData: Array<{ rut: string; cliente_email: string; cliente_telefono: string }> = [];
     
     if (ruts.length > 0) {
       const dataSource = await this.getDataSource();
-      // Usar parámetros posicionales de PostgreSQL ($1, $2, etc.)
       const placeholders = ruts.map((_, index) => `$${index + 1}`).join(',');
       clientsData = await dataSource.query(
         `SELECT rut, "contactoCorreoElectronico" as cliente_email, "contactoTelefono" as cliente_telefono 
@@ -342,99 +368,52 @@ export class AnalyticsService {
         { email: c.cliente_email || null, telefono: c.cliente_telefono || null }
       ])
     );
+
+    // Agrupar documentos por RUT
+    const documentosPorRut = new Map<string, CtasPorCobrar[]>();
     
-    // Mapear las entidades a la estructura esperada con los datos de cliente
-    const rawData = paginatedEntities.map(entity => {
-      const clientData: ClientData = clientsMap.get(entity.rut || '') || { email: null, telefono: null };
-      return {
-        ctas_td: entity.td,
-        ctas_numdocto: entity.numdocto,
-        ctas_nrutfact: entity.nrutfact,
-        ctas_cta: entity.cta,
-        ctas_razsoc: entity.razsoc,
-        ctas_rut: entity.rut,
-        ctas_rutpadre: entity.rutpadre,
-        ctas_razsoc_padre: entity.razsoc_padre,
-        ctas_periodo_emision: entity.periodo_emision,
-        ctas_periodo_vencim: entity.periodo_vencim,
-        ctas_fecha: entity.fecha,
-        ctas_vencimiento: entity.vencimiento,
-        ctas_dias_vencidos: entity.dias_vencidos,
-        ctas_rango_dias_vencidos: entity.rango_dias_vencidos,
-        ctas_rango_dias_vencidos_cobranza: entity.rango_dias_vencidos_cobranza,
-        ctas_debe: entity.debe,
-        ctas_haber: entity.haber,
-        ctas_deuda: entity.deuda,
-        ctas_cta_cod: entity.cta_cod,
-        ctas_cta_nom: entity.cta_nom,
-        ctas_pers_cod: entity.pers_cod,
-        ctas_codvend: entity.codvend,
-        ctas_nombre_vendedor: entity.nombre_vendedor,
-        ctas_team: entity.team,
-        ctas_email_vendedor: entity.email_vendedor,
-        ctas_numordenc: entity.numordenc,
-        ctas_hep: entity.hep,
-        ctas_nrohep: entity.nrohep,
-        ctas_nrohep1: entity.nrohep1,
-        ctas_created_at: entity.created_at,
-        ctas_updated_at: entity.updated_at,
-        ctas_sync_date: entity.sync_date,
-        cliente_email: clientData.email,
-        cliente_telefono: clientData.telefono
-      };
+    allDocumentos.forEach(doc => {
+      if (doc.rut) {
+        if (!documentosPorRut.has(doc.rut)) {
+          documentosPorRut.set(doc.rut, []);
+        }
+        documentosPorRut.get(doc.rut)!.push(doc);
+      }
     });
 
-    // Mapear los datos raw a la estructura esperada
-    // Los campos de ctas vienen con prefijo 'ctas_'
-    const data: CtasPorCobrarConCliente[] = rawData.map((row) => {
-      const ctasData: CtasPorCobrar = {
-        td: row.ctas_td,
-        numdocto: row.ctas_numdocto,
-        nrutfact: row.ctas_nrutfact,
-        cta: row.ctas_cta,
-        razsoc: row.ctas_razsoc,
-        rut: row.ctas_rut,
-        rutpadre: row.ctas_rutpadre,
-        razsoc_padre: row.ctas_razsoc_padre,
-        periodo_emision: row.ctas_periodo_emision,
-        periodo_vencim: row.ctas_periodo_vencim,
-        fecha: row.ctas_fecha,
-        vencimiento: row.ctas_vencimiento,
-        dias_vencidos: row.ctas_dias_vencidos,
-        rango_dias_vencidos: row.ctas_rango_dias_vencidos,
-        rango_dias_vencidos_cobranza: row.ctas_rango_dias_vencidos_cobranza,
-        debe: row.ctas_debe,
-        haber: row.ctas_haber,
-        deuda: row.ctas_deuda,
-        cta_cod: row.ctas_cta_cod,
-        cta_nom: row.ctas_cta_nom,
-        pers_cod: row.ctas_pers_cod,
-        codvend: row.ctas_codvend,
-        nombre_vendedor: row.ctas_nombre_vendedor,
-        team: row.ctas_team,
-        email_vendedor: row.ctas_email_vendedor,
-        numordenc: row.ctas_numordenc,
-        hep: row.ctas_hep,
-        nrohep: row.ctas_nrohep,
-        nrohep1: row.ctas_nrohep1,
-        created_at: row.ctas_created_at,
-        updated_at: row.ctas_updated_at,
-        sync_date: row.ctas_sync_date
-      };
-      
-      return {
-        ...ctasData,
-        cliente_email: row.cliente_email || null,
-        cliente_telefono: row.cliente_telefono || null
-      };
-    });
+    // Crear la estructura de respuesta agrupada por empresa
+    const data: EmpresaConDocumentos[] = paginatedRuts
+      .filter((row: { rut: string }) => row.rut && documentosPorRut.has(row.rut))
+      .map((row: { rut: string; razsoc: string }) => {
+        const rut = row.rut;
+        const documentos = documentosPorRut.get(rut) || [];
+        const clientData: ClientData = clientsMap.get(rut) || { email: null, telefono: null };
+        
+        // Calcular total de deuda y total de documentos
+        const total_deuda = documentos.reduce((sum, doc) => {
+          // Convertir deuda a número si es string, o usar 0 si es null/undefined
+          const deudaValue = typeof doc.deuda === 'string' ? parseFloat(doc.deuda) || 0 : (doc.deuda ?? 0);
+          return sum + (isNaN(deudaValue) ? 0 : deudaValue);
+        }, 0);
+        const total_documentos = documentos.length;
+
+        return {
+          rut,
+          razsoc: row.razsoc || documentos[0]?.razsoc || '',
+          cliente_email: clientData.email,
+          cliente_telefono: clientData.telefono,
+          documentos,
+          total_deuda,
+          total_documentos
+        };
+      });
 
     return {
       data,
-      total,
+      total: totalEmpresas,
       page,
       limit,
-      totalPages: Math.ceil(total / limit)
+      totalPages: Math.ceil(totalEmpresas / limit)
     };
   }
 

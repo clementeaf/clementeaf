@@ -1,6 +1,7 @@
 import { apiClient } from './api';
 import type {
   CtasPorCobrar,
+  EmpresaConDocumentos,
   PaginatedResponse,
   ResumenCliente,
   ResumenVendedor,
@@ -20,10 +21,10 @@ export const analyticsService = {
   },
 
   /**
-   * Obtiene deudas activas (deuda > 0)
+   * Obtiene deudas activas (deuda > 0) agrupadas por empresa
    */
-  async getDeudasActivas(filters?: QueryFilters): Promise<PaginatedResponse<CtasPorCobrar>> {
-    const { data } = await apiClient.get<{ data: PaginatedResponse<CtasPorCobrar> }>('/analytics/deudas-activas', {
+  async getDeudasActivas(filters?: QueryFilters): Promise<PaginatedResponse<EmpresaConDocumentos>> {
+    const { data } = await apiClient.get<{ data: PaginatedResponse<EmpresaConDocumentos> }>('/analytics/deudas-activas', {
       params: filters
     });
     return data.data;

@@ -53,16 +53,83 @@ export const Collections = () => {
   }, [filters]);
 
   /**
-   * Obtiene todas las deudas de todas las páginas cargadas
+   * Obtiene todas las empresas de todas las páginas cargadas
+   * Maneja tanto la estructura antigua (lista de documentos) como la nueva (lista de empresas)
    */
-  const allDeudas = useMemo(() => {
+  const allEmpresas = useMemo(() => {
     if (!deudasActivasData?.pages || deudasActivasData.pages.length === 0) {
       return [];
     }
     
-    // Mostrar todas las páginas que se han cargado
-    return deudasActivasData.pages.flatMap(page => page.data);
+    // Obtener todos los datos de todas las páginas
+    const allData = deudasActivasData.pages.flatMap(page => page.data || []);
+    
+    if (allData.length === 0) {
+      return [];
+    }
+    
+    // Verificar si la primera entrada tiene la estructura de EmpresaConDocumentos (tiene 'documentos')
+    const firstItem = allData[0];
+    const isEmpresaStructure = firstItem && typeof firstItem === 'object' && 'documentos' in firstItem;
+    
+    if (isEmpresaStructure) {
+      // Estructura nueva: ya viene agrupada por empresa
+      return allData as Array<{
+        rut: string;
+        razsoc: string;
+        cliente_email: string | null;
+        cliente_telefono: string | null;
+        documentos: CtasPorCobrar[];
+        total_deuda: number;
+        total_documentos: number;
+      }>;
+    } else {
+      // Estructura antigua: lista de documentos, necesitamos agrupar por empresa
+      const empresasMap = new Map<string, {
+        rut: string;
+        razsoc: string;
+        cliente_email: string | null;
+        cliente_telefono: string | null;
+        documentos: CtasPorCobrar[];
+        total_deuda: number;
+        total_documentos: number;
+      }>();
+      
+      (allData as unknown as CtasPorCobrar[]).forEach((doc: CtasPorCobrar) => {
+        if (!doc.rut) return;
+        
+        if (!empresasMap.has(doc.rut)) {
+          empresasMap.set(doc.rut, {
+            rut: doc.rut,
+            razsoc: doc.razsoc || '',
+            cliente_email: doc.cliente_email || null,
+            cliente_telefono: doc.cliente_telefono || null,
+            documentos: [],
+            total_deuda: 0,
+            total_documentos: 0
+          });
+        }
+        
+        const empresa = empresasMap.get(doc.rut)!;
+        empresa.documentos.push(doc);
+        // Convertir deuda a número si es string, o usar 0 si es null/undefined
+        const deudaValue = typeof doc.deuda === 'string' ? parseFloat(doc.deuda) || 0 : (doc.deuda ?? 0);
+        empresa.total_deuda += isNaN(deudaValue) ? 0 : deudaValue;
+        empresa.total_documentos += 1;
+      });
+      
+      return Array.from(empresasMap.values());
+    }
   }, [deudasActivasData?.pages]);
+
+  /**
+   * Obtiene todos los documentos de todas las empresas (para compatibilidad con código existente)
+   */
+  const allDeudas = useMemo(() => {
+    return allEmpresas
+      .flatMap(empresa => empresa.documentos || [])
+      .filter((deuda): deuda is CtasPorCobrar => deuda !== null && deuda !== undefined);
+  }, [allEmpresas]);
 
   /**
    * Maneja el scroll infinito
@@ -102,11 +169,22 @@ export const Collections = () => {
    * @param value - Valor numérico a formatear
    * @returns String formateado como moneda
    */
-  const formatCurrency = (value: number): string => {
+  const formatCurrency = (value: number | string | null | undefined): string => {
+    // Convertir a número si es string, o usar 0 si es null/undefined
+    const numValue = typeof value === 'string' ? parseFloat(value) || 0 : (value ?? 0);
+    
+    // Verificar que sea un número válido
+    if (isNaN(numValue) || !isFinite(numValue)) {
+      return new Intl.NumberFormat('es-CL', {
+        style: 'currency',
+        currency: 'CLP'
+      }).format(0);
+    }
+    
     return new Intl.NumberFormat('es-CL', {
       style: 'currency',
       currency: 'CLP'
-    }).format(value);
+    }).format(numValue);
   };
 
   /**
@@ -119,59 +197,13 @@ export const Collections = () => {
   };
 
   /**
-   * Determina el estado de pago basado en días vencidos
-   * @param diasVencidos - Días vencidos
-   * @returns String con el estado de pago
-   */
-  const getPaymentStatus = (diasVencidos: number | null): string => {
-    if (diasVencidos === null || diasVencidos === undefined) return 'Pendiente';
-    if (diasVencidos < 0) return 'Por vencer';
-    if (diasVencidos === 0) return 'Vence hoy';
-    if (diasVencidos <= 30) return 'Vencido';
-    if (diasVencidos <= 60) return 'Vencido 30-60 días';
-    return 'Vencido +60 días';
-  };
-
-  /**
-   * Obtiene el color del badge según el estado de pago
-   * @param diasVencidos - Días vencidos
-   * @returns String con las clases CSS
-   */
-  const getStatusBadgeColor = (diasVencidos: number | null): string => {
-    if (diasVencidos === null || diasVencidos === undefined) return 'bg-gray-100 text-gray-800';
-    if (diasVencidos < 0) return 'bg-blue-100 text-blue-800';
-    if (diasVencidos === 0) return 'bg-yellow-100 text-yellow-800';
-    if (diasVencidos <= 30) return 'bg-orange-100 text-orange-800';
-    if (diasVencidos <= 60) return 'bg-red-100 text-red-800';
-    return 'bg-red-200 text-red-900';
-  };
-
-  /**
-   * Obtiene el ID único de una fila
-   */
-  const getRowId = (deuda: CtasPorCobrar): string => {
-    return `${deuda.td}-${deuda.numdocto}`;
-  };
-
-  /**
-   * Obtiene todas las empresas únicas (RUTs) de las deudas visibles
+   * Obtiene todas las empresas únicas (RUTs) de las empresas visibles
    */
   const uniqueCompanyRuts = useMemo(() => {
-    const ruts = new Set<string>();
-    allDeudas.forEach(deuda => {
-      if (deuda.rut) {
-        ruts.add(deuda.rut);
-      }
-    });
-    return Array.from(ruts);
-  }, [allDeudas]);
-
-  /**
-   * Verifica si una fila está seleccionada (basado en si su empresa está seleccionada)
-   */
-  const isRowSelected = (deuda: CtasPorCobrar): boolean => {
-    return deuda.rut ? selectedCompanies.has(deuda.rut) : false;
-  };
+    return allEmpresas
+      .map(empresa => empresa.rut)
+      .filter((rut): rut is string => Boolean(rut));
+  }, [allEmpresas]);
 
   /**
    * Maneja la selección/deselección de una fila en la tabla
@@ -292,9 +324,9 @@ export const Collections = () => {
               )}
             </div>
             <div className="flex items-center gap-4">
-              {allDeudas.length > 0 && (
+              {allEmpresas.length > 0 && (
                 <div className="text-sm text-gray-500">
-                  Mostrando {allDeudas.length} de {deudasActivasData?.pages[0]?.total || 0} registros
+                  Mostrando {allEmpresas.length} de {deudasActivasData?.pages[0]?.total || 0} empresas
                 </div>
               )}
               <ActionsMenu
@@ -311,9 +343,16 @@ export const Collections = () => {
               />
             </div>
           </div>
-        {loadingDeudas && allDeudas.length === 0 ? (
+        {loadingDeudas && allEmpresas.length === 0 ? (
           <div className="flex items-center justify-center py-12 flex-1">
             <div className="text-gray-500">Cargando...</div>
+          </div>
+        ) : allEmpresas.length === 0 && !loadingDeudas ? (
+          <div className="flex items-center justify-center py-12 flex-1">
+            <div className="text-gray-500">No hay empresas para mostrar</div>
+            <div className="text-xs text-gray-400 mt-2">
+              Debug: deudasActivasData = {JSON.stringify(deudasActivasData, null, 2)}
+            </div>
           </div>
         ) : (
           <div
@@ -336,19 +375,13 @@ export const Collections = () => {
                     Nombre Cliente
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Fecha y Monto Factura
+                    Total Facturado
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Fecha Vencimiento
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Estado de Pago
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Mail
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Teléfono
+                    Deuda
                   </th>
                   <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Acciones
@@ -356,92 +389,103 @@ export const Collections = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {allDeudas.map((deuda) => {
-                  const rowId = getRowId(deuda);
-                  const isSelected = isRowSelected(deuda);
+                {allEmpresas.map((empresa) => {
+                  const isSelected = empresa.rut ? selectedCompanies.has(empresa.rut) : false;
+                  const documentos = empresa.documentos || [];
+                  
+                  // Si no hay documentos, no renderizar nada
+                  if (documentos.length === 0) {
+                    return null;
+                  }
+                  
+                  // Encontrar la fecha de vencimiento más reciente (la más cercana en el futuro, o si todas están vencidas, la más reciente)
+                  const fechaVencimientoMasReciente = documentos
+                    .map(doc => doc.vencimiento ? new Date(doc.vencimiento) : null)
+                    .filter((date): date is Date => date !== null)
+                    .sort((a, b) => {
+                      // Ordenar: primero las fechas futuras (más cercanas primero), luego las pasadas (más recientes primero)
+                      const now = new Date();
+                      const aIsFuture = a > now;
+                      const bIsFuture = b > now;
+                      
+                      if (aIsFuture && !bIsFuture) return -1;
+                      if (!aIsFuture && bIsFuture) return 1;
+                      if (aIsFuture && bIsFuture) return a.getTime() - b.getTime(); // Futuras: más cercanas primero
+                      return b.getTime() - a.getTime(); // Pasadas: más recientes primero
+                    })[0];
+                  
+                  // Determinar si la empresa tiene documentos "Por vencer" o "Vencido"
+                  // Si hay al menos un documento con dias_vencidos < 0, es "Por vencer"
+                  // Si todos los documentos tienen dias_vencidos >= 0, es "Vencido"
+                  const tieneDocumentosPorVencer = documentos.some(doc => 
+                    doc.dias_vencidos !== null && doc.dias_vencidos !== undefined && doc.dias_vencidos < 0
+                  );
+                  
+                  // Color de la deuda: verde si hay documentos por vencer, rojo si están vencidos
+                  const deudaColor = tieneDocumentosPorVencer ? 'text-green-600' : 'text-red-600';
+                  
                   return (
-                    <tr key={rowId} className={`hover:bg-gray-50 ${isSelected ? 'bg-blue-50' : ''}`}>
+                    <tr key={empresa.rut} className={`hover:bg-gray-50 ${isSelected ? 'bg-blue-50' : ''}`}>
                       <td className="px-4 py-3 text-center">
                         <div className="flex justify-center">
                           <Checkbox
                             checked={isSelected}
-                            onChange={() => handleRowToggle(deuda)}
+                            onChange={() => {
+                              if (empresa.rut) {
+                                handleRowToggle({ rut: empresa.rut } as CtasPorCobrar);
+                              }
+                            }}
                             containerClassName=""
                           />
                         </div>
                       </td>
                       <td className="px-4 py-3 text-sm">
-                      <div>
-                        <p className="font-medium text-gray-900">{deuda.razsoc || '-'}</p>
-                        <p className="text-xs text-gray-500">RUT: {deuda.rut || '-'}</p>
-                        <p className="text-xs text-gray-500">Doc: {deuda.td} {deuda.numdocto}</p>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-sm">
-                      <div>
-                        <p className="font-medium text-gray-900">
-                          {deuda.fecha ? formatDate(deuda.fecha) : '-'}
+                        <div>
+                          <p className="font-bold text-gray-900">{empresa.razsoc || '-'}</p>
+                          <p className="text-xs text-gray-500">RUT: {empresa.rut || '-'}</p>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-sm">
+                        <p className="font-semibold text-gray-900">
+                          {formatCurrency(empresa.total_deuda)}
                         </p>
-                        <p className="text-sm font-semibold text-red-600">
-                          {formatCurrency(deuda.deuda || 0)}
-                        </p>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-sm">
-                      <div>
+                      </td>
+                      <td className="px-4 py-3 text-sm">
                         <p className="font-medium text-gray-900">
-                          {deuda.vencimiento ? formatDate(deuda.vencimiento) : '-'}
+                          {fechaVencimientoMasReciente ? formatDate(fechaVencimientoMasReciente.toISOString()) : '-'}
+                        </p>
+                      </td>
+                      <td className="px-4 py-3 text-sm">
+                        <p className={`font-semibold ${deudaColor}`}>
+                          {formatCurrency(empresa.total_deuda)}
                         </p>
                         <p className="text-xs text-gray-500">
-                          {deuda.dias_vencidos !== null && deuda.dias_vencidos !== undefined
-                            ? `${deuda.dias_vencidos} días ${deuda.dias_vencidos > 0 ? 'vencidos' : 'restantes'}`
-                            : '-'
-                          }
+                          {tieneDocumentosPorVencer ? 'Por vencer' : 'Vencido'}
                         </p>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-sm">
-                      <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusBadgeColor(deuda.dias_vencidos)}`}>
-                        {getPaymentStatus(deuda.dias_vencidos)}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-sm">
-                      {deuda.cliente_email ? (
-                        <span className="text-gray-900">{deuda.cliente_email}</span>
-                      ) : (
-                        <span className="text-gray-400 italic">No disponible</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3 text-sm">
-                      {deuda.cliente_telefono ? (
-                        <span className="text-gray-900">{deuda.cliente_telefono}</span>
-                      ) : (
-                        <span className="text-gray-400 italic">No disponible</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-center">
-                      <ActionsMenu
-                        items={[
-                          {
-                            id: 'enviar-mail',
-                            label: 'Enviar mail',
-                            onClick: () => {
-                              console.log('Enviar mail a:', deuda.cliente_email);
+                      </td>
+                      <td className="px-4 py-3 text-sm text-center">
+                        <ActionsMenu
+                          items={[
+                            {
+                              id: 'enviar-mail',
+                              label: 'Enviar mail',
+                              onClick: () => {
+                                console.log('Enviar mail a:', empresa.cliente_email);
+                              },
+                              icon: <EmailIcon color="#6B7280" />
                             },
-                            icon: <EmailIcon color="#6B7280" />
-                          },
-                          {
-                            id: 'ver-detalle',
-                            label: 'Ver detalle',
-                            onClick: () => {
-                              console.log('Ver detalle de:', deuda);
-                            },
-                            icon: <EyeIcon color="#6B7280" />
-                          }
-                        ]}
-                      />
-                    </td>
-                  </tr>
+                            {
+                              id: 'ver-detalle',
+                              label: 'Ver detalle',
+                              onClick: () => {
+                                console.log('Ver detalle de empresa:', empresa);
+                              },
+                              icon: <EyeIcon color="#6B7280" />
+                            }
+                          ]}
+                        />
+                      </td>
+                    </tr>
                   );
                 })}
               </tbody>
@@ -451,9 +495,9 @@ export const Collections = () => {
                 <div className="text-sm text-gray-500">Cargando más registros...</div>
               </div>
             )}
-            {!hasNextPage && allDeudas.length > 0 && (
+            {!hasNextPage && allEmpresas.length > 0 && (
               <div className="flex items-center justify-center py-4">
-                <div className="text-sm text-gray-500">No hay más registros</div>
+                <div className="text-sm text-gray-500">No hay más empresas</div>
               </div>
             )}
           </div>
