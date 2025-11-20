@@ -568,8 +568,8 @@ export class AnalyticsService {
       });
 
     // Aplicar ordenamiento
-    const sortBy = filters.sortBy || 'razsoc';
-    const sortOrder = filters.sortOrder || 'asc';
+    const sortBy = filters.sortBy || 'vencimiento';
+    const sortOrder = filters.sortOrder || 'desc';
     
     // Debug: verificar que los parámetros se están recibiendo correctamente
     console.log('Backend - Aplicando ordenamiento:', { 
@@ -598,13 +598,30 @@ export class AnalyticsService {
           // Ordenamiento por fecha (más reciente a más antigua)
           const fechaA = a.vencimientoMasReciente ? new Date(a.vencimientoMasReciente).getTime() : 0;
           const fechaB = b.vencimientoMasReciente ? new Date(b.vencimientoMasReciente).getTime() : 0;
-          comparison = fechaB - fechaA; // Más reciente primero (desc por defecto)
+          
+          // Si ambas tienen fecha, comparar normalmente
+          // Si una no tiene fecha, ponerla al final
+          if (fechaA === 0 && fechaB === 0) {
+            comparison = 0;
+          } else if (fechaA === 0) {
+            comparison = -1; // A (sin fecha) va después de B
+          } else if (fechaB === 0) {
+            comparison = 1; // B (sin fecha) va después de A
+          } else {
+            // Comparar fechas: fechaA - fechaB (invertido para que funcione correctamente)
+            // Si A es más reciente, fechaA > fechaB, entonces fechaA - fechaB es positivo
+            // En sort(), positivo significa A va antes de B
+            // Para 'desc' (más reciente primero): queremos que A (más reciente) vaya antes de B, entonces retornamos positivo
+            comparison = fechaA - fechaB;
+          }
           break;
         default:
           comparison = 0;
       }
       
-      return sortOrder === 'asc' ? comparison : -comparison;
+      // Para 'desc': más reciente primero (comparison positivo cuando A es más reciente = A va antes, correcto)
+      // Para 'asc': más antiguo primero (invertir el signo para que A vaya antes cuando A es más antiguo)
+      return sortOrder === 'desc' ? comparison : -comparison;
     });
 
     // Debug: verificar el orden después de ordenar

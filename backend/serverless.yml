@@ -30,6 +30,11 @@ provider:
             - execute-api:ManageConnections
           Resource:
             - arn:aws:execute-api:${self:provider.region}:*:*/@connections/*
+        - Effect: Allow
+          Action:
+            - ses:SendEmail
+            - ses:SendRawEmail
+          Resource: '*'
   environment:
     AWS_ENDPOINT_URL: ${env:AWS_ENDPOINT_URL, ''}
     JWT_SECRET: ${env:JWT_SECRET, 'your-secret-key-change-in-production'}
@@ -44,6 +49,8 @@ provider:
     CHECKAUDITOR_BASE_URL: ${env:CHECKAUDITOR_BASE_URL, 'https://app.checkauditor.com'}
     S3_BUCKET_NAME: ${env:S3_BUCKET_NAME, 'banados-analytics-data'}
     S3_DATA_KEY: ${env:S3_DATA_KEY, 'Analytics_CtasPorCobrar/combined_data.json'}
+    SES_FROM_EMAIL: ${env:SES_FROM_EMAIL, 'carriagadafalcone@gmail.com'}
+    SES_FROM_NAME: ${env:SES_FROM_NAME, 'noreply@banados.cl'}
 
 package:
   patterns:
@@ -61,7 +68,9 @@ package:
     - 'node_modules/pg/**'
     - 'node_modules/reflect-metadata/**'
     - 'node_modules/@aws-sdk/client-s3/**'
+    - 'node_modules/@aws-sdk/client-ses/**'
     - 'node_modules/@aws-sdk/s3-request-presigner/**'
+    - 'node_modules/@smithy/**'
     - 'node_modules/@aws-sdk/client-apigatewaymanagementapi/**'
     - 'node_modules/@aws-sdk/client-dynamodb/**'
     - 'node_modules/@aws-sdk/lib-dynamodb/**'
@@ -86,6 +95,9 @@ package:
     - 'node_modules/@aws-sdk/util-user-agent-node/**'
     - 'node_modules/@aws-sdk/util-utf8-node/**'
     - 'node_modules/@aws-sdk/types/**'
+    - 'node_modules/@smithy/**'
+    - 'node_modules/tslib/**'
+    - 'node_modules/fast-xml-parser/**'
     - 'node_modules/bcryptjs/**'
     - 'node_modules/jsonwebtoken/**'
     - 'node_modules/axios/**'
@@ -471,6 +483,18 @@ functions:
     events:
       - http:
           path: tickets/presigned-url
+          method: post
+          cors: true
+
+  # Email endpoints
+  sendEmail:
+    handler: dist/modules/Email/handlers/sendEmail.handler
+    timeout: 30
+    memorySize: 512
+    vpc: null
+    events:
+      - http:
+          path: email/send
           method: post
           cors: true
 

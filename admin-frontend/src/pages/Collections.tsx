@@ -21,8 +21,8 @@ export const Collections = () => {
   const tableContainerRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
   const [filters, setFilters] = useState<Omit<QueryFilters, 'page' | 'limit'>>({});
-  const [sortBy, setSortBy] = useState<SortField | undefined>(undefined);
-  const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
+  const [sortBy, setSortBy] = useState<SortField | undefined>('vencimiento');
+  const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
   const [isAutomationModalOpen, setIsAutomationModalOpen] = useState(false);
   const [isQuickActionsMenuOpen, setIsQuickActionsMenuOpen] = useState(false);
   const quickActionsMenuRef = useRef<HTMLDivElement>(null);
@@ -796,12 +796,25 @@ export const Collections = () => {
                         const sucursalFechaVencimiento = sucursal.vencimientoMasReciente 
                           ? new Date(sucursal.vencimientoMasReciente)
                           : null;
+                        const isSucursalSelected = selectedCompanies.has(sucursal.rut || '');
                         
                         return (
                           <React.Fragment key={sucursal.rut}>
                             {/* Fila de sucursal */}
-                            <tr className={`bg-gray-50 hover:bg-gray-100 ${isSelected ? 'bg-blue-100' : ''}`}>
-                              <td className="px-4 py-3 text-center"></td>
+                            <tr className={`bg-gray-50 hover:bg-gray-100 ${isSucursalSelected ? 'bg-blue-100' : ''}`}>
+                              <td className="px-4 py-3 text-center">
+                                <div className="flex justify-center">
+                                  <Checkbox
+                                    checked={isSucursalSelected}
+                                    onChange={() => {
+                                      if (sucursal.rut) {
+                                        handleRowToggle({ rut: sucursal.rut } as CtasPorCobrar);
+                                      }
+                                    }}
+                                    containerClassName=""
+                                  />
+                                </div>
+                              </td>
                               <td className="px-4 py-3 text-center">
                                 <button
                                   onClick={() => empresa.rut && handleToggleSucursal(empresa.rut, sucursal.rut)}
@@ -853,10 +866,26 @@ export const Collections = () => {
                               const docTieneDocumentosPorVencer = doc.dias_vencidos !== null && doc.dias_vencidos !== undefined && doc.dias_vencidos < 0;
                               const docDeudaColor = docTieneDocumentosPorVencer ? 'text-green-600' : 'text-red-600';
                               
+                              const isDocSelected = selectedCompanies.has(doc.rut || '');
+                              
                               return (
-                                <tr key={`${doc.td}-${doc.numdocto}`} className={`bg-gray-100 hover:bg-gray-200 ${isSelected ? 'bg-blue-50' : ''}`}>
-                                  <td className="px-4 py-3 text-center"></td>
-                                  <td className="px-4 py-3 text-center"></td>
+                                <tr key={`${doc.td}-${doc.numdocto}`} className={`bg-gray-100 hover:bg-gray-200 ${isDocSelected ? 'bg-blue-50' : ''}`}>
+                                  <td className="px-4 py-3 text-center">
+                                    <div className="flex justify-center">
+                                      <Checkbox
+                                        checked={isDocSelected}
+                                        onChange={() => {
+                                          if (doc.rut) {
+                                            handleRowToggle(doc);
+                                          }
+                                        }}
+                                        containerClassName=""
+                                      />
+                                    </div>
+                                  </td>
+                                  <td className="px-4 py-3 text-center">
+                                    {/* Sin flecha para documentos */}
+                                  </td>
                                   <td className="px-4 py-3 text-sm">
                                     <div className="pl-12">
                                       <p className="font-medium text-gray-600">
@@ -898,11 +927,26 @@ export const Collections = () => {
                         const docFechaVencimiento = doc.vencimiento ? new Date(doc.vencimiento) : null;
                         const docTieneDocumentosPorVencer = doc.dias_vencidos !== null && doc.dias_vencidos !== undefined && doc.dias_vencidos < 0;
                         const docDeudaColor = docTieneDocumentosPorVencer ? 'text-green-600' : 'text-red-600';
+                        const isDocSelected = selectedCompanies.has(doc.rut || '');
                         
                         return (
-                          <tr key={`${doc.td}-${doc.numdocto}`} className={`bg-gray-50 hover:bg-gray-100 ${isSelected ? 'bg-blue-50' : ''}`}>
-                            <td className="px-4 py-3 text-center"></td>
-                            <td className="px-4 py-3 text-center"></td>
+                          <tr key={`${doc.td}-${doc.numdocto}`} className={`bg-gray-50 hover:bg-gray-100 ${isDocSelected ? 'bg-blue-50' : ''}`}>
+                            <td className="px-4 py-3 text-center">
+                              <div className="flex justify-center">
+                                <Checkbox
+                                  checked={isDocSelected}
+                                  onChange={() => {
+                                    if (doc.rut) {
+                                      handleRowToggle(doc);
+                                    }
+                                  }}
+                                  containerClassName=""
+                                />
+                              </div>
+                            </td>
+                            <td className="px-4 py-3 text-center">
+                              {/* Sin flecha para documentos */}
+                            </td>
                             <td className="px-4 py-3 text-sm">
                               <div className="pl-6">
                                 <p className="font-medium text-gray-600">
