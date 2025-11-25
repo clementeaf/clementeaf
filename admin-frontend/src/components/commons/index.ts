@@ -16,6 +16,8 @@ export { Table } from './Table';
 export type { TableProps } from './Table';
 export { Input } from './Input';
 export type { InputProps } from './Input';
+export { InputNumber } from './InputNumber';
+export type { InputNumberProps } from './InputNumber';
 export { Select } from './Select';
 export type { SelectProps, SelectOption } from './Select';
 export { CountrySelector } from './CountrySelector';

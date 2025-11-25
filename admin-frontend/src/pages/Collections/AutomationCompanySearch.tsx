@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { SearchIcon, DropdownIcon, ChevronUpIcon } from '../../components/commons/icons';
-import { Select, Toggle, Input } from '../../components/commons';
+import { Select, Toggle, InputNumber } from '../../components/commons';
 import type { SelectOption } from '../../components/commons';
 import type { CtasPorCobrar } from '../../types/analytics';
 
@@ -74,6 +74,11 @@ export interface AutomationCompanySearchProps {
    * Función para manejar el cambio de configuración de automatización
    */
   onAutomationConfigChange: (config: AutomationConfig) => void;
+  /**
+   * Si es true, oculta la sección de búsqueda de empresas
+   * Útil cuando el modal se abre desde el botón de acciones de una empresa específica
+   */
+  hideSearch?: boolean;
 }
 
 /**
@@ -86,7 +91,8 @@ export const AutomationCompanySearch = ({
   selectedCompanies,
   onSelectionChange,
   automationConfig,
-  onAutomationConfigChange
+  onAutomationConfigChange,
+  hideSearch = false
 }: AutomationCompanySearchProps): React.ReactElement => {
   const [filters, setFilters] = useState<CompanySearchFilters>({
     searchTerm: '',
@@ -249,84 +255,86 @@ export const AutomationCompanySearch = ({
 
   return (
     <div className="space-y-4">
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Buscar Empresa
-        </label>
-        
-        {/* Barra de búsqueda con filtros */}
-        <div className="flex gap-2 mb-3">
-          <div className="flex-1 relative">
-            <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
-              <SearchIcon color="#9CA3AF" />
-            </div>
-            <input
-              type="text"
-              placeholder="Busca por nombre, RUT, segmento..."
-              value={filters.searchTerm}
-              onChange={(e) => handleSearchChange(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-          </div>
-          <div className="w-40">
-            <Select
-              value={filters.filterType}
-              onChange={handleFilterTypeChange}
-              options={filterOptions}
-              placeholder="Filtro"
-              selectClassName="h-[42px]"
-            />
-          </div>
-        </div>
-
-        {/* Resultados de búsqueda */}
-        <div className="border border-gray-200 rounded-lg max-h-64 overflow-y-auto">
-          {filteredCompanies.length === 0 ? (
-            <div className="p-4 text-center text-gray-500">
-              {filters.searchTerm ? 'No se encontraron empresas' : 'Ingresa un término de búsqueda'}
-            </div>
-          ) : (
-            <>
-              <div className="sticky top-0 bg-gray-50 border-b border-gray-200 px-4 py-2 flex items-center justify-between">
-                <span className="text-sm text-gray-600">
-                  {filteredCompanies.length} empresa{filteredCompanies.length !== 1 ? 's' : ''} encontrada{filteredCompanies.length !== 1 ? 's' : ''}
-                </span>
-                <button
-                  onClick={handleSelectAll}
-                  className="text-sm text-blue-600 hover:text-blue-800 font-medium"
-                >
-                  {filteredCompanies.every(c => selectedCompanies.includes(c.rut)) ? 'Deseleccionar todas' : 'Seleccionar todas'}
-                </button>
+      {!hideSearch && (
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Buscar Empresa
+          </label>
+          
+          {/* Barra de búsqueda con filtros */}
+          <div className="flex gap-2 mb-3">
+            <div className="flex-1 relative">
+              <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
+                <SearchIcon color="#9CA3AF" />
               </div>
-              <div className="divide-y divide-gray-200">
-                {filteredCompanies.map((company) => (
-                  <div
-                    key={company.rut}
-                    className="px-4 py-3 hover:bg-gray-50 transition-colors cursor-pointer"
-                    onClick={() => handleCompanyToggle(company.rut)}
+              <input
+                type="text"
+                placeholder="Busca por nombre, RUT, segmento..."
+                value={filters.searchTerm}
+                onChange={(e) => handleSearchChange(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+            <div className="w-40">
+              <Select
+                value={filters.filterType}
+                onChange={handleFilterTypeChange}
+                options={filterOptions}
+                placeholder="Filtro"
+                selectClassName="h-[42px]"
+              />
+            </div>
+          </div>
+
+          {/* Resultados de búsqueda */}
+          <div className="border border-gray-200 rounded-lg max-h-64 overflow-y-auto">
+            {filteredCompanies.length === 0 ? (
+              <div className="p-4 text-center text-gray-500">
+                {filters.searchTerm ? 'No se encontraron empresas' : 'Ingresa un término de búsqueda'}
+              </div>
+            ) : (
+              <>
+                <div className="sticky top-0 bg-gray-50 border-b border-gray-200 px-4 py-2 flex items-center justify-between">
+                  <span className="text-sm text-gray-600">
+                    {filteredCompanies.length} empresa{filteredCompanies.length !== 1 ? 's' : ''} encontrada{filteredCompanies.length !== 1 ? 's' : ''}
+                  </span>
+                  <button
+                    onClick={handleSelectAll}
+                    className="text-sm text-blue-600 hover:text-blue-800 font-medium"
                   >
-                    <div className="flex items-start gap-3">
-                      <input
-                        type="checkbox"
-                        checked={selectedCompanies.includes(company.rut)}
-                        onChange={() => handleCompanyToggle(company.rut)}
-                        onClick={(e) => e.stopPropagation()}
-                        className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                      />
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-gray-900">
-                          {company.razsoc || '-'}
-                        </p>
-                        <p className="text-sm text-gray-500">RUT: {company.rut || '-'}</p>
+                    {filteredCompanies.every(c => selectedCompanies.includes(c.rut)) ? 'Deseleccionar todas' : 'Seleccionar todas'}
+                  </button>
+                </div>
+                <div className="divide-y divide-gray-200">
+                  {filteredCompanies.map((company) => (
+                    <div
+                      key={company.rut}
+                      className="px-4 py-3 hover:bg-gray-50 transition-colors cursor-pointer"
+                      onClick={() => handleCompanyToggle(company.rut)}
+                    >
+                      <div className="flex items-start gap-3">
+                        <input
+                          type="checkbox"
+                          checked={selectedCompanies.includes(company.rut)}
+                          onChange={() => handleCompanyToggle(company.rut)}
+                          onClick={(e) => e.stopPropagation()}
+                          className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-gray-900">
+                            {company.razsoc || '-'}
+                          </p>
+                          <p className="text-sm text-gray-500">RUT: {company.rut || '-'}</p>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            </>
-          )}
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Resumen de selección con acordeón */}
       {selectedCompanies.length > 0 && (
@@ -406,82 +414,92 @@ export const AutomationCompanySearch = ({
         />
 
         {automationConfig.autoSendEnabled && (
-          <div className="space-y-3 pl-4 border-l-2 border-blue-200">
-            <div className="flex items-center gap-3">
-              <Toggle
-                checked={automationConfig.sendDaysBefore.enabled}
-                onChange={(e) => {
-                  onAutomationConfigChange({
-                    ...automationConfig,
-                    sendDaysBefore: {
-                      ...automationConfig.sendDaysBefore,
-                      enabled: e.target.checked
-                    }
-                  });
-                }}
-                containerClassName="flex-shrink-0"
-              />
-              <div className="flex-1 flex items-center gap-2">
-                <span className="text-sm text-gray-700 whitespace-nowrap">Enviar</span>
-                <Input
-                  type="number"
-                  value={automationConfig.sendDaysBefore.days > 0 ? automationConfig.sendDaysBefore.days : ''}
+          <div className="space-y-4 pl-6 border-l-2 border-blue-200">
+            <div className="flex items-start gap-4">
+              <div className="pt-1.5 flex-shrink-0">
+                <Toggle
+                  checked={automationConfig.sendDaysBefore.enabled}
                   onChange={(e) => {
-                    const value = e.target.value;
-                    const days = value === '' ? 0 : parseInt(value, 10) || 0;
                     onAutomationConfigChange({
                       ...automationConfig,
                       sendDaysBefore: {
                         ...automationConfig.sendDaysBefore,
-                        days
-                      }
+                        enabled: e.target.checked
+                      },
+                      sendDaysAfter: {
+                        ...automationConfig.sendDaysAfter,
+                        enabled: false
+                      },
+                      sendOnDueDate: false
                     });
                   }}
-                  disabled={!automationConfig.sendDaysBefore.enabled}
-                  inputClassName="w-20 h-[32px]"
-                  placeholder="0"
-                  min="0"
                 />
-                <span className="text-sm text-gray-700 whitespace-nowrap">días previos a la fecha de vencimiento</span>
+              </div>
+              <div className="flex items-center gap-2">
+                  <InputNumber
+                    value={automationConfig.sendDaysBefore.days > 0 ? automationConfig.sendDaysBefore.days.toString() : ''}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      const days = value === '' ? 0 : parseInt(value, 10) || 0;
+                      onAutomationConfigChange({
+                        ...automationConfig,
+                        sendDaysBefore: {
+                          ...automationConfig.sendDaysBefore,
+                          days
+                        }
+                      });
+                    }}
+                    disabled={!automationConfig.sendDaysBefore.enabled}
+                    containerClassName="w-[50px] p-0"
+                    inputClassName="p-0 text-center text-sm"
+                    placeholder="0"
+                    min={0}
+                  />
+                <p className="text-[13px] text-gray-600">días previos a la fecha de vencimiento</p>
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
-              <Toggle
-                checked={automationConfig.sendDaysAfter.enabled}
-                onChange={(e) => {
-                  onAutomationConfigChange({
-                    ...automationConfig,
-                    sendDaysAfter: {
-                      ...automationConfig.sendDaysAfter,
-                      enabled: e.target.checked
-                    }
-                  });
-                }}
-                containerClassName="flex-shrink-0"
-              />
-              <div className="flex-1 flex items-center gap-2">
-                <span className="text-sm text-gray-700 whitespace-nowrap">Enviar</span>
-                <Input
-                  type="number"
-                  value={automationConfig.sendDaysAfter.days > 0 ? automationConfig.sendDaysAfter.days : ''}
+            <div className="flex items-start gap-4">
+              <div className="pt-1.5 flex-shrink-0">
+                <Toggle
+                  checked={automationConfig.sendDaysAfter.enabled}
                   onChange={(e) => {
-                    const value = e.target.value;
-                    const days = value === '' ? 0 : parseInt(value, 10) || 0;
                     onAutomationConfigChange({
                       ...automationConfig,
+                      sendDaysBefore: {
+                        ...automationConfig.sendDaysBefore,
+                        enabled: false
+                      },
                       sendDaysAfter: {
                         ...automationConfig.sendDaysAfter,
-                        days
-                      }
+                        enabled: e.target.checked
+                      },
+                      sendOnDueDate: false
                     });
                   }}
-                  disabled={!automationConfig.sendDaysAfter.enabled}
-                  inputClassName="w-20 h-[32px]"
-                  placeholder="0"
-                  min="0"
                 />
-                <span className="text-sm text-gray-700 whitespace-nowrap">días posteriores a la fecha de vencimiento</span>
+              </div>
+              <div className="flex items-center gap-2">
+                  <InputNumber
+                    value={automationConfig.sendDaysAfter.days > 0 ? automationConfig.sendDaysAfter.days.toString() : ''}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      const days = value === '' ? 0 : parseInt(value, 10) || 0;
+                      onAutomationConfigChange({
+                        ...automationConfig,
+                        sendDaysAfter: {
+                          ...automationConfig.sendDaysAfter,
+                          days
+                        }
+                      });
+                    }}
+                    disabled={!automationConfig.sendDaysAfter.enabled}
+                    containerClassName="w-[50px]"
+                    inputClassName="h-[32px] px-2 text-center text-sm"
+                    placeholder="0"
+                    min={0}
+                  />
+                <p className="text-[13px] text-gray-600">días posteriores a la fecha de vencimiento</p>
               </div>
             </div>
 
@@ -492,6 +510,14 @@ export const AutomationCompanySearch = ({
                 onChange={(e) => {
                   onAutomationConfigChange({
                     ...automationConfig,
+                    sendDaysBefore: {
+                      ...automationConfig.sendDaysBefore,
+                      enabled: false
+                    },
+                    sendDaysAfter: {
+                      ...automationConfig.sendDaysAfter,
+                      enabled: false
+                    },
                     sendOnDueDate: e.target.checked
                   });
                 }}

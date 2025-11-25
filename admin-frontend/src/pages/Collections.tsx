@@ -5,13 +5,13 @@ import {
   useDeudasActivasInfinite
 } from '../hooks/useAnalytics';
 import { CollectionsFilters } from './Collections/CollectionsFilters';
-import { ActionsMenu, EyeIcon, EmailIcon, AutomationIcon, Modal, Checkbox, Button } from '../components/commons';
+import { ActionsMenu, EyeIcon, EmailIcon, AutomationIcon, Modal, Checkbox, Button, Input } from '../components/commons';
 import { AutomationCompanySearch } from './Collections/AutomationCompanySearch';
 import type { QueryFilters, SortField, SortOrder, EmpresaConDocumentos } from '../types/analytics';
 import type { CtasPorCobrar } from '../types/analytics';
 import type { AutomationConfig } from './Collections/AutomationCompanySearch';
 import { DropdownIcon, ChevronUpIcon, ChevronRightIcon } from '../components/commons/icons';
-import { emailService } from '../services/emailService';
+import { emailService, generateDebtNotificationEmail } from '../services/emailService';
 
 /**
  * Página de Cuentas por Cobrar
@@ -25,6 +25,11 @@ export const Collections = () => {
   const [sortBy, setSortBy] = useState<SortField | undefined>('vencimiento');
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
   const [isAutomationModalOpen, setIsAutomationModalOpen] = useState(false);
+  const [isAutomationFromActionButton, setIsAutomationFromActionButton] = useState(false);
+  const [isManualSendModalOpen, setIsManualSendModalOpen] = useState(false);
+  const [manualSendEmail, setManualSendEmail] = useState('');
+  const [isSendingManualEmail, setIsSendingManualEmail] = useState(false);
+  const [manualSendResult, setManualSendResult] = useState<{ success: boolean; message: string } | null>(null);
   const [isQuickActionsMenuOpen, setIsQuickActionsMenuOpen] = useState(false);
   const quickActionsMenuRef = useRef<HTMLDivElement>(null);
   // Estado principal: empresas seleccionadas por RUT (sincronizado entre tabla y modal)
@@ -387,6 +392,80 @@ export const Collections = () => {
     }
 
     return debts;
+  };
+
+  /**
+   * Envía notificación manual a una empresa con email personalizado
+   */
+  const handleSendManualNotification = async (): Promise<void> => {
+    if (selectedCompanies.size === 0) {
+      alert('Por favor, selecciona una empresa');
+      return;
+    }
+
+    if (!manualSendEmail.trim()) {
+      alert('Por favor, ingresa un email de destino');
+      return;
+    }
+
+    // Validar formato de email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(manualSendEmail.trim())) {
+      alert('Por favor, ingresa un email válido');
+      return;
+    }
+
+    setIsSendingManualEmail(true);
+    setManualSendResult(null);
+
+    try {
+      // Obtener la primera empresa seleccionada (para envío manual, solo una)
+      const selectedRut = Array.from(selectedCompanies)[0];
+      const empresa = allEmpresas.find(emp => emp.rut === selectedRut);
+      
+      if (!empresa) {
+        throw new Error('Empresa no encontrada');
+      }
+
+      const debts = getCompanyDebts(selectedRut);
+      if (debts.length === 0) {
+        throw new Error('La empresa no tiene documentos pendientes');
+      }
+
+      // Usar el servicio de email con el email personalizado
+      const { subject, htmlBody, textBody } = generateDebtNotificationEmail(
+        empresa.razsoc || 'Cliente',
+        empresa.rut,
+        debts
+      );
+
+      await emailService.sendEmail({
+        to: manualSendEmail.trim(),
+        subject,
+        body: textBody,
+        htmlBody
+      });
+
+      setManualSendResult({
+        success: true,
+        message: `Notificación enviada exitosamente a ${manualSendEmail.trim()}`
+      });
+
+      // Cerrar modal después de 2 segundos
+      setTimeout(() => {
+        setIsManualSendModalOpen(false);
+        setManualSendEmail('');
+        setManualSendResult(null);
+      }, 2000);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Error desconocido al enviar correo';
+      setManualSendResult({
+        success: false,
+        message: errorMessage
+      });
+    } finally {
+      setIsSendingManualEmail(false);
+    }
   };
 
   /**
@@ -878,6 +957,19 @@ export const Collections = () => {
                                 icon: <EmailIcon color="#6B7280" />
                               },
                               {
+                                id: 'enviar-notificacion-manual',
+                                label: 'Enviar notificación manual',
+                                onClick: () => {
+                                  // Seleccionar automáticamente la empresa de esta fila
+                                  setSelectedCompanies(new Set([empresa.rut]));
+                                  // Prellenar el email con el email registrado de la empresa
+                                  setManualSendEmail(empresa.cliente_email || '');
+                                  // Abrir el modal de envío manual
+                                  setIsManualSendModalOpen(true);
+                                },
+                                icon: <EmailIcon color="#6B7280" />
+                              },
+                              {
                                 id: 'ver-detalle',
                                 label: 'Ver detalle',
                                 onClick: () => {
@@ -891,6 +983,8 @@ export const Collections = () => {
                                 onClick: () => {
                                   // Seleccionar automáticamente la empresa de esta fila
                                   setSelectedCompanies(new Set([empresa.rut]));
+                                  // Marcar que el modal se abrió desde el botón de acciones
+                                  setIsAutomationFromActionButton(true);
                                   // Abrir el modal de automatización
                                   setIsAutomationModalOpen(true);
                                 },
@@ -1120,6 +1214,7 @@ export const Collections = () => {
         isOpen={isAutomationModalOpen}
         onClose={() => {
           setIsAutomationModalOpen(false);
+          setIsAutomationFromActionButton(false);
           // No limpiar selecciones al cerrar - mantener sincronización
         }}
         contentClassName="max-w-4xl"
@@ -1130,6 +1225,7 @@ export const Collections = () => {
             <button
               onClick={() => {
                 setIsAutomationModalOpen(false);
+                setIsAutomationFromActionButton(false);
                 // No limpiar selecciones al cerrar - mantener sincronización
               }}
               className="text-gray-400 hover:text-gray-600 transition-colors"
@@ -1153,6 +1249,7 @@ export const Collections = () => {
               onSelectionChange={handleCompaniesSelectionChange}
               automationConfig={automationConfig}
               onAutomationConfigChange={setAutomationConfig}
+              hideSearch={isAutomationFromActionButton}
             />
           </div>
 
@@ -1199,35 +1296,178 @@ export const Collections = () => {
             </div>
           )}
 
-          <div className="flex justify-end gap-3 mt-6 pt-6 border-t border-gray-200">
+          <div className="mt-6 pt-6 border-t border-gray-200">
+            <div className="flex flex-col gap-3">
+              {automationConfig.autoSendEnabled && (
+                <button
+                  onClick={handleSendNotifications}
+                  disabled={isSendingEmails || selectedCompanies.size === 0}
+                  className="w-full px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 font-medium"
+                >
+                  {isSendingEmails ? (
+                    <>
+                      <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Configurando...
+                    </>
+                  ) : (
+                    <>
+                      <AutomationIcon color="#FFFFFF" />
+                      Configurar notificación
+                    </>
+                  )}
+                </button>
+              )}
+              <button
+                onClick={() => {
+                  if (selectedCompanies.size === 1) {
+                    const selectedRut = Array.from(selectedCompanies)[0];
+                    const empresa = allEmpresas.find(emp => emp.rut === selectedRut);
+                    setManualSendEmail(empresa?.cliente_email || '');
+                    setIsManualSendModalOpen(true);
+                  } else if (selectedCompanies.size > 1) {
+                    alert('Por favor, selecciona solo una empresa para envío manual');
+                  } else {
+                    alert('Por favor, selecciona una empresa para envío manual');
+                  }
+                }}
+                disabled={selectedCompanies.size === 0 || selectedCompanies.size > 1}
+                className="w-full px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 font-medium"
+              >
+                <EmailIcon color="#FFFFFF" />
+                Envío manual
+              </button>
+            </div>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Modal de Envío Manual */}
+      <Modal
+        isOpen={isManualSendModalOpen}
+        onClose={() => {
+          setIsManualSendModalOpen(false);
+          setManualSendEmail('');
+          setManualSendResult(null);
+        }}
+        contentClassName="max-w-2xl"
+      >
+        <div className="p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold text-gray-800">Enviar notificación manual</h2>
             <button
               onClick={() => {
-                setIsAutomationModalOpen(false);
-                setEmailSendResults(null);
-                // No limpiar selecciones al cerrar - mantener sincronización
+                setIsManualSendModalOpen(false);
+                setManualSendEmail('');
+                setManualSendResult(null);
               }}
-              className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors"
-              disabled={isSendingEmails}
+              className="text-gray-400 hover:text-gray-600 transition-colors"
+              aria-label="Cerrar"
             >
-              {emailSendResults ? 'Cerrar' : 'Cancelar'}
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
             </button>
-            <button
-              onClick={handleSendNotifications}
-              disabled={isSendingEmails || selectedCompanies.size === 0}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-            >
-              {isSendingEmails ? (
+          </div>
+
+          <div className="space-y-6">
+            {selectedCompanies.size === 1 && (() => {
+              const selectedRut = Array.from(selectedCompanies)[0];
+              const empresa = allEmpresas.find(emp => emp.rut === selectedRut);
+              const debts = empresa ? getCompanyDebts(selectedRut) : [];
+              const totalDebt = debts.reduce((sum, debt) => sum + (debt.deuda || 0), 0);
+
+              return empresa ? (
                 <>
-                  <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Enviando...
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <h3 className="font-semibold text-gray-900 mb-2">Información de la empresa</h3>
+                    <div className="space-y-1 text-sm">
+                      <p><span className="font-medium">Nombre:</span> {empresa.razsoc || '-'}</p>
+                      <p><span className="font-medium">RUT:</span> {empresa.rut || '-'}</p>
+                      <p><span className="font-medium">Email registrado:</span> {empresa.cliente_email || 'No registrado'}</p>
+                      <p><span className="font-medium">Total documentos:</span> {debts.length}</p>
+                      <p><span className="font-medium">Deuda total:</span> {formatCurrency(totalDebt)}</p>
+                    </div>
+                  </div>
+
+                  <div>
+                    <Input
+                      type="email"
+                      label="Email de destino"
+                      placeholder="ejemplo@empresa.cl"
+                      value={manualSendEmail}
+                      onChange={(e) => setManualSendEmail(e.target.value)}
+                      inputClassName="w-full"
+                      disabled={isSendingManualEmail}
+                    />
+                    <p className="mt-2 text-sm text-gray-500">
+                      Ingresa el email al que deseas enviar la notificación. Se enviará un correo con todos los documentos pendientes de esta empresa.
+                    </p>
+                  </div>
+
+                  {manualSendResult && (
+                    <div className={`p-4 rounded-lg ${
+                      manualSendResult.success
+                        ? 'bg-green-50 border border-green-200'
+                        : 'bg-red-50 border border-red-200'
+                    }`}>
+                      <div className="flex items-start gap-3">
+                        {manualSendResult.success ? (
+                          <svg className="w-5 h-5 text-green-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                        ) : (
+                          <svg className="w-5 h-5 text-red-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        )}
+                        <p className={`font-medium ${
+                          manualSendResult.success ? 'text-green-800' : 'text-red-800'
+                        }`}>
+                          {manualSendResult.message}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
+                    <button
+                      onClick={() => {
+                        setIsManualSendModalOpen(false);
+                        setManualSendEmail('');
+                        setManualSendResult(null);
+                      }}
+                      className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors"
+                      disabled={isSendingManualEmail}
+                    >
+                      {manualSendResult ? 'Cerrar' : 'Cancelar'}
+                    </button>
+                    <button
+                      onClick={handleSendManualNotification}
+                      disabled={isSendingManualEmail || !manualSendEmail.trim()}
+                      className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                    >
+                      {isSendingManualEmail ? (
+                        <>
+                          <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          Enviando...
+                        </>
+                      ) : (
+                        <>
+                          <EmailIcon color="#FFFFFF" />
+                          Enviar notificación
+                        </>
+                      )}
+                    </button>
+                  </div>
                 </>
-              ) : (
-                'Enviar Notificaciones'
-              )}
-            </button>
+              ) : null;
+            })()}
           </div>
         </div>
       </Modal>
