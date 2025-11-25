@@ -149,7 +149,12 @@ export const Collections = () => {
         sortOrder,
         totalPages: deudasActivasData.pages.length,
         firstPageCount: deudasActivasData.pages[0]?.data?.length || 0,
-        first3Razsoc: allData.slice(0, 3).map((e: any) => e.razsoc || e.rut)
+        first3Razsoc: allData.slice(0, 3).map((e: EmpresaConDocumentos | CtasPorCobrar) => {
+          if ('razsoc' in e) {
+            return e.razsoc || (e as CtasPorCobrar).rut || '';
+          }
+          return (e as CtasPorCobrar).rut || '';
+        })
       });
     }
     

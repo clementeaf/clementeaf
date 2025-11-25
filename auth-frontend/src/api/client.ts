@@ -3,9 +3,17 @@ import type { ApiErrorResponse } from './types';
 import { authService } from './auth';
 
 /**
+ * Base URL del backend
+ * Usa variable de entorno o valor por defecto de producción (AWS)
+ * Para desarrollo local con serverless-offline, configurar: VITE_API_URL=http://localhost:9500/dev
+ */
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://7ebampwqf4.execute-api.us-east-1.amazonaws.com/dev';
+
+/**
  * Cliente HTTP configurado para el backend
  */
 export const apiClient: AxiosInstance = axios.create({
+  baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json'
   }

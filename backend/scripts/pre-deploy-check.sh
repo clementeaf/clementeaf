@@ -201,6 +201,43 @@ else
   report_success "@aws-sdk en dependencias"
 fi
 
+if ! grep -q "jwk-to-pem" package.json; then
+  report_error "jwk-to-pem no se encuentra en package.json (requerido para Cognito)"
+else
+  report_success "jwk-to-pem en dependencias"
+fi
+
+# 14.1. Verificar que las dependencias de jwk-to-pem están incluidas en serverless.yml
+echo ""
+echo "🔍 Verificando dependencias de jwk-to-pem en serverless.yml..."
+JWK_DEPENDENCIES=(
+  "jwk-to-pem"
+  "asn1.js"
+  "elliptic"
+  "safe-buffer"
+  "bn.js"
+)
+
+MISSING_DEPENDENCIES=0
+for dep in "${JWK_DEPENDENCIES[@]}"; do
+  if ! grep -q "node_modules/${dep}/" serverless.yml; then
+    report_error "Dependencia ${dep} no está incluida en serverless.yml (requerida para jwk-to-pem)"
+    MISSING_DEPENDENCIES=$((MISSING_DEPENDENCIES + 1))
+  else
+    report_success "Dependencia ${dep} incluida en serverless.yml"
+  fi
+done
+
+if [ $MISSING_DEPENDENCIES -gt 0 ]; then
+  report_error "$MISSING_DEPENDENCIES dependencias de jwk-to-pem faltantes en serverless.yml"
+  echo "   💡 Agrega estas dependencias a la sección 'package.patterns' en serverless.yml:"
+  for dep in "${JWK_DEPENDENCIES[@]}"; do
+    if ! grep -q "node_modules/${dep}/" serverless.yml; then
+      echo "      - 'node_modules/${dep}/**'"
+    fi
+  done
+fi
+
 # 15. Advertencia sobre VPC configuration
 echo ""
 echo "🔍 Verificando configuración de VPC en serverless.yml..."

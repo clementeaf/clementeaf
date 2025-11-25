@@ -48,6 +48,19 @@ export const authService = {
       { refreshToken }
     );
     return data;
+  },
+
+  /**
+   * Cierra la sesión del usuario actual
+   * @returns Respuesta del servidor
+   */
+  async logout(): Promise<void> {
+    try {
+      await apiClient.post(endpoints.auth.logout);
+    } catch (error) {
+      // Si falla el logout en el servidor, continuar con la limpieza local
+      console.error('Error al cerrar sesión en el servidor:', error);
+    }
   }
 };
 

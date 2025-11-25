@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { DropdownIcon, ChevronUpIcon } from '../../components/commons/icons';
 import { Input, Checkbox } from '../../components/commons';
-import type { QueryFilters } from '../../types/analytics';
+import type { QueryFilters, DiasVencidosRange } from '../../types/analytics';
 
 /**
  * Props del componente CollectionsFilters
@@ -54,9 +54,9 @@ export const CollectionsFilters = ({
     const selected = new Set<string>();
     
     // Si hay múltiples rangos, verificar cada uno
-    const ranges = (filters as any)?.diasVencidosRanges;
+    const ranges = filters.diasVencidosRanges;
     if (Array.isArray(ranges) && ranges.length > 0) {
-      ranges.forEach((range: { min?: number; max?: number }) => {
+      ranges.forEach((range: DiasVencidosRange) => {
         statusOptions.forEach(option => {
           let matches = false;
           
@@ -101,7 +101,7 @@ export const CollectionsFilters = ({
     }
     
     return selected;
-  }, [filters.diasVencidosMin, filters.diasVencidosMax, (filters as any)?.diasVencidosRanges]);
+  }, [filters.diasVencidosMin, filters.diasVencidosMax, filters.diasVencidosRanges]);
 
   /**
    * Actualiza un filtro específico
@@ -156,11 +156,12 @@ export const CollectionsFilters = ({
     if (ranges.length === 1) {
       newFilters.diasVencidosMin = ranges[0].min;
       newFilters.diasVencidosMax = ranges[0].max;
+      newFilters.diasVencidosRanges = undefined;
     } else {
       // Si hay múltiples rangos, usar el nuevo formato
       newFilters.diasVencidosMin = undefined;
       newFilters.diasVencidosMax = undefined;
-      (newFilters as any).diasVencidosRanges = ranges;
+      newFilters.diasVencidosRanges = ranges;
     }
     
     onFiltersChange(newFilters);

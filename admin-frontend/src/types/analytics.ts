@@ -100,6 +100,14 @@ export interface Estadisticas {
 export type SortOrder = 'asc' | 'desc';
 export type SortField = 'razsoc' | 'total_deuda' | 'vencimiento' | 'deuda';
 
+/**
+ * Rango de días vencidos
+ */
+export interface DiasVencidosRange {
+  min?: number;
+  max?: number;
+}
+
 export interface QueryFilters {
   rut?: string;
   razsoc?: string;
@@ -107,6 +115,7 @@ export interface QueryFilters {
   team?: string;
   diasVencidosMin?: number;
   diasVencidosMax?: number;
+  diasVencidosRanges?: DiasVencidosRange[];
   deudaMin?: number;
   deudaMax?: number;
   fechaDesde?: string;

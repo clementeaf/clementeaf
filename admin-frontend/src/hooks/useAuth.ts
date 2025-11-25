@@ -1,5 +1,6 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { authService, type AuthUser } from '../services/authService';
+import { getFrontendUrls } from '../config/frontendUrls';
 
 /**
  * Decodifica un JWT y extrae el payload
@@ -72,5 +73,40 @@ export const useCurrentUser = () => {
     retry: false,
     enabled: !!token || !!userIdFromToken
   });
+};
+
+/**
+ * Hook para cerrar sesión y redirigir a auth-frontend
+ * @returns Función para cerrar sesión
+ */
+export const useLogout = () => {
+  const queryClient = useQueryClient();
+
+  /**
+   * Cierra la sesión del usuario
+   * Limpia los tokens, invalida las queries y redirige a auth-frontend
+   */
+  const logout = async (): Promise<void> => {
+    try {
+      // Intentar cerrar sesión en el servidor
+      await authService.logout();
+    } catch (error) {
+      // Si falla, continuar con la limpieza local
+      console.error('Error al cerrar sesión:', error);
+    } finally {
+      // Limpiar tokens del localStorage
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('refreshToken');
+
+      // Invalidar todas las queries de React Query
+      queryClient.clear();
+
+      // Redirigir a auth-frontend
+      const { auth: authUrl } = getFrontendUrls();
+      window.location.href = authUrl;
+    }
+  };
+
+  return { logout };
 };
 

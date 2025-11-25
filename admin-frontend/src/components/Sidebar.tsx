@@ -5,6 +5,7 @@ import { NavItem } from './Sidebar/NavItem';
 import { SellsSubMenu } from './Sidebar/SellsSubMenu';
 import { navItems, sellsSubItems } from './Sidebar/navItems.config';
 import { isActive, isSellsSectionActive } from './Sidebar/utils';
+import { useLogout } from '../hooks/useAuth';
 
 /**
  * Componente Sidebar de la aplicación admin
@@ -12,6 +13,7 @@ import { isActive, isSellsSectionActive } from './Sidebar/utils';
  */
 export const Sidebar = () => {
   const location = useLocation();
+  const { logout } = useLogout();
   const [isSellsExpanded, setIsSellsExpanded] = useState(false);
   const [manualToggle, setManualToggle] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -80,7 +82,7 @@ export const Sidebar = () => {
     >
       <SidebarHeader isCollapsed={isCollapsed} onToggleCollapse={handleToggleCollapse} isExpanded={isExpanded} />
 
-      <nav className={`w-full flex flex-col transition-all duration-300 ${isExpanded ? 'px-2' : 'px-1'}`}>
+      <nav className={`w-full flex flex-col transition-all duration-300 flex-1 ${isExpanded ? 'px-2' : 'px-1'}`}>
         {navItems.map((item) => {
           const active = isActive(item.path, location.pathname);
           const isSellsItem = item.name === 'Ventas';
@@ -109,6 +111,35 @@ export const Sidebar = () => {
           );
         })}
       </nav>
+
+      {/* Footer con botón de cerrar sesión */}
+      <div className={`w-full mt-auto ${isExpanded ? 'px-2' : 'px-1'}`}>
+        <button
+          onClick={logout}
+          className={`w-full flex items-center gap-3 py-3 px-3 rounded-lg text-sm font-medium text-white hover:bg-red-600 transition-colors duration-200 ${
+            !isExpanded ? 'justify-center' : ''
+          }`}
+          title={!isExpanded ? 'Cerrar sesión' : undefined}
+        >
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 20 20"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            className="flex-shrink-0"
+          >
+            <path
+              d="M7.5 17.5H4.16667C3.72464 17.5 3.30072 17.3244 2.98816 17.0118C2.67559 16.6993 2.5 16.2754 2.5 15.8333V4.16667C2.5 3.72464 2.67559 3.30072 2.98816 2.98816C3.30072 2.67559 3.72464 2.5 4.16667 2.5H7.5M13.3333 14.1667L17.5 10M17.5 10L13.3333 5.83333M17.5 10H7.5"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+          {isExpanded && <span>Cerrar sesión</span>}
+        </button>
+      </div>
     </div>
   );
 };
