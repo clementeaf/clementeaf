@@ -19,7 +19,10 @@ export const useRegister = () => {
         password: variables.password
       }).then((loginResponse) => {
         if (loginResponse.data.token) {
-          localStorage.setItem('token', loginResponse.data.token);
+          localStorage.setItem('authToken', loginResponse.data.token);
+        }
+        if (loginResponse.data.refreshToken) {
+          localStorage.setItem('refreshToken', loginResponse.data.refreshToken);
         }
         // Redirigir a la página de selección de aplicación
         navigate('/select-app');
@@ -47,7 +50,10 @@ export const useLogin = () => {
     mutationFn: authService.login,
     onSuccess: (data) => {
       if (data.data.token) {
-        localStorage.setItem('token', data.data.token);
+        localStorage.setItem('authToken', data.data.token);
+      }
+      if (data.data.refreshToken) {
+        localStorage.setItem('refreshToken', data.data.refreshToken);
       }
       // Redirigir a la página de selección de aplicación después del login exitoso
       navigate('/select-app');

@@ -26,12 +26,13 @@ const loginHandler = async (event: APIGatewayProxyEvent) => {
   }
 
   const authService = new AuthService();
-  const { token, user } = await authService.login(loginDto);
+  const { token, refreshToken, user } = await authService.login(loginDto);
 
   return successResponse(
     200,
     {
       token,
+      refreshToken,
       user: {
         id: user.id,
         email: user.email,

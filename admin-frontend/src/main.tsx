@@ -7,6 +7,36 @@ import './index.css'
 import App from './App.tsx'
 
 /**
+ * Extrae el token y refresh token de la URL y los guarda en localStorage
+ * Luego limpia la URL para evitar exponer los tokens
+ */
+const handleTokenFromUrl = (): void => {
+  const urlParams = new URLSearchParams(window.location.search);
+  const token = urlParams.get('token');
+  const refreshToken = urlParams.get('refreshToken');
+  
+  if (token) {
+    // Guardar el token en localStorage
+    localStorage.setItem('authToken', token);
+    
+    // Si hay refresh token, guardarlo también
+    if (refreshToken) {
+      localStorage.setItem('refreshToken', refreshToken);
+    }
+    
+    // Limpiar la URL removiendo los parámetros de token
+    urlParams.delete('token');
+    urlParams.delete('refreshToken');
+    const newUrl = urlParams.toString() 
+      ? `${window.location.pathname}?${urlParams.toString()}`
+      : window.location.pathname;
+    
+    // Reemplazar la URL sin recargar la página
+    window.history.replaceState({}, '', newUrl);
+  }
+};
+
+/**
  * Configuración de QueryClient para evitar refetches innecesarios
  */
 const queryClient = new QueryClient({
@@ -20,6 +50,9 @@ const queryClient = new QueryClient({
     }
   }
 })
+
+// Manejar token de la URL antes de renderizar la app
+handleTokenFromUrl();
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

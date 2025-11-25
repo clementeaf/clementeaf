@@ -1,0 +1,7 @@
+node_modules/
+dist/
+.mcp-backups/
+*.log
+.env
+.DS_Store
+

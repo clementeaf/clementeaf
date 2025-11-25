@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "banados-aws": {
+      "command": "node",
+      "args": [
+        "/ruta/absoluta/al/proyecto/banados-fullstack/mcp-server/dist/index.js"
+      ],
+      "env": {
+        "AWS_REGION": "us-east-1"
+      }
+    }
+  }
+}
+

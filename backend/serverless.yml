@@ -35,8 +35,17 @@ provider:
             - ses:SendEmail
             - ses:SendRawEmail
           Resource: '*'
+        - Effect: Allow
+          Action:
+            - cognito-idp:SignUp
+            - cognito-idp:InitiateAuth
+            - cognito-idp:AdminUpdateUserAttributes
+            - cognito-idp:AdminGetUser
+            - cognito-idp:AdminConfirmSignUp
+          Resource: '*'
   environment:
     AWS_ENDPOINT_URL: ${env:AWS_ENDPOINT_URL, ''}
+    AWS_REGION: ${self:provider.region}
     JWT_SECRET: ${env:JWT_SECRET, 'your-secret-key-change-in-production'}
     JWT_EXPIRES_IN: ${env:JWT_EXPIRES_IN, '7d'}
     DB_HOST: ${env:DB_HOST, 'banados-analytics-db.cupsguy6sr11.us-east-1.rds.amazonaws.com'}
@@ -51,6 +60,10 @@ provider:
     S3_DATA_KEY: ${env:S3_DATA_KEY, 'Analytics_CtasPorCobrar/combined_data.json'}
     SES_FROM_EMAIL: ${env:SES_FROM_EMAIL, 'carriagadafalcone@gmail.com'}
     SES_FROM_NAME: ${env:SES_FROM_NAME, 'noreply@banados.cl'}
+    COGNITO_USER_POOL_ID: ${env:COGNITO_USER_POOL_ID, ''}
+    COGNITO_CLIENT_ID: ${env:COGNITO_CLIENT_ID, ''}
+    COGNITO_REGION: ${env:COGNITO_REGION, self:provider.region}
+    COGNITO_AUTO_CONFIRM: ${env:COGNITO_AUTO_CONFIRM, 'true'}
 
 package:
   patterns:
@@ -101,6 +114,8 @@ package:
     - 'node_modules/bcryptjs/**'
     - 'node_modules/jsonwebtoken/**'
     - 'node_modules/axios/**'
+    - 'node_modules/@aws-sdk/client-cognito-identity-provider/**'
+    - 'node_modules/node-fetch/**'
     - 'dist/**'
     - 'package.json'
   excludeDevDependencies: true
@@ -163,6 +178,16 @@ functions:
     events:
       - http:
           path: auth/logout
+          method: post
+          cors: true
+
+  refreshToken:
+    handler: dist/modules/Users/handlers/refreshToken.handler
+    timeout: 30
+    memorySize: 512
+    events:
+      - http:
+          path: auth/refresh
           method: post
           cors: true
 

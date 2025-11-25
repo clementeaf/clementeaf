@@ -1,76 +1,64 @@
-import * as bcrypt from 'bcryptjs';
-import * as jwt from 'jsonwebtoken';
-import { AppDataSource } from '../../../config/database';
 import { User } from '../entities/User.entity';
 import { type RegisterDto } from '../dto/RegisterDto';
 import { type LoginDto } from '../dto/LoginDto';
+import { CognitoService } from '../services/CognitoService';
 
-const JWT_SECRET = process.env.JWT_SECRET ?? 'your-secret-key-change-in-production';
-const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN ?? '7d';
+/**
+ * Tipo para usuario sin contraseña
+ */
+type UserWithoutPassword = Omit<User, 'password'>;
+
+/**
+ * Crea un objeto usuario mínimo compatible con la entidad User
+ * @param email - Email del usuario
+ * @param name - Nombre del usuario (opcional)
+ * @returns Usuario sin contraseña
+ */
+const createMinimalUser = (email: string, name: string | null = null): UserWithoutPassword => {
+  return {
+    id: 0,
+    email,
+    name,
+    createdAt: new Date(),
+    updatedAt: new Date()
+  };
+};
 
 /**
  * Servicio de autenticación para usuarios
  */
 export class AuthService {
-  private get userRepository() {
-    return AppDataSource.getRepository(User);
-  }
-
   /**
    * Registra un nuevo usuario
    * @param registerDto - Datos de registro
    * @returns Usuario creado sin la contraseña
    */
-  async register(registerDto: RegisterDto): Promise<Omit<User, 'password'>> {
-    const existingUser = await this.userRepository.findOne({
-      where: { email: registerDto.email }
-    });
-
-    if (existingUser) {
-      throw new Error('User with this email already exists');
-    }
-
-    const hashedPassword = await bcrypt.hash(registerDto.password, 10);
-
-    const user = this.userRepository.create({
-      email: registerDto.email,
-      password: hashedPassword,
-      name: registerDto.name ?? null
-    } as User);
-
-    const savedUser = await this.userRepository.save(user);
-    const { password: _password, ...userWithoutPassword } = savedUser;
-    return userWithoutPassword as Omit<User, 'password'>;
+  async register(registerDto: RegisterDto): Promise<UserWithoutPassword> {
+    const cognito = new CognitoService();
+    await cognito.signUp(registerDto);
+    return createMinimalUser(registerDto.email, registerDto.name ?? null);
   }
 
   /**
    * Autentica un usuario y genera un token JWT
    * @param loginDto - Datos de login
-   * @returns Token JWT y datos del usuario
+   * @returns Token JWT, refresh token y datos del usuario
    */
-  async login(loginDto: LoginDto): Promise<{ token: string; user: Omit<User, 'password'> }> {
-    const user = await this.userRepository.findOne({
-      where: { email: loginDto.email }
-    });
+  async login(loginDto: LoginDto): Promise<{ token: string; refreshToken: string; user: UserWithoutPassword }> {
+    const cognito = new CognitoService();
+    const { token, refreshToken, user } = await cognito.signIn(loginDto);
+    return { token, refreshToken, user: createMinimalUser(user.email, null) };
+  }
 
-    if (!user) {
-      throw new Error('Invalid credentials');
-    }
-
-    const isPasswordValid = await bcrypt.compare(loginDto.password, user.password);
-
-    if (!isPasswordValid) {
-      throw new Error('Invalid credentials');
-    }
-
-    const token = jwt.sign(
-      { userId: user.id, email: user.email },
-      JWT_SECRET,
-      { expiresIn: JWT_EXPIRES_IN } as jwt.SignOptions
-    );
-
-    const { password, ...userWithoutPassword } = user;
-    return { token, user: userWithoutPassword };
+  /**
+   * Refresca el access token usando un refresh token
+   * @param refreshToken - Refresh token
+   * @returns Nuevo access token, refresh token y datos del usuario
+   */
+  async refreshToken(refreshToken: string): Promise<{ token: string; refreshToken: string; user: UserWithoutPassword }> {
+    const cognito = new CognitoService();
+    const { token, refreshToken: newRefreshToken, user } = await cognito.refreshToken({ refreshToken });
+    return { token, refreshToken: newRefreshToken, user: createMinimalUser(user.email, null) };
   }
 
   /**
@@ -78,23 +66,10 @@ export class AuthService {
    * @param token - Token JWT
    * @returns Usuario autenticado
    */
-  async verifyToken(token: string): Promise<Omit<User, 'password'>> {
-    try {
-      const decoded = jwt.verify(token, JWT_SECRET) as { userId: number; email: string };
-
-      const user = await this.userRepository.findOne({
-        where: { id: decoded.userId }
-      });
-
-      if (!user) {
-        throw new Error('User not found');
-      }
-
-      const { password, ...userWithoutPassword } = user;
-      return userWithoutPassword;
-    } catch (error) {
-      throw new Error('Invalid token');
-    }
+  async verifyToken(token: string): Promise<UserWithoutPassword> {
+    const cognito = new CognitoService();
+    const payload = await cognito.verifyToken(token);
+    return createMinimalUser(payload.email, null);
   }
 
   /**
@@ -105,7 +80,8 @@ export class AuthService {
    */
   async logout(token: string): Promise<boolean> {
     try {
-      jwt.verify(token, JWT_SECRET);
+      const cognito = new CognitoService();
+      await cognito.verifyToken(token);
       return true;
     } catch {
       return false;

@@ -33,7 +33,8 @@ export const endpoints = {
     register: 'register',
     login: 'login',
     me: 'me',
-    logout: 'logout'
+    logout: 'logout',
+    refresh: 'refresh'
   }),
   clients: buildEndpoints('clients', {
     create: '',
@@ -66,6 +67,9 @@ export const endpoints = {
     update: '{id}',
     delete: '{id}',
     getPresignedUrl: 'presigned-url'
+  }),
+  email: buildEndpoints('email', {
+    send: 'send'
   })
 } as const;
 

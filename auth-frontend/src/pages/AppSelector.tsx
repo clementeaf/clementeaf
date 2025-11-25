@@ -3,11 +3,25 @@ import { Button } from '../components/ui/Button';
 import { getFrontendUrls } from '../config/frontendUrls';
 
 /**
- * Redirige a la aplicación seleccionada
+ * Redirige a la aplicación seleccionada con el token y refresh token en la URL
  * @param url - URL de la aplicación a la que redirigir
  */
 const redirectToApp = (url: string): void => {
-  window.location.href = url;
+  const token = localStorage.getItem('authToken');
+  const refreshToken = localStorage.getItem('refreshToken');
+  
+  if (token) {
+    const separator = url.includes('?') ? '&' : '?';
+    let redirectUrl = `${url}${separator}token=${encodeURIComponent(token)}`;
+    
+    if (refreshToken) {
+      redirectUrl += `&refreshToken=${encodeURIComponent(refreshToken)}`;
+    }
+    
+    window.location.href = redirectUrl;
+  } else {
+    window.location.href = url;
+  }
 };
 
 /**

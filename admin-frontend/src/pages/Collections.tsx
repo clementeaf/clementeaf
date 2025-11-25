@@ -11,6 +11,7 @@ import type { QueryFilters, SortField, SortOrder, EmpresaConDocumentos } from '.
 import type { CtasPorCobrar } from '../types/analytics';
 import type { AutomationConfig } from './Collections/AutomationCompanySearch';
 import { DropdownIcon, ChevronUpIcon, ChevronRightIcon } from '../components/commons/icons';
+import { emailService } from '../services/emailService';
 
 /**
  * Página de Cuentas por Cobrar
@@ -44,6 +45,12 @@ export const Collections = () => {
     },
     sendOnDueDate: false
   });
+  const [isSendingEmails, setIsSendingEmails] = useState(false);
+  const [emailSendResults, setEmailSendResults] = useState<{
+    success: number;
+    failed: number;
+    errors: string[];
+  } | null>(null);
 
   const { data: estadisticas, isLoading: loadingStats } = useEstadisticas();
   // Combinar filtros con ordenamiento
@@ -349,6 +356,110 @@ export const Collections = () => {
    */
   const handleCompaniesSelectionChange = (companyRuts: string[]): void => {
     setSelectedCompanies(new Set(companyRuts));
+  };
+
+  /**
+   * Obtiene todas las deudas de una empresa (incluyendo sucursales)
+   */
+  const getCompanyDebts = (companyRut: string): CtasPorCobrar[] => {
+    const empresa = allEmpresas.find(emp => emp.rut === companyRut);
+    if (!empresa) return [];
+
+    const debts: CtasPorCobrar[] = [];
+
+    // Agregar documentos de sucursales si existen
+    if (empresa.sucursal && empresa.sucursal.length > 0) {
+      empresa.sucursal.forEach(sucursal => {
+        if (sucursal.documentos) {
+          debts.push(...sucursal.documentos);
+        }
+      });
+    }
+
+    // Agregar documentos directos si existen
+    if (empresa.documentos && empresa.documentos.length > 0) {
+      debts.push(...empresa.documentos);
+    }
+
+    return debts;
+  };
+
+  /**
+   * Envía notificaciones de deudas a las empresas seleccionadas
+   */
+  const handleSendNotifications = async (): Promise<void> => {
+    if (selectedCompanies.size === 0) {
+      alert('Por favor, selecciona al menos una empresa');
+      return;
+    }
+
+    setIsSendingEmails(true);
+    setEmailSendResults(null);
+
+    const results = {
+      success: 0,
+      failed: 0,
+      errors: [] as string[]
+    };
+
+    try {
+      const selectedRuts = Array.from(selectedCompanies);
+      
+      for (const rut of selectedRuts) {
+        const empresa = allEmpresas.find(emp => emp.rut === rut);
+        if (!empresa) {
+          results.failed++;
+          results.errors.push(`Empresa con RUT ${rut} no encontrada`);
+          continue;
+        }
+
+        if (!empresa.cliente_email) {
+          results.failed++;
+          results.errors.push(`${empresa.razsoc || rut} no tiene email registrado`);
+          continue;
+        }
+
+        const debts = getCompanyDebts(rut);
+        if (debts.length === 0) {
+          results.failed++;
+          results.errors.push(`${empresa.razsoc || rut} no tiene documentos pendientes`);
+          continue;
+        }
+
+        try {
+          await emailService.sendDebtNotification(
+            empresa.razsoc || 'Cliente',
+            empresa.rut,
+            empresa.cliente_email,
+            debts
+          );
+          results.success++;
+        } catch (error) {
+          results.failed++;
+          const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+          results.errors.push(`${empresa.razsoc || rut}: ${errorMessage}`);
+        }
+      }
+
+      setEmailSendResults(results);
+      
+      if (results.success > 0) {
+        // Cerrar modal después de 2 segundos si hubo éxitos
+        setTimeout(() => {
+          setIsAutomationModalOpen(false);
+          setEmailSendResults(null);
+        }, 2000);
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Error desconocido al enviar correos';
+      setEmailSendResults({
+        success: 0,
+        failed: selectedCompanies.size,
+        errors: [errorMessage]
+      });
+    } finally {
+      setIsSendingEmails(false);
+    }
   };
 
   /**
@@ -1040,24 +1151,77 @@ export const Collections = () => {
             />
           </div>
 
+          {/* Resultados del envío */}
+          {emailSendResults && (
+            <div className={`mt-4 p-4 rounded-lg ${
+              emailSendResults.failed === 0 
+                ? 'bg-green-50 border border-green-200' 
+                : emailSendResults.success > 0 
+                  ? 'bg-yellow-50 border border-yellow-200'
+                  : 'bg-red-50 border border-red-200'
+            }`}>
+              <div className="flex items-start gap-3">
+                {emailSendResults.failed === 0 ? (
+                  <svg className="w-5 h-5 text-green-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                ) : (
+                  <svg className="w-5 h-5 text-yellow-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                )}
+                <div className="flex-1">
+                  <p className={`font-medium ${
+                    emailSendResults.failed === 0 ? 'text-green-800' : 'text-yellow-800'
+                  }`}>
+                    {emailSendResults.failed === 0 
+                      ? `✅ ${emailSendResults.success} notificación${emailSendResults.success !== 1 ? 'es' : ''} enviada${emailSendResults.success !== 1 ? 's' : ''} exitosamente`
+                      : `${emailSendResults.success} enviada${emailSendResults.success !== 1 ? 's' : ''}, ${emailSendResults.failed} fallida${emailSendResults.failed !== 1 ? 's' : ''}`
+                    }
+                  </p>
+                  {emailSendResults.errors.length > 0 && (
+                    <ul className="mt-2 text-sm text-gray-700 list-disc list-inside space-y-1">
+                      {emailSendResults.errors.slice(0, 5).map((error, index) => (
+                        <li key={index}>{error}</li>
+                      ))}
+                      {emailSendResults.errors.length > 5 && (
+                        <li className="text-gray-500">... y {emailSendResults.errors.length - 5} error{emailSendResults.errors.length - 5 !== 1 ? 'es' : ''} más</li>
+                      )}
+                    </ul>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="flex justify-end gap-3 mt-6 pt-6 border-t border-gray-200">
             <button
               onClick={() => {
                 setIsAutomationModalOpen(false);
+                setEmailSendResults(null);
                 // No limpiar selecciones al cerrar - mantener sincronización
               }}
               className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors"
+              disabled={isSendingEmails}
             >
-              Cancelar
+              {emailSendResults ? 'Cerrar' : 'Cancelar'}
             </button>
             <button
-              onClick={() => {
-                console.log('Guardar automatización');
-                setIsAutomationModalOpen(false);
-              }}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              onClick={handleSendNotifications}
+              disabled={isSendingEmails || selectedCompanies.size === 0}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
-              Guardar
+              {isSendingEmails ? (
+                <>
+                  <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Enviando...
+                </>
+              ) : (
+                'Enviar Notificaciones'
+              )}
             </button>
           </div>
         </div>
