@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import type { Message } from '../services/chatService';
 
-const WSS_ENDPOINT = import.meta.env.VITE_WS_URL || 'wss://us3x8rdme1.execute-api.us-east-1.amazonaws.com/dev';
+const WSS_ENDPOINT = import.meta.env.VITE_WS_URL || 'wss://ao9gv2kwll.execute-api.us-east-1.amazonaws.com/dev';
 
 interface WebSocketMessage {
   action: string;

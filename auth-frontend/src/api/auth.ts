@@ -3,6 +3,24 @@ import { endpoints } from './endpoints';
 import type { RegisterRequest, LoginRequest, RegisterResponse, LoginResponse } from './types';
 
 /**
+ * Respuesta de refresh token
+ */
+export interface RefreshTokenResponse {
+  data: {
+    token: string;
+    refreshToken: string;
+    user: {
+      id: number;
+      email: string;
+      name: string | null;
+      createdAt: string;
+      updatedAt: string;
+    };
+  };
+  message: string;
+}
+
+/**
  * Servicio de autenticación
  */
 export const authService = {
@@ -28,6 +46,19 @@ export const authService = {
     const response = await apiClient.post<LoginResponse>(
       endpoints.auth.login,
       data
+    );
+    return response.data;
+  },
+
+  /**
+   * Refresca el access token usando el refresh token
+   * @param refreshToken - Refresh token almacenado
+   * @returns Nuevo access token y refresh token
+   */
+  async refreshToken(refreshToken: string): Promise<RefreshTokenResponse> {
+    const response = await apiClient.post<RefreshTokenResponse>(
+      endpoints.auth.refresh,
+      { refreshToken }
     );
     return response.data;
   }

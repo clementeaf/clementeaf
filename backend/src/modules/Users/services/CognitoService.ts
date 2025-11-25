@@ -25,6 +25,8 @@ import { type LoginDto } from '../dto/LoginDto';
 import { type RefreshTokenDto } from '../dto/RefreshTokenDto';
 import * as jwt from 'jsonwebtoken';
 import fetch from 'node-fetch';
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const jwkToPem = require('jwk-to-pem');
 
 /**
  * Interfaz para JWK (JSON Web Key)
@@ -44,24 +46,28 @@ interface JWKS {
     keys: JWK[];
 }
 
-/**
- * Interfaz para el header del JWT
- */
-interface JWTHeader {
-    kid: string;
-    alg: string;
-}
 
 // Cliente Cognito configurado con la región del pool
 const cognitoClient = new CognitoIdentityProviderClient({ region: COGNITO_REGION });
 
 export class CognitoService {
+    private validateConfig(): void {
+        if (!COGNITO_USER_POOL_ID || !COGNITO_CLIENT_ID) {
+            throw new Error(
+                `Cognito configuration missing. ` +
+                `COGNITO_USER_POOL_ID: ${COGNITO_USER_POOL_ID ? '✓' : '✗'}, ` +
+                `COGNITO_CLIENT_ID: ${COGNITO_CLIENT_ID ? '✓' : '✗'}`
+            );
+        }
+    }
+
     /**
      * Registra un nuevo usuario en el User Pool.
      * @param registerDto datos de registro (email, password, name opcional)
      * @returns objeto con sub (userId) y email
      */
     async signUp(registerDto: RegisterDto): Promise<{ sub: string; email: string }> {
+        this.validateConfig();
         const signUpCommand = new SignUpCommand({
             ClientId: COGNITO_CLIENT_ID,
             Username: registerDto.email,
@@ -102,6 +108,7 @@ export class CognitoService {
      * @returns Token ID, refresh token y datos del usuario
      */
     async signIn(loginDto: LoginDto): Promise<{ token: string; refreshToken: string; user: { sub: string; email: string } }> {
+        this.validateConfig();
         const command = new InitiateAuthCommand({
             AuthFlow: 'USER_PASSWORD_AUTH',
             ClientId: COGNITO_CLIENT_ID,
@@ -136,6 +143,7 @@ export class CognitoService {
      * @returns Nuevo access token y refresh token
      */
     async refreshToken(refreshTokenDto: RefreshTokenDto): Promise<{ token: string; refreshToken: string; user: { sub: string; email: string } }> {
+        this.validateConfig();
         const command = new InitiateAuthCommand({
             AuthFlow: 'REFRESH_TOKEN_AUTH',
             ClientId: COGNITO_CLIENT_ID,
@@ -165,10 +173,16 @@ export class CognitoService {
      * Esta implementación descarga la JWKS en cada llamada (para simplicidad).
      */
     async verifyToken(token: string): Promise<{ sub: string; email: string }> {
+        this.validateConfig();
         // Obtener el poolId (ej: us-east-1_XXXX) para construir la URL JWKS
         const poolId = COGNITO_USER_POOL_ID;
         if (!poolId) {
-            throw new Error('Cognito User Pool ID not configured');
+            console.error('Cognito User Pool ID not configured. Environment variables:', {
+                COGNITO_USER_POOL_ID: process.env.COGNITO_USER_POOL_ID || 'not set',
+                COGNITO_CLIENT_ID: process.env.COGNITO_CLIENT_ID ? 'set' : 'not set',
+                COGNITO_REGION: process.env.COGNITO_REGION || process.env.AWS_REGION || 'not set'
+            });
+            throw new Error('Cognito User Pool ID not configured. Please set COGNITO_USER_POOL_ID environment variable.');
         }
         const region = COGNITO_REGION;
         const jwksUrl = `https://cognito-idp.${region}.amazonaws.com/${poolId}/.well-known/jwks.json`;
@@ -178,17 +192,24 @@ export class CognitoService {
         }
         const jwks = (await jwksRes.json()) as JWKS;
         // Convertir JWKS a un objeto de claves para jsonwebtoken
-        const getKey = (header: JWTHeader, callback: jwt.VerifyCallback) => {
+        const getKey: jwt.GetPublicKeyOrSecret = (header: jwt.JwtHeader, callback: jwt.SigningKeyCallback) => {
+            if (!header.kid) {
+                return callback(new jwt.JsonWebTokenError('Missing kid in token header'));
+            }
             const key = jwks.keys.find((k) => k.kid === header.kid);
             if (!key) {
-                return callback(new Error('Unable to find matching key'), undefined);
+                return callback(new jwt.JsonWebTokenError('Unable to find matching key'));
             }
-            // Construir la clave pública en formato PEM
-            const pubKey = jwkToPem(key);
-            callback(null, pubKey);
+            // Construir la clave pública en formato PEM usando la librería jwk-to-pem
+            try {
+                const pubKey = jwkToPem(key);
+                callback(null, pubKey);
+            } catch (error) {
+                callback(error instanceof Error ? error : new Error('Failed to convert JWK to PEM'));
+            }
         };
         return new Promise<{ sub: string; email: string }>((resolve, reject) => {
-            jwt.verify(token, getKey, { algorithms: ['RS256'] }, (err, decoded) => {
+            jwt.verify(token, getKey, { algorithms: ['RS256'] }, (err: jwt.VerifyErrors | null, decoded: string | jwt.JwtPayload | undefined) => {
                 if (err || !decoded) {
                     return reject(err || new Error('Invalid token'));
                 }
@@ -199,44 +220,3 @@ export class CognitoService {
     }
 }
 
-/**
- * Convierte un JWK (JSON Web Key) a formato PEM
- * @param jwk - JSON Web Key a convertir
- * @returns Clave pública en formato PEM
- */
-function jwkToPem(jwk: JWK): string {
-    if (jwk.kty !== 'RSA') {
-        throw new Error('Unsupported key type');
-    }
-    const exponent = Buffer.from(jwk.e, 'base64');
-    const modulus = Buffer.from(jwk.n, 'base64');
-    // Construir la estructura ASN.1 para la clave pública RSA
-    const getLength = (buf: Buffer) => {
-        const len = buf.length;
-        if (len < 0x80) return Buffer.from([len]);
-        const lenHex = len.toString(16);
-        const lenBytes = Buffer.from(lenHex, 'hex');
-        return Buffer.concat([Buffer.from([0x80 + lenBytes.length]), lenBytes]);
-    };
-    const sequence = Buffer.concat([
-        Buffer.from([0x30]), // SEQUENCE
-        getLength(Buffer.concat([
-            Buffer.from([0x30]), // SEQUENCE (algo identifier)
-            getLength(Buffer.from([0x06, 0x09, 0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x01, 0x01])), // OID rsaEncryption
-            Buffer.from([0x05, 0x00]), // NULL
-        ])),
-        Buffer.from([0x03]), // BIT STRING
-        getLength(Buffer.concat([Buffer.from([0x00]), // unused bits
-        Buffer.from([0x30]), // SEQUENCE
-        getLength(Buffer.concat([
-            Buffer.from([0x02]), // INTEGER (modulus)
-            getLength(modulus),
-            modulus,
-            Buffer.from([0x02]), // INTEGER (exponent)
-            getLength(exponent),
-            exponent,
-        ])),
-        ])),
-    ]);
-    return `-----BEGIN PUBLIC KEY-----\n${sequence.toString('base64').match(/.{1,64}/g)!.join('\n')}\n-----END PUBLIC KEY-----`;
-}

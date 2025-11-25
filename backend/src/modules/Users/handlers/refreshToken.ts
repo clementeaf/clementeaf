@@ -44,6 +44,12 @@ const refreshTokenHandler = async (event: APIGatewayProxyEvent) => {
     );
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Invalid refresh token';
+    console.error('Error refreshing token:', errorMessage);
+    console.error('Cognito config:', {
+      poolId: process.env.COGNITO_USER_POOL_ID ? 'configured' : 'missing',
+      clientId: process.env.COGNITO_CLIENT_ID ? 'configured' : 'missing',
+      region: process.env.COGNITO_REGION || process.env.AWS_REGION || 'not set'
+    });
     return errorResponse(401, errorMessage);
   }
 };

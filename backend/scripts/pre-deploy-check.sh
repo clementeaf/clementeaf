@@ -177,6 +177,37 @@ if [ "$STAGE" = "prod" ]; then
   fi
 fi
 
+# 13. Verificar Cognito configuration (critical para auth)
+echo ""
+echo "🔍 Verificando configuración de Cognito..."
+if [ -z "$COGNITO_USER_POOL_ID" ] && ! grep -q "COGNITO_USER_POOL_ID.*:.*'[^']*'" serverless.yml; then
+  report_warning "COGNITO_USER_POOL_ID no configurado (requiere variable de entorno o default en serverless.yml)"
+else
+  report_success "COGNITO_USER_POOL_ID configurado"
+fi
+
+# 14. Verificar que package.json tiene dependencias críticas
+echo ""
+echo "🔍 Verificando dependencias críticas..."
+if ! grep -q "typeorm" package.json; then
+  report_error "typeorm no se encuentra en package.json"
+else
+  report_success "typeorm en dependencias"
+fi
+
+if ! grep -q "@aws-sdk" package.json; then
+  report_error "@aws-sdk no se encuentra en package.json"
+else
+  report_success "@aws-sdk en dependencias"
+fi
+
+# 15. Advertencia sobre VPC configuration
+echo ""
+echo "🔍 Verificando configuración de VPC en serverless.yml..."
+if grep -q "LAMBDA_SECURITY_GROUP_ID" serverless.yml && [ -z "$LAMBDA_SECURITY_GROUP_ID" ]; then
+  report_warning "VPC está configurado pero LAMBDA_SECURITY_GROUP_ID no está establecido. Usar defaults de serverless.yml."
+fi
+
 # 11. Verificar que AWS CLI está configurado
 echo ""
 echo "🔍 Verificando configuración de AWS..."

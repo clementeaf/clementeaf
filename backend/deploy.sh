@@ -14,6 +14,37 @@ echo "Stage: $STAGE"
 echo "Región: $AWS_REGION"
 echo ""
 
+# Verificar si hay un rollback fallido y recuperar si es necesario
+echo "🔍 Verificando estado del stack antes de desplegar..."
+STACK_STATUS=$(aws cloudformation describe-stacks \
+  --stack-name "backend-${STAGE}" \
+  --region "$AWS_REGION" \
+  --query 'Stacks[0].StackStatus' \
+  --output text 2>/dev/null || echo "")
+
+if [[ "$STACK_STATUS" == *"FAILED"* ]] || [[ "$STACK_STATUS" == *"ROLLBACK"* ]]; then
+  echo "⚠️  ⚠️  Stack en estado problemático: $STACK_STATUS"
+  echo "🔎 Intentando recuperarse automáticamente..."
+  echo ""
+  
+  if [ -f "scripts/recover-rollback.sh" ]; then
+    chmod +x scripts/recover-rollback.sh
+    if ./scripts/recover-rollback.sh "$STAGE" "$AWS_REGION"; then
+      echo ""
+      echo "✅ Stack recuperado exitosamente"
+    else
+      echo ""
+      echo "❌ Error: No se pudo recuperar el stack automáticamente"
+      echo "   Ejecuta manualmente: ./scripts/recover-rollback.sh $STAGE $AWS_REGION"
+      exit 1
+    fi
+  else
+    echo "❌ Error: Script de recuperación no encontrado"
+    exit 1
+  fi
+  echo ""
+fi
+
 # Ejecutar validaciones pre-deploy
 if [ -f "scripts/pre-deploy-check.sh" ]; then
   echo "🔍 Ejecutando validaciones pre-deploy..."
@@ -80,19 +111,29 @@ if [ ! -d "dist" ]; then
 fi
 
 # Verificar que al menos algunos handlers críticos existen
+echo "🔍 Verificando handlers críticos..."
 CRITICAL_HANDLERS=(
   "dist/modules/Users/handlers/login.js"
   "dist/modules/Users/handlers/register.js"
-  "dist/modules/Products/handlers/getAllProducts.js"
+  "dist/handlers/hello.js"
 )
 
+MISSING_COUNT=0
 for handler in "${CRITICAL_HANDLERS[@]}"; do
   if [ ! -f "$handler" ]; then
     echo "❌ Error: Handler crítico no encontrado: $handler"
-    echo "   Verifica que la compilación de TypeScript fue exitosa"
-    exit 1
+    MISSING_COUNT=$((MISSING_COUNT + 1))
   fi
 done
+
+if [ $MISSING_COUNT -gt 0 ]; then
+  echo ""
+  echo "❌ Error: $MISSING_COUNT handlers críticos faltantes"
+  echo "   Verifica que la compilación de TypeScript fue exitosa"
+  echo "   Ejecuta: npm run build"
+  exit 1
+fi
+echo "✅ Todos los handlers críticos encontrados"
 
 # 2. Desplegar con Serverless Framework
 echo ""

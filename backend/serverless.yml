@@ -8,6 +8,7 @@ provider:
   stage: ${opt:stage, 'dev'}
   region: ${opt:region, 'us-east-1'}
   versionFunctions: false
+  # VPC: Configuración condicional (solo si están definidas las variables)
   vpc:
     securityGroupIds:
       - ${env:LAMBDA_SECURITY_GROUP_ID, 'sg-07008cd2c332f0575'}
@@ -17,6 +18,7 @@ provider:
   iam:
     role:
       statements:
+        # S3 acceso a datos
         - Effect: Allow
           Action:
             - s3:GetObject
@@ -25,16 +27,19 @@ provider:
           Resource:
             - arn:aws:s3:::banados-analytics-data
             - arn:aws:s3:::banados-analytics-data/*
+        # WebSocket connections
         - Effect: Allow
           Action:
             - execute-api:ManageConnections
           Resource:
             - arn:aws:execute-api:${self:provider.region}:*:*/@connections/*
+        # SES envío de emails
         - Effect: Allow
           Action:
             - ses:SendEmail
             - ses:SendRawEmail
           Resource: '*'
+        # Cognito auth
         - Effect: Allow
           Action:
             - cognito-idp:SignUp
@@ -43,9 +48,25 @@ provider:
             - cognito-idp:AdminGetUser
             - cognito-idp:AdminConfirmSignUp
           Resource: '*'
+        # Permisos VPC para ENIs (requeridos si Lambda está en VPC)
+        - Effect: Allow
+          Action:
+            - ec2:CreateNetworkInterface
+            - ec2:DescribeNetworkInterfaces
+            - ec2:DeleteNetworkInterface
+            - ec2:DescribeSubnets
+            - ec2:DescribeSecurityGroups
+            - ec2:DescribeVpcs
+          Resource: '*'
+        # Logs explícitos (defensivo)
+        - Effect: Allow
+          Action:
+            - logs:CreateLogGroup
+            - logs:CreateLogStream
+            - logs:PutLogEvents
+          Resource: arn:aws:logs:${self:provider.region}:*:log-group:/aws/lambda/*
   environment:
     AWS_ENDPOINT_URL: ${env:AWS_ENDPOINT_URL, ''}
-    AWS_REGION: ${self:provider.region}
     JWT_SECRET: ${env:JWT_SECRET, 'your-secret-key-change-in-production'}
     JWT_EXPIRES_IN: ${env:JWT_EXPIRES_IN, '7d'}
     DB_HOST: ${env:DB_HOST, 'banados-analytics-db.cupsguy6sr11.us-east-1.rds.amazonaws.com'}
@@ -60,9 +81,9 @@ provider:
     S3_DATA_KEY: ${env:S3_DATA_KEY, 'Analytics_CtasPorCobrar/combined_data.json'}
     SES_FROM_EMAIL: ${env:SES_FROM_EMAIL, 'carriagadafalcone@gmail.com'}
     SES_FROM_NAME: ${env:SES_FROM_NAME, 'noreply@banados.cl'}
-    COGNITO_USER_POOL_ID: ${env:COGNITO_USER_POOL_ID, ''}
-    COGNITO_CLIENT_ID: ${env:COGNITO_CLIENT_ID, ''}
-    COGNITO_REGION: ${env:COGNITO_REGION, self:provider.region}
+    COGNITO_USER_POOL_ID: ${env:COGNITO_USER_POOL_ID, 'us-east-1_ET27TiV8Y'}
+    COGNITO_CLIENT_ID: ${env:COGNITO_CLIENT_ID, '3ido9jo5thqnl5c05vlna3c0no'}
+    COGNITO_REGION: ${env:COGNITO_REGION, 'us-east-1'}
     COGNITO_AUTO_CONFIRM: ${env:COGNITO_AUTO_CONFIRM, 'true'}
 
 package:
@@ -116,6 +137,7 @@ package:
     - 'node_modules/axios/**'
     - 'node_modules/@aws-sdk/client-cognito-identity-provider/**'
     - 'node_modules/node-fetch/**'
+    - 'node_modules/jwk-to-pem/**'
     - 'dist/**'
     - 'package.json'
   excludeDevDependencies: true
@@ -147,6 +169,7 @@ functions:
     handler: dist/modules/Users/handlers/register.handler
     timeout: 30
     memorySize: 512
+    vpc: null
     events:
       - http:
           path: auth/register
@@ -157,6 +180,7 @@ functions:
     handler: dist/modules/Users/handlers/login.handler
     timeout: 30
     memorySize: 512
+    vpc: null
     events:
       - http:
           path: auth/login
@@ -167,6 +191,7 @@ functions:
     handler: dist/modules/Users/handlers/me.handler
     timeout: 30
     memorySize: 512
+    vpc: null
     events:
       - http:
           path: auth/me
@@ -175,6 +200,7 @@ functions:
 
   logout:
     handler: dist/modules/Users/handlers/logout.handler
+    vpc: null
     events:
       - http:
           path: auth/logout
@@ -185,6 +211,7 @@ functions:
     handler: dist/modules/Users/handlers/refreshToken.handler
     timeout: 30
     memorySize: 512
+    vpc: null
     events:
       - http:
           path: auth/refresh
@@ -539,6 +566,14 @@ functions:
     events:
       - websocket:
           route: $disconnect
+
+  websocketSendMessage:
+    handler: dist/modules/Chat/handlers/websocket/sendMessage.handler
+    timeout: 30
+    memorySize: 512
+    events:
+      - websocket:
+          route: $default
 
 resources:
   # CORS configurado manualmente en el bucket S3 existente

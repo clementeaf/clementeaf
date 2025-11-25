@@ -47,7 +47,8 @@ export const endpoints = {
     register: 'register',
     login: 'login',
     me: 'me',
-    logout: 'logout'
+    logout: 'logout',
+    refresh: 'refresh'
   })
 } as const;
 
