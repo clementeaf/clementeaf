@@ -12,6 +12,7 @@ import { CreateClient } from './pages/Clients/CreateClient';
 import { ClientDetails } from './pages/Clients/ClientDetails/ClientDetails';
 import { Quotes } from './pages/Quotes';
 import { CreateQuote } from './pages/Quotes/CreateQuote';
+import { QuoteDetails } from './pages/Quotes/QuoteDetails/QuoteDetails';
 import { SalesOrder } from './pages/SalesOrder';
 import { Collections } from './pages/Collections';
 import { Analytics } from './pages/Analytics';
@@ -38,6 +39,7 @@ function App(): React.ReactNode {
           <Route path={`${routes.clientDetails}/:id`} element={<ClientDetails />} />
           <Route path={routes.quotes} element={<Quotes />} />
           <Route path={routes.createQuote} element={<CreateQuote />} />
+          <Route path={`${routes.quoteDetails}/:id`} element={<QuoteDetails />} />
           <Route path={routes.salesOrder} element={<SalesOrder />} />
           <Route path={routes.collections} element={<Collections />} />
           <Route path={routes.analytics} element={<Analytics />} />

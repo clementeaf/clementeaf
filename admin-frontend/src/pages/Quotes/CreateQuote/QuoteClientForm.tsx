@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Input, CountrySelector, type Country } from '../../../components/commons';
+import { Input, CountrySelector, ClientSearchInput, type Country } from '../../../components/commons';
 import { DropdownIcon } from '../../../components/commons/icons';
 import { getCountryByCode } from '../../../components/commons/countries';
+import type { Client } from '../../../services/clientsService';
 
 /**
  * Props del componente QuoteClientForm
@@ -115,20 +116,60 @@ export const QuoteClientForm = ({ onDataChange, initialData }: QuoteClientFormPr
     }
   };
 
+  /**
+   * Maneja la selección de un cliente desde el buscador
+   */
+  const handleClientSelect = (client: Client): void => {
+    // Construir región/comuna/código postal
+    const regionParts: string[] = [];
+    if (client.regionFacturacion) regionParts.push(client.regionFacturacion);
+    if (client.comunaFacturacion) regionParts.push(client.comunaFacturacion);
+    if (client.codigoPostalFacturacion) regionParts.push(client.codigoPostalFacturacion);
+    const regionComunaCodigo = regionParts.length > 0 ? regionParts.join(' / ') : '';
+
+    const newData: Record<string, string> = {
+      ...formData,
+      clienteNombre: client.nombreCliente || client.razonSocial || '',
+      direccionFacturacion: client.direccionFacturacion || '',
+      telefono: '', // El teléfono del cliente se mantiene vacío ya que no existe en la entidad
+      regionComunaCodigo: regionComunaCodigo,
+      contactoNombre: client.contactoNombre || '',
+      contactoEmail: client.contactoCorreoElectronico || '',
+      contactoTelefono: client.contactoTelefono || '',
+      countryCode: client.contactoCountryCode || 'CL',
+      countryDialCode: client.contactoCountryDialCode || '+56',
+      contactoCountryCode: client.contactoCountryCode || 'CL',
+      contactoCountryDialCode: client.contactoCountryDialCode || '+56'
+    };
+
+    // Actualizar país seleccionado para teléfono de contacto si hay código de país
+    if (client.contactoCountryCode) {
+      const country = getCountryByCode(client.contactoCountryCode);
+      if (country) {
+        setContactCountry(country);
+      }
+    }
+
+    setFormData(newData);
+    
+    if (onDataChange) {
+      onDataChange(newData);
+    }
+  };
+
   return (
     <div className="flex-1 p-6">
       <h2 className="text-lg font-bold text-gray-800 mb-6">Información del cliente</h2>
       <div className="grid grid-cols-2 gap-6">
         <div className="col-span-2">
-          <Input
+          <ClientSearchInput
             id="clienteNombre"
             label="Nombre del cliente"
-            type="text"
             value={formData.clienteNombre || ''}
-            onChange={(e): void => handleFieldChange('clienteNombre', e.target.value)}
+            onChange={(value): void => handleFieldChange('clienteNombre', value)}
+            onClientSelect={handleClientSelect}
             placeholder="Busca o selecciona un cliente existente"
             inputClassName="bg-white"
-            rightIcon={<DropdownIcon color="#6b7280" />}
             error={errors.clienteNombre || undefined}
           />
         </div>

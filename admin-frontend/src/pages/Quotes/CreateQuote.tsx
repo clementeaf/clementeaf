@@ -9,7 +9,9 @@ import { QuoteProductsForm } from './CreateQuote/QuoteProductsForm';
 import { QuoteReviewForm } from './CreateQuote/QuoteReviewForm';
 import { Button } from '../../components/commons';
 import { ChevronRightIcon } from '../../components/commons/icons';
+import { useCreateQuote } from '../../hooks/useQuotes';
 import { routes } from '../../routes';
+import type { CreateQuoteDto } from '../../services/quotesService';
 
 const STORAGE_KEY = 'createQuoteFormData';
 
@@ -19,6 +21,7 @@ const STORAGE_KEY = 'createQuoteFormData';
  */
 export const CreateQuote = () => {
   const navigate = useNavigate();
+  const createQuoteMutation = useCreateQuote();
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState<Record<string, unknown>>({});
 
@@ -153,14 +156,73 @@ export const CreateQuote = () => {
   };
 
   /**
+   * Convierte una fecha en formato DD/MM/YYYY a ISO string
+   * @param dateString - Fecha en formato DD/MM/YYYY
+   * @returns Fecha en formato ISO string o null si no es válida
+   */
+  const convertDateToISO = (dateString: string): string | null => {
+    if (!dateString) return null;
+    
+    // Intentar parsear formato DD/MM/YYYY
+    const parts = dateString.split('/');
+    if (parts.length === 3) {
+      const day = parseInt(parts[0], 10);
+      const month = parseInt(parts[1], 10) - 1; // Mes es 0-indexed
+      const year = parseInt(parts[2], 10);
+      const date = new Date(year, month, day);
+      if (!isNaN(date.getTime())) {
+        return date.toISOString();
+      }
+    }
+    
+    // Si ya es un formato ISO válido, retornarlo
+    const isoDate = new Date(dateString);
+    if (!isNaN(isoDate.getTime())) {
+      return isoDate.toISOString();
+    }
+    
+    return null;
+  };
+
+  /**
    * Maneja el envío final del formulario
    */
   const handleSubmit = async (): Promise<void> => {
     try {
-      const quoteData = getStepData(1);
+      const step1Data = getStepData(1);
+      const step2Data = formData.condiciones as Record<string, unknown> || {};
+      const step3Data = formData.productos as unknown[] || [];
       
-      // TODO: Implementar creación de cotización
-      console.log('Datos de cotización:', quoteData);
+      // Convertir fecha a formato ISO
+      const fechaString = String(step2Data.fecha || '');
+      const fechaISO = convertDateToISO(fechaString) || new Date().toISOString();
+      
+      // Construir el DTO completo
+      const quoteData: CreateQuoteDto = {
+        clienteNombre: String(step1Data.clienteNombre || ''),
+        direccionFacturacion: String(step1Data.direccionFacturacion || ''),
+        telefono: String(step1Data.telefono || ''),
+        regionComunaCodigo: String(step1Data.regionComunaCodigo || ''),
+        asesorAsignado: String(step1Data.asesorAsignado || ''),
+        contactoNombre: String(step1Data.contactoNombre || ''),
+        contactoTelefono: String(step1Data.contactoTelefono || ''),
+        contactoEmail: String(step1Data.contactoEmail || ''),
+        countryCode: String(step1Data.countryCode || ''),
+        countryDialCode: String(step1Data.countryDialCode || ''),
+        contactoCountryCode: String(step1Data.contactoCountryCode || ''),
+        contactoCountryDialCode: String(step1Data.contactoCountryDialCode || ''),
+        numeroCotizacion: String(step2Data.numeroCotizacion || ''),
+        fecha: fechaISO,
+        terminosPago: String(step2Data.terminosPago || ''),
+        numeroReferencia: String(step2Data.numeroReferencia || ''),
+        centroCosto: String(step2Data.centroCosto || ''),
+        listaPrecios: String(step2Data.listaPrecios || ''),
+        sinCostoEnvio: step2Data.sinCostoEnvio === 'true' || step2Data.sinCostoEnvio === true,
+        productos: JSON.stringify(step3Data),
+        estado: 'borrador'
+      };
+      
+      await createQuoteMutation.mutateAsync(quoteData);
       
       toast.success('Cotización creada exitosamente');
       
@@ -187,23 +249,42 @@ export const CreateQuote = () => {
     <div className="w-full h-full flex flex-col p-8">
       <CreateQuoteHeader />
 
-      <div className="flex gap-6 bg-white rounded-lg shadow-sm border border-gray-200 w-full h-full">
+      <div className="flex gap-6 bg-white rounded-lg shadow-sm border border-gray-200 w-full h-full overflow-hidden">
         <QuoteStepper currentStep={currentStep} />
-        <div className="w-full px-[100px] py-6 h-full flex flex-col">
-          <div className="flex-1">
+        <div className="w-full px-[100px] py-6 h-full flex flex-col overflow-hidden">
+          <div className="flex-1 overflow-y-auto">
             {renderStepContent()}
           </div>
-          <div className="flex justify-end mt-6">
-            <Button
-              onClick={isLastStep ? handleSubmit : handleNext}
-              rightIcon={!isLastStep ? <ChevronRightIcon color="white" /> : undefined}
-              className="bg-[#004BB7] text-white hover:bg-blue-600 px-6 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isLastStep 
-                ? 'Crear Cotización'
-                : 'Siguiente'
-              }
-            </Button>
+          <div className="flex justify-end gap-4 mt-6">
+            {isLastStep ? (
+              <>
+                <Button
+                  onClick={(): void => {
+                    // TODO: Implementar guardar borrador
+                    console.log('Guardar borrador');
+                  }}
+                  className="bg-[#0052C9] text-white hover:bg-[#004BB7] px-6 py-2"
+                >
+                  Guardar borrador
+                </Button>
+                <Button
+                  onClick={handleSubmit}
+                  rightIcon={<ChevronRightIcon color="white" />}
+                  className="bg-[#004BB7] text-white hover:bg-blue-600 px-6 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={createQuoteMutation.isPending}
+                >
+                  {createQuoteMutation.isPending ? 'Creando...' : 'Crear cotización'}
+                </Button>
+              </>
+            ) : (
+              <Button
+                onClick={handleNext}
+                rightIcon={<ChevronRightIcon color="white" />}
+                className="bg-[#004BB7] text-white hover:bg-blue-600 px-6 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Siguiente
+              </Button>
+            )}
           </div>
         </div>
       </div>

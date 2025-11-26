@@ -377,6 +377,57 @@ functions:
           method: delete
           cors: true
 
+  # Quotes endpoints
+  createQuote:
+    handler: dist/modules/Quotes/handlers/createQuote.handler
+    timeout: 30
+    memorySize: 512
+    events:
+      - http:
+          path: quotes
+          method: post
+          cors: true
+
+  getQuoteById:
+    handler: dist/modules/Quotes/handlers/getQuoteById.handler
+    timeout: 30
+    memorySize: 512
+    events:
+      - http:
+          path: quotes/{id}
+          method: get
+          cors: true
+
+  getAllQuotes:
+    handler: dist/modules/Quotes/handlers/getAllQuotes.handler
+    timeout: 30
+    memorySize: 512
+    events:
+      - http:
+          path: quotes
+          method: get
+          cors: true
+
+  updateQuote:
+    handler: dist/modules/Quotes/handlers/updateQuote.handler
+    timeout: 30
+    memorySize: 512
+    events:
+      - http:
+          path: quotes/{id}
+          method: put
+          cors: true
+
+  deleteQuote:
+    handler: dist/modules/Quotes/handlers/deleteQuote.handler
+    timeout: 30
+    memorySize: 512
+    events:
+      - http:
+          path: quotes/{id}
+          method: delete
+          cors: true
+
   # Chat endpoints
   createConversation:
     handler: dist/modules/Chat/handlers/createConversation.handler

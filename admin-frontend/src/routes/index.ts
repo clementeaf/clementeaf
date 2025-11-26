@@ -13,6 +13,7 @@ export const routes = {
   clientDetails: '/sells/clients/details',
   quotes: '/sells/quotes',
   createQuote: '/sells/quotes/create',
+  quoteDetails: '/sells/quotes/details',
   salesOrder: '/sells/sales-order',
   collections: '/sells/collections',
   analytics: '/analytics',

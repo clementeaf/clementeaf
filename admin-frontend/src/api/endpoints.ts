@@ -70,6 +70,13 @@ export const endpoints = {
   }),
   email: buildEndpoints('email', {
     send: 'send'
+  }),
+  quotes: buildEndpoints('quotes', {
+    create: '',
+    getById: '{id}',
+    getAll: '',
+    update: '{id}',
+    delete: '{id}'
   })
 } as const;
 
