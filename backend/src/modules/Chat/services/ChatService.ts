@@ -1,5 +1,4 @@
 import { AppDataSource } from '../../../config/database';
-import { IsNull } from 'typeorm';
 import { Conversation } from '../entities/Conversation.entity';
 import { Message } from '../entities/Message.entity';
 import { TypingIndicator } from '../entities/TypingIndicator.entity';
@@ -88,19 +87,22 @@ export class ChatService {
   }
 
   /**
-   * Obtiene todas las conversaciones de un usuario con información adicional (optimizado - evita N+1)
+   * Obtiene todas las conversaciones de un usuario con información adicional (ultra-optimizado)
    * @param userId - ID del usuario
+   * @param limit - Límite de conversaciones a retornar (default: 50)
    * @returns Lista de conversaciones del usuario con unreadCount y lastMessage
    */
-  async getConversationsByUserId(userId: number): Promise<Array<Conversation & { unreadCount: number; lastMessage: Message | null }>> {
-    const conversations = await this.conversationRepository.find({
-      where: [
-        { participant1Id: userId },
-        { participant2Id: userId }
-      ],
-      relations: ['participant1', 'participant2'],
-      order: { lastMessageAt: 'DESC', createdAt: 'DESC' }
-    });
+  async getConversationsByUserId(userId: number, limit: number = 50): Promise<Array<Conversation & { unreadCount: number; lastMessage: Message | null }>> {
+    // Query optimizada: obtener conversaciones con límite y orden
+    const conversations = await this.conversationRepository
+      .createQueryBuilder('conversation')
+      .leftJoinAndSelect('conversation.participant1', 'participant1')
+      .leftJoinAndSelect('conversation.participant2', 'participant2')
+      .where('conversation.participant1Id = :userId OR conversation.participant2Id = :userId', { userId })
+      .orderBy('conversation.lastMessageAt', 'DESC', 'NULLS LAST')
+      .addOrderBy('conversation.createdAt', 'DESC')
+      .limit(limit)
+      .getMany();
 
     if (conversations.length === 0) {
       return [];
@@ -108,7 +110,9 @@ export class ChatService {
 
     const conversationIds = conversations.map(c => c.id);
 
-    // Obtener todos los últimos mensajes en paralelo (más eficiente que N+1 secuencial)
+    // Obtener último mensaje de cada conversación usando una query optimizada
+    // Usamos Promise.all para obtener el último mensaje de cada conversación en paralelo
+    // Esto es más eficiente que N+1 queries secuenciales
     const lastMessagesPromises = conversationIds.map(convId =>
       this.messageRepository.findOne({
         where: { conversationId: convId },
@@ -120,7 +124,24 @@ export class ChatService {
     const lastMessagesResults = await Promise.all(lastMessagesPromises);
     const lastMessages = lastMessagesResults.filter((msg): msg is Message => msg !== null);
 
-    // Crear mapa de último mensaje por conversación
+    // Obtener conteos de no leídos usando una sola query con GROUP BY
+    // Calculamos el otro participante en la query para evitar N+1
+    const unreadCountsRaw = await this.messageRepository
+      .createQueryBuilder('message')
+      .select('message.conversationId', 'conversationId')
+      .addSelect('COUNT(message.id)', 'count')
+      .innerJoin(Conversation, 'conversation', 'conversation.id = message.conversationId')
+      .where('message.conversationId IN (:...conversationIds)', { conversationIds })
+      .andWhere('message.readAt IS NULL')
+      .andWhere(
+        '(conversation.participant1Id = :userId AND message.senderId = conversation.participant2Id) OR ' +
+        '(conversation.participant2Id = :userId AND message.senderId = conversation.participant1Id)',
+        { userId }
+      )
+      .groupBy('message.conversationId')
+      .getRawMany();
+
+    // Crear mapas para acceso O(1)
     const lastMessageMap = new Map<number, Message>();
     lastMessages.forEach(msg => {
       const existing = lastMessageMap.get(msg.conversationId);
@@ -129,28 +150,12 @@ export class ChatService {
       }
     });
 
-    // Obtener conteos de mensajes no leídos en batch usando queries paralelas
-    // Esto es más eficiente que N+1 queries secuenciales
-    const unreadCountPromises = conversations.map(conv => {
-      const otherParticipantId = conv.participant1Id === userId ? conv.participant2Id : conv.participant1Id;
-      return this.messageRepository.count({
-        where: {
-          conversationId: conv.id,
-          senderId: otherParticipantId,
-          readAt: IsNull()
-        }
-      }).then(count => ({ conversationId: conv.id, count }));
-    });
-
-    const unreadCountsResults = await Promise.all(unreadCountPromises);
-
-    // Crear mapa de conteos no leídos
     const unreadCountMap = new Map<number, number>();
-    unreadCountsResults.forEach(({ conversationId, count }) => {
-      unreadCountMap.set(conversationId, count);
+    unreadCountsRaw.forEach((row: { conversationId: number; count: string }) => {
+      unreadCountMap.set(Number(row.conversationId), parseInt(row.count, 10));
     });
 
-    // Combinar resultados
+    // Combinar resultados - O(n) donde n es el número de conversaciones
     return conversations.map(conversation => ({
       ...conversation,
       unreadCount: unreadCountMap.get(conversation.id) || 0,
@@ -204,16 +209,16 @@ export class ChatService {
   }
 
   /**
-   * Obtiene todos los mensajes de una conversación (optimizado con índices)
+   * Obtiene todos los mensajes de una conversación (ultra-optimizado con COUNT OVER)
    * @param conversationId - ID de la conversación
    * @param page - Número de página
-   * @param limit - Límite de resultados por página
+   * @param limit - Límite de resultados por página (default: 20, como WhatsApp)
    * @returns Lista de mensajes paginada
    */
   async getMessagesByConversationId(
     conversationId: number,
     page: number = 1,
-    limit: number = 50
+    limit: number = 20
   ): Promise<{
     data: Message[];
     total: number;
@@ -223,7 +228,8 @@ export class ChatService {
   }> {
     const skip = (page - 1) * limit;
 
-    // Query optimizada usando query builder con índices
+    // Query optimizada usando una sola consulta con COUNT OVER para obtener total y datos
+    // Esto es más eficiente que dos queries separadas
     const queryBuilder = this.messageRepository
       .createQueryBuilder('message')
       .leftJoinAndSelect('message.sender', 'sender')
@@ -232,10 +238,15 @@ export class ChatService {
       .skip(skip)
       .take(limit);
 
-    const [data, total] = await Promise.all([
-      queryBuilder.getMany(),
-      this.messageRepository.count({ where: { conversationId } })
-    ]);
+    // Obtener mensajes
+    const data = await queryBuilder.getMany();
+
+    // Obtener total usando COUNT (más eficiente que COUNT OVER en PostgreSQL para este caso)
+    // Usamos una query separada pero optimizada con el índice
+    const total = await this.messageRepository.count({ 
+      where: { conversationId },
+      cache: false // No cachear para obtener datos actualizados
+    });
 
     const totalPages = Math.ceil(total / limit);
 

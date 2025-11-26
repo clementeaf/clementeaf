@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import type { Conversation, Message } from '../services/chatService';
+import type { InfiniteData } from '@tanstack/react-query';
+import type { Conversation, Message, PaginatedMessagesResponse } from '../services/chatService';
 import { chatService } from '../services/chatService';
 import { useConversationsByUserId, useCreateMessage, useMessagesByConversationId, useCreateConversation } from '../hooks/useChat';
 import { useWebSocket } from '../hooks/useWebSocket';
@@ -41,18 +42,12 @@ export const Chat = () => {
   // Hook para notificaciones del navegador
   const { showNotification, isTabActive, requestPermission } = useBrowserNotifications();
 
-  const { data: conversationsData, isLoading: isLoadingConversations, refetch: refetchConversations } = useConversationsByUserId(currentUserId);
+  const { data: conversationsData, isLoading: isLoadingConversations } = useConversationsByUserId(currentUserId);
   
   // Asegurar que conversations sea siempre un array (memoizado para evitar cambios en cada render)
   const conversations = useMemo(() => {
     return Array.isArray(conversationsData) ? conversationsData : [];
   }, [conversationsData]);
-  
-  useEffect(() => {
-    if (currentUserId) {
-      refetchConversations();
-    }
-  }, [currentUserId, refetchConversations]);
 
   // Solicitar permisos de notificación al cargar el componente
   useEffect(() => {
@@ -81,7 +76,11 @@ export const Chat = () => {
     if (!messagesData?.pages) return [];
     return messagesData.pages.flatMap(page => page.data);
   }, [messagesData]);
-  const { data: usersData, isLoading: isLoadingUsers } = useAllUsers();
+  
+  // Cargar usuarios solo cuando se abre el modal de nueva conversación (lazy loading)
+  const { data: usersData, isLoading: isLoadingUsers } = useAllUsers(1, 50, {
+    enabled: isStartConversationModalOpen // Solo cargar cuando el modal está abierto
+  });
   const createMessageMutation = useCreateMessage();
   const createConversationMutation = useCreateConversation();
 
@@ -99,14 +98,38 @@ export const Chat = () => {
     const isFromOtherUser = currentUserId && message.senderId !== currentUserId;
 
     if (isCurrentConversation) {
-      queryClient.invalidateQueries({ queryKey: ['messages', message.conversationId] });
+      // Actualizar optimísticamente los mensajes en lugar de invalidar toda la query
+      queryClient.setQueryData<InfiniteData<PaginatedMessagesResponse>>(
+        ['messages', message.conversationId], 
+        (oldData) => {
+          if (!oldData?.pages) return oldData;
+          const firstPage = oldData.pages[0];
+          if (firstPage?.data?.some((m: Message) => m.id === message.id)) {
+            return oldData; // Ya existe, no actualizar
+          }
+          return {
+            ...oldData,
+            pages: [
+              { ...firstPage, data: [message, ...firstPage.data] },
+              ...oldData.pages.slice(1)
+            ]
+          };
+        }
+      );
       // Marcar mensajes como leídos cuando se reciben en la conversación activa
       if (isFromOtherUser) {
         chatService.markConversationMessagesAsRead(message.conversationId, currentUserId).catch(console.error);
       }
     } else {
-      // Mensaje de otra conversación - invalidar lista de conversaciones
-      queryClient.invalidateQueries({ queryKey: ['conversations'] });
+      // Mensaje de otra conversación - actualizar solo la conversación específica
+      queryClient.setQueryData(['conversations', currentUserId], (oldData: Conversation[] | undefined) => {
+        if (!oldData) return oldData;
+        return oldData.map(conv => 
+          conv.id === message.conversationId 
+            ? { ...conv, unreadCount: (conv.unreadCount || 0) + 1, lastMessage: message }
+            : conv
+        );
+      });
     }
 
     // Mostrar notificación si:

@@ -67,7 +67,8 @@ export const useConversationsByUserId = (userId: number | null) => {
       return chatService.getConversationsByUserId(userId);
     },
     enabled: !!userId,
-    staleTime: 1000 * 60 * 5
+    staleTime: 1000 * 60 * 5, // 5 minutos
+    gcTime: 1000 * 60 * 10 // 10 minutos (antes cacheTime)
   });
 };
 
@@ -89,9 +90,9 @@ export const useCreateMessage = () => {
 /**
  * Hook para obtener mensajes de una conversación con paginación infinita
  * @param conversationId - ID de la conversación
- * @param limit - Límite de resultados por página
+ * @param limit - Límite de resultados por página (default: 20, como WhatsApp)
  */
-export const useMessagesByConversationId = (conversationId: number | null, limit: number = 50) => {
+export const useMessagesByConversationId = (conversationId: number | null, limit: number = 20) => {
   return useInfiniteQuery({
     queryKey: ['messages', conversationId, limit],
     queryFn: ({ pageParam = 1 }) => {
@@ -99,7 +100,8 @@ export const useMessagesByConversationId = (conversationId: number | null, limit
       return chatService.getMessagesByConversationId(conversationId, pageParam, limit);
     },
     enabled: !!conversationId,
-    staleTime: 1000 * 30,
+    staleTime: 1000 * 60 * 2, // 2 minutos
+    gcTime: 1000 * 60 * 10, // 10 minutos
     initialPageParam: 1,
     getNextPageParam: (lastPage) => {
       if (lastPage.page < lastPage.totalPages) {

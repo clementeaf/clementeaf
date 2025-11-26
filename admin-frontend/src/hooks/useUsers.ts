@@ -5,12 +5,19 @@ import { usersService } from '../services/usersService';
  * Hook para obtener todos los usuarios con paginación
  * @param page - Número de página
  * @param limit - Límite de resultados por página
+ * @param options - Opciones adicionales de la query
  */
-export const useAllUsers = (page: number = 1, limit: number = 100) => {
+export const useAllUsers = (
+  page: number = 1, 
+  limit: number = 50, 
+  options?: { enabled?: boolean }
+) => {
   return useQuery({
     queryKey: ['users', page, limit],
     queryFn: () => usersService.getAllUsers(page, limit),
-    staleTime: 1000 * 60 * 5
+    staleTime: 1000 * 60 * 5, // 5 minutos
+    gcTime: 1000 * 60 * 10, // 10 minutos
+    enabled: options?.enabled !== false
   });
 };
 

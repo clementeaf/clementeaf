@@ -131,13 +131,13 @@ export const chatService = {
    * Obtiene todos los mensajes de una conversación
    * @param conversationId - ID de la conversación
    * @param page - Número de página
-   * @param limit - Límite de resultados por página
+   * @param limit - Límite de resultados por página (default: 20, como WhatsApp)
    * @returns Lista de mensajes paginada
    */
   async getMessagesByConversationId(
     conversationId: number,
     page: number = 1,
-    limit: number = 50
+    limit: number = 20
   ): Promise<PaginatedMessagesResponse> {
     const url = endpoints.chat.messagesByConversation.replace('{conversationId}', conversationId.toString());
     const { data } = await apiClient.get<{ data: PaginatedMessagesResponse }>(url, {
