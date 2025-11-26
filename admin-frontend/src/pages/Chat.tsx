@@ -38,29 +38,24 @@ export const Chat = () => {
   const [isOtherUserTyping, setIsOtherUserTyping] = useState(false);
   const queryClient = useQueryClient();
   const previousMessagesRef = useRef<Set<number>>(new Set());
-  
-  // Hook para notificaciones del navegador
   const { showNotification, isTabActive, requestPermission } = useBrowserNotifications();
 
   const { data: conversationsData, isLoading: isLoadingConversations } = useConversationsByUserId(currentUserId);
   
-  // Asegurar que conversations sea siempre un array (memoizado para evitar cambios en cada render)
   const conversations = useMemo(() => {
     return Array.isArray(conversationsData) ? conversationsData : [];
   }, [conversationsData]);
 
-  // Solicitar permisos de notificación al cargar el componente
   useEffect(() => {
     requestPermission().catch(console.error);
   }, [requestPermission]);
 
-  // Limpiar mensajes procesados periódicamente para evitar acumulación de memoria
   useEffect(() => {
     const interval = setInterval(() => {
       if (previousMessagesRef.current.size > 1000) {
         previousMessagesRef.current.clear();
       }
-    }, 60000); // Cada minuto
+    }, 60000);
 
     return () => clearInterval(interval);
   }, []);
@@ -74,10 +69,10 @@ export const Chat = () => {
   
   const allMessages = useMemo(() => {
     if (!messagesData?.pages) return [];
-    return messagesData.pages.flatMap(page => page.data);
+    const pages = messagesData.pages as PaginatedMessagesResponse[];
+    return pages.flatMap(page => [...page.data].reverse());
   }, [messagesData]);
   
-  // Cargar usuarios solo cuando se abre el modal de nueva conversación (lazy loading)
   const { data: usersData, isLoading: isLoadingUsers } = useAllUsers(1, 50, {
     enabled: isStartConversationModalOpen // Solo cargar cuando el modal está abierto
   });
@@ -88,7 +83,6 @@ export const Chat = () => {
    * Maneja la recepción de mensajes en tiempo real vía WebSocket
    */
   const handleWebSocketMessage = useCallback((message: Message): void => {
-    // Verificar si es un mensaje nuevo (no procesado antes)
     if (previousMessagesRef.current.has(message.id)) {
       return;
     }
@@ -98,15 +92,18 @@ export const Chat = () => {
     const isFromOtherUser = currentUserId && message.senderId !== currentUserId;
 
     if (isCurrentConversation) {
-      // Actualizar optimísticamente los mensajes en lugar de invalidar toda la query
       queryClient.setQueryData<InfiniteData<PaginatedMessagesResponse>>(
         ['messages', message.conversationId], 
         (oldData) => {
           if (!oldData?.pages) return oldData;
           const firstPage = oldData.pages[0];
-          if (firstPage?.data?.some((m: Message) => m.id === message.id)) {
-            return oldData; // Ya existe, no actualizar
+          const messageExists = oldData.pages.some(page => 
+            page.data.some((m: Message) => m.id === message.id)
+          );
+          if (messageExists) {
+            return oldData;
           }
+
           return {
             ...oldData,
             pages: [
@@ -116,12 +113,11 @@ export const Chat = () => {
           };
         }
       );
-      // Marcar mensajes como leídos cuando se reciben en la conversación activa
+
       if (isFromOtherUser) {
         chatService.markConversationMessagesAsRead(message.conversationId, currentUserId).catch(console.error);
       }
     } else {
-      // Mensaje de otra conversación - actualizar solo la conversación específica
       queryClient.setQueryData(['conversations', currentUserId], (oldData: Conversation[] | undefined) => {
         if (!oldData) return oldData;
         return oldData.map(conv => 
@@ -132,12 +128,7 @@ export const Chat = () => {
       });
     }
 
-    // Mostrar notificación si:
-    // 1. El mensaje es de otro usuario
-    // 2. No es la conversación actual O la pestaña no está activa
-    // 3. El usuario tiene permisos de notificación
     if (isFromOtherUser && (!isCurrentConversation || !isTabActive())) {
-      // Obtener información del remitente
       const senderName = message.sender?.name || message.sender?.email || 'Usuario';
       const messagePreview = message.content.length > 50 
         ? message.content.substring(0, 50) + '...' 
@@ -149,7 +140,6 @@ export const Chat = () => {
         tag: `message-${message.conversationId}`,
         data: { conversationId: message.conversationId },
         onClick: () => {
-          // Buscar la conversación y seleccionarla
           const conversation = conversations.find(c => c.id === message.conversationId);
           if (conversation) {
             setSelectedConversation(conversation);
@@ -166,7 +156,6 @@ export const Chat = () => {
     if (data.conversationId === selectedConversation?.id && data.userId !== currentUserId) {
       setIsOtherUserTyping(data.isTyping);
       
-      // Auto-detener typing después de 3 segundos si no hay actualización
       if (data.isTyping) {
         setTimeout(() => {
           setIsOtherUserTyping(false);
@@ -210,7 +199,6 @@ export const Chat = () => {
       });
       setMessageContent('');
       
-      // Marcar mensajes como leídos después de enviar
       await chatService.markConversationMessagesAsRead(selectedConversation.id, currentUserId);
     } catch (error) {
       console.error('Error sending message:', error);

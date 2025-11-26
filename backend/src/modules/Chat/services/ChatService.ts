@@ -228,8 +228,8 @@ export class ChatService {
   }> {
     const skip = (page - 1) * limit;
 
-    // Query optimizada usando una sola consulta con COUNT OVER para obtener total y datos
-    // Esto es más eficiente que dos queries separadas
+    // Query optimizada: orden DESC para obtener mensajes más recientes primero
+    // En el frontend se invertirá el orden para mostrar los más recientes abajo
     const queryBuilder = this.messageRepository
       .createQueryBuilder('message')
       .leftJoinAndSelect('message.sender', 'sender')

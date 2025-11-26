@@ -41,9 +41,13 @@ export const MessageList = memo(({
     }));
   }, [messages, currentUserId]);
 
+  // Scroll automático hacia abajo cuando hay nuevos mensajes o se carga la conversación
   useEffect(() => {
     if (messages.length > 0 && messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+      // Usar setTimeout para asegurar que el DOM se haya actualizado
+      setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'auto' });
+      }, 50);
     }
   }, [messages.length]);
 

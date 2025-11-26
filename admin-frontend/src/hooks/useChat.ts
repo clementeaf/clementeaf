@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
-import { chatService, type CreateConversationDto, type CreateMessageDto, type Conversation } from '../services/chatService';
+import { chatService, type CreateConversationDto, type CreateMessageDto, type Conversation, type PaginatedMessagesResponse } from '../services/chatService';
 
 /**
  * Hook para crear una conversación
@@ -10,7 +10,6 @@ export const useCreateConversation = () => {
   return useMutation({
     mutationFn: (conversationData: CreateConversationDto) => chatService.createConversation(conversationData),
     onSuccess: (newConversation) => {
-      // Actualizar optimísticamente la lista de conversaciones para todos los usuarios participantes
       const participantIds = [newConversation.participant1Id, newConversation.participant2Id];
       
       participantIds.forEach((userId) => {
@@ -21,19 +20,16 @@ export const useCreateConversation = () => {
               return [newConversation];
             }
             
-            // Verificar si la conversación ya existe
             const exists = oldData.some(conv => conv.id === newConversation.id);
             if (exists) {
               return oldData;
             }
             
-            // Agregar la nueva conversación al inicio de la lista
             return [newConversation, ...oldData];
           }
         );
       });
       
-      // Invalidar para asegurar sincronización con el servidor
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
     }
   });
@@ -89,29 +85,39 @@ export const useCreateMessage = () => {
 
 /**
  * Hook para obtener mensajes de una conversación con paginación infinita
+ * Los mensajes se cargan desde los más recientes (última página) hacia atrás
  * @param conversationId - ID de la conversación
  * @param limit - Límite de resultados por página (default: 20, como WhatsApp)
  */
 export const useMessagesByConversationId = (conversationId: number | null, limit: number = 20) => {
-  return useInfiniteQuery({
+  return useInfiniteQuery<PaginatedMessagesResponse, Error, PaginatedMessagesResponse, [string, number | null, number], number | 'last'>({
     queryKey: ['messages', conversationId, limit],
-    queryFn: ({ pageParam = 1 }) => {
+    queryFn: async ({ pageParam = 'last' }) => {
       if (!conversationId) throw new Error('Conversation ID is required');
-      return chatService.getMessagesByConversationId(conversationId, pageParam, limit);
+      // pageParam puede ser un número (página) o 'last' para la última página
+      if (pageParam === 'last') {
+        // Primero obtener el total para calcular la última página
+        const firstPage = await chatService.getMessagesByConversationId(conversationId, 1, limit);
+        const lastPageNumber = firstPage.totalPages;
+        return chatService.getMessagesByConversationId(conversationId, lastPageNumber, limit);
+      }
+      return chatService.getMessagesByConversationId(conversationId, pageParam as number, limit);
     },
     enabled: !!conversationId,
     staleTime: 1000 * 60 * 2, // 2 minutos
     gcTime: 1000 * 60 * 10, // 10 minutos
-    initialPageParam: 1,
+    initialPageParam: 'last' as const,
     getNextPageParam: (lastPage) => {
-      if (lastPage.page < lastPage.totalPages) {
-        return lastPage.page + 1;
+      // Cargar página anterior (mensajes más antiguos) cuando se hace scroll hacia arriba
+      if (lastPage.page > 1) {
+        return lastPage.page - 1;
       }
       return undefined;
     },
     getPreviousPageParam: (firstPage) => {
-      if (firstPage.page > 1) {
-        return firstPage.page - 1;
+      // Cargar página siguiente (mensajes más recientes) cuando se hace scroll hacia abajo
+      if (firstPage.page < firstPage.totalPages) {
+        return firstPage.page + 1;
       }
       return undefined;
     }
