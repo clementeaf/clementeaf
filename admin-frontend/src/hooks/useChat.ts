@@ -94,9 +94,7 @@ export const useMessagesByConversationId = (conversationId: number | null, limit
     queryKey: ['messages', conversationId, limit],
     queryFn: async ({ pageParam = 'last' }) => {
       if (!conversationId) throw new Error('Conversation ID is required');
-      // pageParam puede ser un número (página) o 'last' para la última página
       if (pageParam === 'last') {
-        // Primero obtener el total para calcular la última página
         const firstPage = await chatService.getMessagesByConversationId(conversationId, 1, limit);
         const lastPageNumber = firstPage.totalPages;
         return chatService.getMessagesByConversationId(conversationId, lastPageNumber, limit);
@@ -108,14 +106,12 @@ export const useMessagesByConversationId = (conversationId: number | null, limit
     gcTime: 1000 * 60 * 10, // 10 minutos
     initialPageParam: 'last' as const,
     getNextPageParam: (lastPage) => {
-      // Cargar página anterior (mensajes más antiguos) cuando se hace scroll hacia arriba
       if (lastPage.page > 1) {
         return lastPage.page - 1;
       }
       return undefined;
     },
     getPreviousPageParam: (firstPage) => {
-      // Cargar página siguiente (mensajes más recientes) cuando se hace scroll hacia abajo
       if (firstPage.page < firstPage.totalPages) {
         return firstPage.page + 1;
       }
