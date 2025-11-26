@@ -31,12 +31,16 @@ export const ClientsHeader = ({ onCreateClient }: ClientsHeaderProps) => {
     }
   };
 
+  const handleCreateQuote = (): void => {
+    navigate(routes.createQuote);
+  };
+
   return (
     <div className="flex items-center justify-between mb-6">
       <h1 className="text-2xl font-bold text-gray-800">Clientes</h1>
       <div className="flex items-center gap-4">
         <Button
-          onClick={handleCreateClient}
+          onClick={handleCreateQuote}
           leftIcon={<img src={addBlueIcon} alt="add blue icon" />}
           className="bg-[#E6EEFA] text-[#0052C9]"
         >

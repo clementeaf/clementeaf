@@ -12,6 +12,7 @@ export const routes = {
   createClient: '/sells/clients/create',
   clientDetails: '/sells/clients/details',
   quotes: '/sells/quotes',
+  createQuote: '/sells/quotes/create',
   salesOrder: '/sells/sales-order',
   collections: '/sells/collections',
   analytics: '/analytics',
