@@ -1,8 +1,11 @@
 import step1Icon from '../../../assets/step1.png';
 import step2Icon from '../../../assets/step2.png';
+import step2ActiveIcon from '../../../assets/step2-active.png';
 import step3Icon from '../../../assets/step3.png';
+import step3ActiveIcon from '../../../assets/step3-active.png';
 import step4Icon from '../../../assets/step4.png';
-import completedStepIcon from '../../../assets/completedStep.png';
+import step4ActiveIcon from '../../../assets/step4-active.png';
+import completedIcon from '../../../assets/completed.png';
 
 /**
  * Props del componente QuoteStepper
@@ -25,25 +28,29 @@ export const QuoteStepper = ({ currentStep }: QuoteStepperProps) => {
       number: 1,
       title: 'Cliente',
       iconSrc: step1Icon,
-      completedIconSrc: completedStepIcon
+      activeIconSrc: step1Icon,
+      completedIconSrc: completedIcon
     },
     {
       number: 2,
       title: 'Condiciones',
       iconSrc: step2Icon,
-      completedIconSrc: completedStepIcon
+      activeIconSrc: step2ActiveIcon,
+      completedIconSrc: completedIcon
     },
     {
       number: 3,
       title: 'Productos',
       iconSrc: step3Icon,
-      completedIconSrc: completedStepIcon
+      activeIconSrc: step3ActiveIcon,
+      completedIconSrc: completedIcon
     },
     {
       number: 4,
       title: 'Revisión',
       iconSrc: step4Icon,
-      completedIconSrc: completedStepIcon
+      activeIconSrc: step4ActiveIcon,
+      completedIconSrc: completedIcon
     }
   ];
 
@@ -71,6 +78,9 @@ export const QuoteStepper = ({ currentStep }: QuoteStepperProps) => {
   const getStepIcon = (step: typeof steps[0], status: 'completed' | 'active' | 'pending'): string => {
     if (status === 'completed' && step.completedIconSrc) {
       return step.completedIconSrc;
+    }
+    if (status === 'active' && step.activeIconSrc) {
+      return step.activeIconSrc;
     }
     return step.iconSrc;
   };
