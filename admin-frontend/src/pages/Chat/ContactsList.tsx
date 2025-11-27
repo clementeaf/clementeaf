@@ -65,19 +65,8 @@ export const ContactsList = memo(({
 
   return (
     <div className="w-[20%] border-r border-gray-200 flex flex-col">
-      <div className="p-4 border-b border-gray-200 flex flex-col gap-2">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-gray-800">Contactos</h2>
-          <div className="flex items-center gap-2">
-            <Button
-              onClick={onStartConversation}
-              className="bg-blue-500 text-white hover:bg-blue-600 px-3 py-1.5 text-sm flex items-center gap-1"
-              leftIcon={<PlusIcon />}
-            >
-              Iniciar conversación
-            </Button>
-          </div>
-        </div>
+      <div className="p-4 border-b border-gray-200">
+        <h2 className="text-lg font-semibold text-gray-800">Contactos</h2>
       </div>
       <div className="flex-1 overflow-y-auto">
         {isLoading ? (
@@ -136,6 +125,15 @@ export const ContactsList = memo(({
         ) : (
           <div className="p-4 text-center text-gray-500">No hay conversaciones</div>
         )}
+      </div>
+      <div className="p-4 border-t border-gray-200">
+        <Button
+          onClick={onStartConversation}
+          className="w-full bg-blue-500 text-white hover:bg-blue-600 px-3 py-1.5 text-sm flex items-center justify-center gap-1"
+          leftIcon={<PlusIcon />}
+        >
+          Iniciar conversación
+        </Button>
       </div>
     </div>
   );
