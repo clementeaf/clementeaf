@@ -1,7 +1,5 @@
 import { Button } from './Button';
-import { BellIcon, ProfileIcon } from './icons';
-import addBlueIcon from '../../assets/addBlue.png';
-import addWhiteIcon from '../../assets/addWhite.png';
+import { BellIcon, ProfileIcon, PlusIcon } from './icons';
 
 /**
  * Configuración de un botón de acción
@@ -64,10 +62,8 @@ export const PageHeader = ({ title, actionButtons = [], className = '' }: PageHe
               leftIcon={
                 button.icon ? (
                   <img src={button.icon} alt={`${button.label} icon`} />
-                ) : isSecondary ? (
-                  <img src={addBlueIcon} alt="add blue icon" />
                 ) : (
-                  <img src={addWhiteIcon} alt="add white icon" />
+                  <PlusIcon color={isSecondary ? '#0052C9' : 'white'} />
                 )
               }
               className={
