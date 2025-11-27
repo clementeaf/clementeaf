@@ -1,9 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Table } from '../components/commons';
-import { QuotesHeader } from './Quotes/QuotesHeader';
-import { QuotesFilters } from './Quotes/QuotesFilters';
-import { QuotesSearchBar } from './Quotes/QuotesSearchBar';
+import { PageHeader, FiltersPanel, SearchBar, DataTablePage, type ActionButton } from '../components/commons';
 import { columns } from './Quotes/columns';
 import { useAllQuotes } from '../hooks/useQuotes';
 import { routes } from '../routes';
@@ -20,13 +17,6 @@ export const Quotes = () => {
   const limit = 50;
 
   const { data: quotesData, isLoading, error, hasDataChanged } = useAllQuotes(page, limit);
-
-  // Debug: Log para verificar que se está llamando la API
-  useEffect(() => {
-    console.log('Quotes - quotesData:', quotesData);
-    console.log('Quotes - isLoading:', isLoading);
-    console.log('Quotes - error:', error);
-  }, [quotesData, isLoading, error]);
 
   /**
    * Formatea una fecha ISO a formato DD/MM/YYYY
@@ -89,46 +79,34 @@ export const Quotes = () => {
   const hasPersistedData = quotesData && quotesData.data.length > 0;
   const shouldShowSkeleton = isLoading && (!hasPersistedData || hasDataChanged);
 
+  const actionButtons: ActionButton[] = [
+    {
+      label: 'Crear cotización',
+      onClick: () => navigate(routes.createQuote),
+      variant: 'primary'
+    }
+  ];
+
   return (
-    <>
-      <div className="w-full h-full flex flex-col p-8">
-        <QuotesHeader />
+    <div className="w-full h-full flex flex-col p-8">
+      <PageHeader title="Cotizaciones" actionButtons={actionButtons} />
 
-        <div className="flex gap-4 flex-1 min-h-0">
-          <QuotesFilters />
+      <div className="flex gap-4 flex-1 min-h-0">
+        <FiltersPanel />
 
-          <div className="flex-1 flex flex-col min-w-0">
-            <QuotesSearchBar searchValue={searchValue} onSearchChange={handleSearchChange} />
+        <div className="flex-1 flex flex-col min-w-0">
+          <SearchBar searchValue={searchValue} onSearchChange={handleSearchChange} />
 
-            <div className="flex-1 overflow-auto rounded-lg shadow-sm bg-white p-4">
-              {error ? (
-                <div className="flex flex-col items-center justify-center h-64">
-                  <div className="text-lg text-red-500 mb-2">Error al cargar las cotizaciones</div>
-                  <div className="text-sm text-gray-500">
-                    {error instanceof Error ? error.message : 'Error desconocido'}
-                  </div>
-                </div>
-              ) : (
-                <Table<QuoteRow>
-                  data={filteredQuotes}
-                  columns={columns}
-                  enableSorting={true}
-                  isLoading={shouldShowSkeleton}
-                  skeletonRowCount={5}
-                  containerClassName="w-full"
-                  tableClassName="w-full border-collapse"
-                  theadClassName="bg-gray-50 sticky top-0"
-                  headerRowClassName="border-b border-gray-200"
-                  headerCellClassName="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider"
-                  bodyRowClassName="border-b border-gray-200 hover:bg-gray-50 transition-colors duration-150"
-                  bodyCellClassName="px-4 py-3 text-sm text-gray-900"
-                  onRowClick={handleRowClick}
-                />
-              )}
-            </div>
-          </div>
+          <DataTablePage<QuoteRow>
+            data={filteredQuotes}
+            columns={columns}
+            isLoading={shouldShowSkeleton}
+            error={error}
+            errorMessage="Error al cargar las cotizaciones"
+            onRowClick={handleRowClick}
+          />
         </div>
       </div>
-    </>
+    </div>
   );
 };

@@ -22,6 +22,7 @@ export interface QueryFilters {
   deudaMax?: number;
   fechaDesde?: string;
   fechaHasta?: string;
+  anioVencimiento?: number;
   page?: number;
   limit?: number;
   sortBy?: SortField;
@@ -161,6 +162,12 @@ export class AnalyticsService {
       queryBuilder.andWhere('ctas.fecha <= :fechaHasta', { fechaHasta: filters.fechaHasta });
     }
 
+    if (filters.anioVencimiento !== undefined) {
+      queryBuilder.andWhere('EXTRACT(YEAR FROM ctas.vencimiento) = :anioVencimiento', { 
+        anioVencimiento: filters.anioVencimiento 
+      });
+    }
+
     // Ordenar por fecha descendente
     queryBuilder.orderBy('ctas.fecha', 'DESC');
 
@@ -192,6 +199,11 @@ export class AnalyticsService {
     }
     if (filters.fechaHasta) {
       countQueryBuilder.andWhere('ctas.fecha <= :fechaHasta', { fechaHasta: filters.fechaHasta });
+    }
+    if (filters.anioVencimiento !== undefined) {
+      countQueryBuilder.andWhere('EXTRACT(YEAR FROM ctas.vencimiento) = :anioVencimiento', { 
+        anioVencimiento: filters.anioVencimiento 
+      });
     }
     const total = await countQueryBuilder.getCount();
 
@@ -349,6 +361,11 @@ export class AnalyticsService {
     if (filters.fechaHasta) {
       uniqueRutPadresQuery.andWhere('ctas.fecha <= :fechaHasta', { fechaHasta: filters.fechaHasta });
     }
+    if (filters.anioVencimiento !== undefined) {
+      uniqueRutPadresQuery.andWhere('EXTRACT(YEAR FROM ctas.vencimiento) = :anioVencimiento', { 
+        anioVencimiento: filters.anioVencimiento 
+      });
+    }
     
     // No aplicar ordenamiento aquí, se hará después de agrupar
     const uniqueRutPadres = await uniqueRutPadresQuery.getRawMany();
@@ -392,6 +409,11 @@ export class AnalyticsService {
     }
     if (filters.fechaHasta) {
       documentosQuery.andWhere('ctas.fecha <= :fechaHasta', { fechaHasta: filters.fechaHasta });
+    }
+    if (filters.anioVencimiento !== undefined) {
+      documentosQuery.andWhere('EXTRACT(YEAR FROM ctas.vencimiento) = :anioVencimiento', { 
+        anioVencimiento: filters.anioVencimiento 
+      });
     }
     
     documentosQuery.orderBy('ctas.vencimiento', 'ASC');

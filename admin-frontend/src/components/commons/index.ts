@@ -30,6 +30,14 @@ export { Tabs } from './Tabs';
 export type { TabsProps, TabItem } from './Tabs';
 export { ActionsMenu } from './ActionsMenu';
 export type { ActionsMenuProps, ActionMenuItem } from './ActionsMenu';
+export { PageHeader } from './PageHeader';
+export type { PageHeaderProps, ActionButton } from './PageHeader';
+export { FiltersPanel } from './FiltersPanel';
+export type { FiltersPanelProps, FilterSection } from './FiltersPanel';
+export { SearchBar } from './SearchBar';
+export type { SearchBarProps, FilterChipConfig } from './SearchBar';
+export { DataTablePage } from './DataTablePage';
+export type { DataTablePageProps } from './DataTablePage';
 export { Toggle } from './Toggle';
 export type { ToggleProps } from './Toggle';
 export {

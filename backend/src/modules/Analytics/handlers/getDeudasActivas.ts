@@ -31,6 +31,7 @@ const getDeudasActivasHandler = async (event: APIGatewayProxyEvent) => {
     deudaMax: queryParams.deudaMax ? parseFloat(queryParams.deudaMax) : undefined,
     fechaDesde: queryParams.fechaDesde,
     fechaHasta: queryParams.fechaHasta,
+    anioVencimiento: queryParams.anioVencimiento ? parseInt(queryParams.anioVencimiento) : 2025,
     page: queryParams.page ? parseInt(queryParams.page) : 1,
     limit: queryParams.limit ? parseInt(queryParams.limit) : 10,
     sortBy: queryParams.sortBy as 'razsoc' | 'total_deuda' | 'vencimiento' | 'deuda' | undefined,

@@ -1,9 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Table } from '../components/commons';
-import { ClientsHeader } from './Clients/ClientsHeader';
-import { ClientsFilters } from './Clients/ClientsFilters';
-import { ClientsSearchBar } from './Clients/ClientsSearchBar';
+import { PageHeader, FiltersPanel, SearchBar, DataTablePage, type ActionButton } from '../components/commons';
 import { VerifyRutModal } from './Clients/CreateClient/VerifyRutModal';
 import { columns } from './Clients/columns';
 import { useAllClients } from '../hooks/useClients';
@@ -71,40 +68,38 @@ export const Clients = () => {
     navigate(`${routes.clientDetails}/${clientId}`);
   };
 
+  const actionButtons: ActionButton[] = [
+    {
+      label: 'Crear cotización',
+      onClick: () => navigate(routes.createQuote),
+      variant: 'secondary'
+    },
+    {
+      label: 'Crear cliente',
+      onClick: handleCreateClient,
+      variant: 'primary'
+    }
+  ];
+
   return (
     <>
       <div className="w-full h-full flex flex-col p-4">
-        <ClientsHeader onCreateClient={handleCreateClient} />
+        <PageHeader title="Clientes" actionButtons={actionButtons} />
 
         <div className="flex gap-4 flex-1 min-h-0">
-          <ClientsFilters />
+          <FiltersPanel />
 
           <div className="flex-1 flex flex-col min-w-0">
-            <ClientsSearchBar searchValue={searchValue} onSearchChange={handleSearchChange} />
+            <SearchBar searchValue={searchValue} onSearchChange={handleSearchChange} />
 
-            <div className="flex-1 overflow-auto rounded-lg shadow-sm bg-white p">
-              {error ? (
-                <div className="flex items-center justify-center h-64">
-                  <div className="text-lg text-red-500">Error al cargar los clientes</div>
-                </div>
-              ) : (
-                <Table<ClientRow>
-                  data={mappedClients}
-                  columns={columns}
-                  enableSorting={true}
-                  isLoading={shouldShowSkeleton}
-                  skeletonRowCount={5}
-                  containerClassName="w-full"
-                  tableClassName="w-full border-collapse"
-                  theadClassName="bg-gray-50 sticky top-0"
-                  headerRowClassName="border-b border-gray-200"
-                  headerCellClassName="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider"
-                  bodyRowClassName="border-b border-gray-200 hover:bg-gray-50 transition-colors duration-150"
-                  bodyCellClassName="px-4 py-3 text-sm text-gray-900"
-                  onRowClick={handleRowClick}
-                />
-              )}
-            </div>
+            <DataTablePage<ClientRow>
+              data={mappedClients}
+              columns={columns}
+              isLoading={shouldShowSkeleton}
+              error={error}
+              errorMessage="Error al cargar los clientes"
+              onRowClick={handleRowClick}
+            />
           </div>
         </div>
       </div>
