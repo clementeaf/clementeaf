@@ -601,7 +601,33 @@ export const Collections = () => {
       </div>
 
       {/* Estadísticas Generales */}
-      {estadisticas && (
+      {loadingStats ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 flex-shrink-0 mb-6">
+          {/* Skeleton Total Documentos */}
+          <div className="bg-white p-6 rounded-lg shadow animate-pulse">
+            <div className="h-4 bg-gray-200 rounded w-32 mb-4"></div>
+            <div className="h-8 bg-gray-300 rounded w-24"></div>
+          </div>
+
+          {/* Skeleton Deuda Total */}
+          <div className="bg-white p-6 rounded-lg shadow animate-pulse">
+            <div className="h-4 bg-gray-200 rounded w-24 mb-4"></div>
+            <div className="h-8 bg-gray-300 rounded w-32"></div>
+          </div>
+
+          {/* Skeleton Documentos Activos */}
+          <div className="bg-white p-6 rounded-lg shadow animate-pulse">
+            <div className="h-4 bg-gray-200 rounded w-36 mb-4"></div>
+            <div className="h-8 bg-gray-300 rounded w-24"></div>
+          </div>
+
+          {/* Skeleton Documentos Vencidos */}
+          <div className="bg-white p-6 rounded-lg shadow animate-pulse">
+            <div className="h-4 bg-gray-200 rounded w-36 mb-4"></div>
+            <div className="h-8 bg-gray-300 rounded w-20"></div>
+          </div>
+        </div>
+      ) : estadisticas ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 flex-shrink-0 mb-6">
           <div className="bg-white p-6 rounded-lg shadow">
             <h3 className="text-sm font-medium text-gray-500">Total Documentos</h3>
@@ -623,7 +649,7 @@ export const Collections = () => {
             <p className="text-2xl font-bold text-orange-600">{estadisticas.documentos_vencidos.toLocaleString()}</p>
           </div>
         </div>
-      )}
+      ) : null}
 
       {/* Contenedor principal con filtros y tabla */}
       <div className="flex-1 flex gap-6 min-h-0 overflow-hidden">
