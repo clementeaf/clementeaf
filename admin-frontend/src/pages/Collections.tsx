@@ -969,14 +969,6 @@ export const Collections = () => {
                             <ActionsMenu
                               items={[
                                 {
-                                  id: 'enviar-mail',
-                                  label: 'Enviar mail',
-                                  onClick: () => {
-                                    console.log('Enviar mail a:', empresa.cliente_email);
-                                  },
-                                  icon: <EmailIcon color="#6B7280" />
-                                },
-                                {
                                   id: 'enviar-notificacion-manual',
                                   label: 'Enviar notificación manual',
                                   onClick: () => {
@@ -1342,25 +1334,6 @@ export const Collections = () => {
                   )}
                 </button>
               )}
-              <button
-                onClick={() => {
-                  if (selectedCompanies.size === 1) {
-                    const selectedRut = Array.from(selectedCompanies)[0];
-                    const empresa = allEmpresas.find(emp => emp.rut === selectedRut);
-                    setManualSendEmail(empresa?.cliente_email || '');
-                    setIsManualSendModalOpen(true);
-                  } else if (selectedCompanies.size > 1) {
-                    alert('Por favor, selecciona solo una empresa para envío manual');
-                  } else {
-                    alert('Por favor, selecciona una empresa para envío manual');
-                  }
-                }}
-                disabled={selectedCompanies.size === 0 || selectedCompanies.size > 1}
-                className="w-full px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 font-medium"
-              >
-                <EmailIcon color="#FFFFFF" />
-                Envío manual
-              </button>
             </div>
           </div>
         </div>
