@@ -661,7 +661,7 @@ export const Collections = () => {
         />
 
         {/* Tabla de Cuentas por Cobrar */}
-        <div className="bg-white p-6 rounded-lg shadow flex flex-col flex-1 min-h-0 overflow-hidden">
+        <div className="bg-white p-6 rounded-lg shadow border border-gray-200 flex flex-col flex-1 min-h-0 overflow-hidden">
           <div className="flex justify-between items-center mb-4 flex-shrink-0">
             <div className="flex items-center gap-4">
               {selectedCompanies.size > 0 && (
