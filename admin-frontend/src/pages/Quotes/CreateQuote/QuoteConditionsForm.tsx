@@ -72,12 +72,12 @@ export const QuoteConditionsForm = ({ onDataChange, initialData, onBack }: Quote
 
   return (
     <div className="flex-1 p-6">
-      <h2 className="text-lg font-bold text-gray-800 mb-6">Condiciones de la cotización</h2>
+      <h2 className="text-lg font-bold text-gray-800 mb-6">Condiciones de la orden de compra</h2>
       <div className="grid grid-cols-2 gap-6">
         <div>
           <Input
             id="numeroCotizacion"
-            label="N° de cotización"
+            label="N° de orden de compra"
             type="text"
             value={formData.numeroCotizacion || ''}
             onChange={(e): void => handleFieldChange('numeroCotizacion', e.target.value)}

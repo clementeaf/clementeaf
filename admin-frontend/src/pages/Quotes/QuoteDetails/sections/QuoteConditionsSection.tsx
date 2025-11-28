@@ -5,7 +5,7 @@ import { type Quote } from '../../../../services/quotesService';
  */
 interface QuoteConditionsSectionProps {
   /**
-   * Datos de la cotización
+   * Datos de la orden de compra
    */
   quote: Quote;
 }
@@ -28,17 +28,17 @@ const formatDate = (dateString: string | null): string => {
 };
 
 /**
- * Componente Sección de condiciones de la cotización
+ * Componente Sección de condiciones de la orden de compra
  * @param props - Props del componente QuoteConditionsSection
  * @returns Componente QuoteConditionsSection
  */
 export const QuoteConditionsSection = ({ quote }: QuoteConditionsSectionProps) => {
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-6">
-      <h3 className="text-base font-bold text-gray-800 mb-4">Condiciones de la cotización</h3>
+      <h3 className="text-base font-bold text-gray-800 mb-4">Condiciones de la orden de compra</h3>
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <p className="text-sm text-gray-600 mb-1">N° de cotización</p>
+          <p className="text-sm text-gray-600 mb-1">N° de orden de compra</p>
           <p className="text-sm font-medium text-gray-800">{quote.numeroCotizacion || '-'}</p>
         </div>
         <div>

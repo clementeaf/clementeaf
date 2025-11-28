@@ -10,7 +10,7 @@ interface ClientSidebarProps {
    */
   client: Client;
   /**
-   * Callback para crear cotización
+   * Callback para crear orden de compra
    */
   onCreateQuote?: () => void;
   /**
@@ -115,7 +115,7 @@ export const ClientSidebar = ({
           className="w-full bg-[#004BB7] text-white hover:bg-[#003a94]"
           leftIcon={<PlusIcon color="white" />}
         >
-          Crear cotización
+          Crear orden de compra
         </Button>
         <button
           onClick={onAddBranch}

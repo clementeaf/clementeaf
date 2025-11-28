@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import { Input, Button, DropdownIcon, PlusIcon } from '../../../components/commons';
 
 /**
- * Interfaz para un producto en la cotización
+ * Interfaz para un producto en la orden de compra
  */
 interface ProductItem {
   id: string;

@@ -18,7 +18,7 @@ interface QuoteStepperProps {
 }
 
 /**
- * Componente Stepper para mostrar los pasos del proceso de creación de cotización
+ * Componente Stepper para mostrar los pasos del proceso de creación de orden de compra
  * @param props - Props del componente QuoteStepper
  * @returns Componente QuoteStepper
  */

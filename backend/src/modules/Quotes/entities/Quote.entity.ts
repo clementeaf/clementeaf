@@ -1,7 +1,7 @@
 import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 
 /**
- * Entidad de Cotizaciones
+ * Entidad de Órdenes de compra
  */
 @Entity('quotes')
 export class Quote {
@@ -72,7 +72,7 @@ export class Quote {
   @Column({ type: 'text', nullable: true })
   productos!: string | null;
 
-  // Estado de la cotización
+  // Estado de la orden de compra
   @Column({ type: 'varchar', length: 50, default: 'borrador' })
   estado!: string; // 'borrador', 'enviada', 'aceptada', 'rechazada', 'cancelada'
 

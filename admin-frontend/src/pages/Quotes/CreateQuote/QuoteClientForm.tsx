@@ -19,7 +19,7 @@ interface QuoteClientFormProps {
 }
 
 /**
- * Componente Formulario de información del cliente para cotización (Paso 1)
+ * Componente Formulario de información del cliente para orden de compra (Paso 1)
  * @param props - Props del componente QuoteClientForm
  * @returns Componente QuoteClientForm
  */

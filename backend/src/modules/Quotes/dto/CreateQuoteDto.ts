@@ -1,5 +1,5 @@
 /**
- * DTO para crear una cotización
+ * DTO para crear una orden de compra
  */
 export interface CreateQuoteDto {
   // Paso 1: Información del Cliente
@@ -33,7 +33,7 @@ export interface CreateQuoteDto {
 }
 
 /**
- * DTO para actualizar una cotización
+ * DTO para actualizar una orden de compra
  */
 export interface UpdateQuoteDto extends Partial<CreateQuoteDto> {}
 

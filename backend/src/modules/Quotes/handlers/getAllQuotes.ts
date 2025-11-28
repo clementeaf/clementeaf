@@ -4,9 +4,9 @@ import { handlerWrapper } from '../../Users/utils/handlerWrapper';
 import { successResponse } from '../../Users/utils/response';
 
 /**
- * Handler para obtener todas las cotizaciones
+ * Handler para obtener todas las órdenes de compra
  * @param event - Evento de API Gateway
- * @returns Respuesta con lista de cotizaciones paginada
+ * @returns Respuesta con lista de órdenes de compra paginada
  */
 const getAllQuotesHandler = async (event: APIGatewayProxyEvent) => {
   try {

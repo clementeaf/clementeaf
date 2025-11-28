@@ -7,7 +7,7 @@ import { routes } from '../routes';
 import type { QuoteRow } from './Quotes/columns';
 
 /**
- * Página de cotizaciones
+ * Página de órdenes de compra
  * @returns Componente Quotes
  */
 export const Quotes = () => {
@@ -49,7 +49,7 @@ export const Quotes = () => {
   })) || [];
 
   /**
-   * Filtra las cotizaciones según el valor de búsqueda
+   * Filtra las órdenes de compra según el valor de búsqueda
    */
   const filteredQuotes = searchValue
     ? mappedQuotes.filter(quote =>
@@ -81,7 +81,7 @@ export const Quotes = () => {
 
   const actionButtons: ActionButton[] = [
     {
-      label: 'Crear cotización',
+      label: 'Crear orden de compra',
       onClick: () => navigate(routes.createQuote),
       variant: 'primary'
     }
@@ -89,7 +89,7 @@ export const Quotes = () => {
 
   return (
     <div className="w-full h-full flex flex-col p-8">
-      <PageHeader title="Cotizaciones" actionButtons={actionButtons} />
+      <PageHeader title="Órdenes de compra" actionButtons={actionButtons} />
 
       <div className="flex gap-4 flex-1 min-h-0">
         <FiltersPanel />
@@ -102,7 +102,7 @@ export const Quotes = () => {
             columns={columns}
             isLoading={shouldShowSkeleton}
             error={error}
-            errorMessage="Error al cargar las cotizaciones"
+            errorMessage="Error al cargar las órdenes de compra"
             onRowClick={handleRowClick}
           />
         </div>

@@ -16,7 +16,7 @@ import type { CreateQuoteDto } from '../../services/quotesService';
 const STORAGE_KEY = 'createQuoteFormData';
 
 /**
- * Página de crear cotización
+ * Página de crear orden de compra
  * @returns Componente CreateQuote
  */
 export const CreateQuote = () => {
@@ -224,14 +224,14 @@ export const CreateQuote = () => {
       
       await createQuoteMutation.mutateAsync(quoteData);
       
-      toast.success('Cotización creada exitosamente');
+      toast.success('Orden de compra creada exitosamente');
       
       sessionStorage.removeItem(STORAGE_KEY);
       navigate(routes.quotes);
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Error desconocido al crear la cotización';
+      const errorMessage = error instanceof Error ? error.message : 'Error desconocido al crear la orden de compra';
       toast.error(errorMessage);
-      console.error('Error al crear cotización:', error);
+      console.error('Error al crear orden de compra:', error);
     }
   };
 
@@ -273,7 +273,7 @@ export const CreateQuote = () => {
                   className="bg-[#004BB7] text-white hover:bg-blue-600 px-6 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   disabled={createQuoteMutation.isPending}
                 >
-                  {createQuoteMutation.isPending ? 'Creando...' : 'Crear cotización'}
+                  {createQuoteMutation.isPending ? 'Creando...' : 'Crear orden de compra'}
                 </Button>
               </>
             ) : (

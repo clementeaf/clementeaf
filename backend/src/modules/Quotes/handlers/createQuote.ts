@@ -6,9 +6,9 @@ import { validateBody, parseBody, validateRequiredFields } from '../../Users/uti
 import { successResponse, errorResponse } from '../../Users/utils/response';
 
 /**
- * Handler para crear una nueva cotización
+ * Handler para crear una nueva orden de compra
  * @param event - Evento de API Gateway
- * @returns Respuesta con cotización creada
+ * @returns Respuesta con orden de compra creada
  */
 const createQuoteHandler = async (event: APIGatewayProxyEvent) => {
   const bodyError = validateBody(event);
@@ -39,7 +39,7 @@ const createQuoteHandler = async (event: APIGatewayProxyEvent) => {
       createdAt: quote.createdAt?.toISOString(),
       updatedAt: quote.updatedAt?.toISOString()
     },
-    'Cotización creada exitosamente'
+    'Orden de compra creada exitosamente'
   );
 };
 

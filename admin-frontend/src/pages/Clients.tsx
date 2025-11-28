@@ -70,7 +70,7 @@ export const Clients = () => {
 
   const actionButtons: ActionButton[] = [
     {
-      label: 'Crear cotización',
+      label: 'Crear orden de compra',
       onClick: () => navigate(routes.createQuote),
       variant: 'secondary'
     },

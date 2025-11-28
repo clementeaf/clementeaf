@@ -4,7 +4,7 @@ import { handlerWrapper } from '../../Users/utils/handlerWrapper';
 import { successResponse } from '../../Users/utils/response';
 
 /**
- * Handler para eliminar una cotización
+ * Handler para eliminar una orden de compra
  * @param event - Evento de API Gateway
  * @returns Respuesta de confirmación
  */
@@ -12,18 +12,18 @@ const deleteQuoteHandler = async (event: APIGatewayProxyEvent) => {
   const id = event.pathParameters?.id;
 
   if (!id) {
-    return successResponse(400, null, 'ID de la cotización es requerido');
+    return successResponse(400, null, 'ID de la orden de compra es requerido');
   }
 
   const quoteId = parseInt(id, 10);
   if (isNaN(quoteId)) {
-    return successResponse(400, null, 'ID de la cotización debe ser un número válido');
+    return successResponse(400, null, 'ID de la orden de compra debe ser un número válido');
   }
 
   const quotesService = new QuotesService();
   await quotesService.deleteQuote(quoteId);
 
-  return successResponse(200, null, 'Cotización eliminada exitosamente');
+  return successResponse(200, null, 'Orden de compra eliminada exitosamente');
 };
 
 export const handler = handlerWrapper(deleteQuoteHandler);

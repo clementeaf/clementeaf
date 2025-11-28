@@ -12,7 +12,7 @@ import {
 } from './sections';
 
 /**
- * Página de detalles de cotización
+ * Página de detalles de orden de compra
  * @returns Componente QuoteDetails
  */
 export const QuoteDetails = (): React.ReactElement => {
@@ -35,7 +35,7 @@ export const QuoteDetails = (): React.ReactElement => {
     navigate(routes.quotes);
   }, [navigate]);
 
-  // Sub-tabs de información - se recrean cuando cambia la cotización
+  // Sub-tabs de información - se recrean cuando cambia la orden de compra
   const infoTabs = useMemo((): TabItem[] => {
     if (!quote) return [];
 
@@ -87,7 +87,7 @@ export const QuoteDetails = (): React.ReactElement => {
   if (isLoading) {
     return (
       <div className="w-full h-full flex items-center justify-center">
-        <div className="text-lg text-gray-500">Cargando cotización...</div>
+        <div className="text-lg text-gray-500">Cargando orden de compra...</div>
       </div>
     );
   }
@@ -96,10 +96,10 @@ export const QuoteDetails = (): React.ReactElement => {
     return (
       <div className="w-full h-full flex flex-col items-center justify-center gap-4">
         <div className="text-lg text-red-500">
-          {error instanceof Error ? error.message : 'Error al cargar la cotización'}
+          {error instanceof Error ? error.message : 'Error al cargar la orden de compra'}
         </div>
         <Button onClick={handleBack} className="bg-[#0052C9] text-white hover:bg-[#004BB7]">
-          Volver a cotizaciones
+          Volver a órdenes de compra
         </Button>
       </div>
     );
@@ -117,7 +117,7 @@ export const QuoteDetails = (): React.ReactElement => {
             <ChevronRightIcon color="#6B7280" className="rotate-180" />
           </button>
           <div>
-            <h1 className="text-2xl font-bold text-gray-800">Cotización #{quote.numeroCotizacion || quote.id}</h1>
+            <h1 className="text-2xl font-bold text-gray-800">Orden de compra #{quote.numeroCotizacion || quote.id}</h1>
             <p className="text-sm text-gray-500 mt-1">
               Cliente: {quote.clienteNombre || 'Sin nombre'}
             </p>

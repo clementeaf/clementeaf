@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { quotesService, type CreateQuoteDto, type Quote, type PaginatedQuotesResponse } from '../services/quotesService';
 
 /**
- * Hook para crear una cotización
+ * Hook para crear una orden de compra
  */
 export const useCreateQuote = () => {
   const queryClient = useQueryClient();
@@ -74,8 +74,8 @@ export const useCreateQuote = () => {
 };
 
 /**
- * Hook para obtener una cotización por su ID
- * @param id - ID de la cotización
+ * Hook para obtener una orden de compra por su ID
+ * @param id - ID de la orden de compra
  */
 export const useQuoteById = (id: number | null) => {
   return useQuery({
@@ -91,12 +91,12 @@ export const useQuoteById = (id: number | null) => {
 };
 
 /**
- * Clave para persistir datos de cotizaciones en localStorage
+ * Clave para persistir datos de órdenes de compra en localStorage
  */
 const QUOTES_STORAGE_KEY = 'quotes_data';
 
 /**
- * Obtiene los datos persistidos de cotizaciones desde localStorage
+ * Obtiene los datos persistidos de órdenes de compra desde localStorage
  */
 const getPersistedQuotes = (page: number, limit: number): PaginatedQuotesResponse | null => {
   try {
@@ -108,24 +108,24 @@ const getPersistedQuotes = (page: number, limit: number): PaginatedQuotesRespons
       }
     }
   } catch (error) {
-    console.error('Error al leer datos persistidos de cotizaciones:', error);
+    console.error('Error al leer datos persistidos de órdenes de compra:', error);
   }
   return null;
 };
 
 /**
- * Persiste los datos de cotizaciones en localStorage
+ * Persiste los datos de órdenes de compra en localStorage
  */
 const persistQuotes = (data: PaginatedQuotesResponse, page: number, limit: number): void => {
   try {
     localStorage.setItem(`${QUOTES_STORAGE_KEY}_${page}_${limit}`, JSON.stringify(data));
   } catch (error) {
-    console.error('Error al persistir datos de cotizaciones:', error);
+    console.error('Error al persistir datos de órdenes de compra:', error);
   }
 };
 
 /**
- * Compara dos respuestas de cotizaciones para determinar si son diferentes
+ * Compara dos respuestas de órdenes de compra para determinar si son diferentes
  */
 const areQuotesDifferent = (oldData: PaginatedQuotesResponse | null, newData: PaginatedQuotesResponse): boolean => {
   if (!oldData) return true;
@@ -153,7 +153,7 @@ const areQuotesDifferent = (oldData: PaginatedQuotesResponse | null, newData: Pa
 };
 
 /**
- * Hook para obtener todas las cotizaciones con paginación
+ * Hook para obtener todas las órdenes de compra con paginación
  * @param page - Número de página
  * @param limit - Límite de resultados por página
  */
@@ -193,7 +193,7 @@ export const useAllQuotes = (page: number = 1, limit: number = 50) => {
 };
 
 /**
- * Hook para actualizar una cotización
+ * Hook para actualizar una orden de compra
  */
 export const useUpdateQuote = () => {
   const queryClient = useQueryClient();
@@ -228,7 +228,7 @@ export const useUpdateQuote = () => {
 };
 
 /**
- * Hook para eliminar una cotización
+ * Hook para eliminar una orden de compra
  */
 export const useDeleteQuote = () => {
   const queryClient = useQueryClient();

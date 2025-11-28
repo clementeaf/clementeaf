@@ -5,7 +5,7 @@ import { type Quote } from '../../../services/quotesService';
  */
 interface QuoteSidebarProps {
   /**
-   * Datos de la cotización
+   * Datos de la orden de compra
    */
   quote: Quote;
   /**
@@ -36,7 +36,7 @@ const formatDate = (dateString: string | null): string => {
 };
 
 /**
- * Componente Sidebar para la página de detalles de cotización
+ * Componente Sidebar para la página de detalles de orden de compra
  * @param props - Props del componente QuoteSidebar
  * @returns Componente QuoteSidebar
  */
@@ -54,7 +54,7 @@ export const QuoteSidebar = ({ quote, activeTab, onTabChange }: QuoteSidebarProp
       {/* Información básica */}
       <div className="mb-6">
         <h2 className="text-xl font-semibold text-gray-900">
-          Cotización #{quote.numeroCotizacion || quote.id}
+          Orden de compra #{quote.numeroCotizacion || quote.id}
         </h2>
         <p className="text-sm text-gray-500 mt-1">
           {quote.clienteNombre || 'Sin nombre'}

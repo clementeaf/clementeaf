@@ -2,7 +2,7 @@ import { apiClient } from './api';
 import { endpoints } from '../api/endpoints';
 
 /**
- * DTO para crear una cotización
+ * DTO para crear una orden de compra
  */
 export interface CreateQuoteDto {
   clienteNombre: string;
@@ -29,7 +29,7 @@ export interface CreateQuoteDto {
 }
 
 /**
- * Respuesta de creación de cotización
+ * Respuesta de creación de orden de compra
  */
 export interface QuoteResponse {
   id: number;
@@ -41,7 +41,7 @@ export interface QuoteResponse {
 }
 
 /**
- * Cotización completa
+ * Orden de compra completa
  */
 export interface Quote {
   id: number;
@@ -71,7 +71,7 @@ export interface Quote {
 }
 
 /**
- * Respuesta paginada de cotizaciones
+ * Respuesta paginada de órdenes de compra
  */
 export interface PaginatedQuotesResponse {
   data: Quote[];
@@ -82,13 +82,13 @@ export interface PaginatedQuotesResponse {
 }
 
 /**
- * Servicio para gestionar cotizaciones
+ * Servicio para gestionar órdenes de compra
  */
 export const quotesService = {
   /**
-   * Crea una nueva cotización
-   * @param quoteData - Datos de la cotización a crear
-   * @returns Cotización creada
+   * Crea una nueva orden de compra
+   * @param quoteData - Datos de la orden de compra a crear
+   * @returns Orden de compra creada
    */
   async createQuote(quoteData: CreateQuoteDto): Promise<QuoteResponse> {
     const { data } = await apiClient.post<{ data: QuoteResponse; message: string }>(
@@ -99,9 +99,9 @@ export const quotesService = {
   },
 
   /**
-   * Obtiene una cotización por su ID
-   * @param id - ID de la cotización
-   * @returns Cotización encontrada o null si no existe
+   * Obtiene una orden de compra por su ID
+   * @param id - ID de la orden de compra
+   * @returns Orden de compra encontrada o null si no existe
    */
   async getQuoteById(id: number): Promise<Quote | null> {
     try {
@@ -120,10 +120,10 @@ export const quotesService = {
   },
 
   /**
-   * Obtiene todas las cotizaciones con paginación
+   * Obtiene todas las órdenes de compra con paginación
    * @param page - Número de página
    * @param limit - Límite de resultados por página
-   * @returns Lista de cotizaciones paginada
+   * @returns Lista de órdenes de compra paginada
    */
   async getAllQuotes(page: number = 1, limit: number = 50): Promise<PaginatedQuotesResponse> {
     const { data } = await apiClient.get<{ data: PaginatedQuotesResponse }>(
@@ -136,10 +136,10 @@ export const quotesService = {
   },
 
   /**
-   * Actualiza una cotización
-   * @param id - ID de la cotización
+   * Actualiza una orden de compra
+   * @param id - ID de la orden de compra
    * @param quoteData - Datos a actualizar
-   * @returns Cotización actualizada
+   * @returns Orden de compra actualizada
    */
   async updateQuote(id: number, quoteData: Partial<CreateQuoteDto>): Promise<QuoteResponse> {
     const url = endpoints.quotes.update.replace('{id}', id.toString());
@@ -151,8 +151,8 @@ export const quotesService = {
   },
 
   /**
-   * Elimina una cotización
-   * @param id - ID de la cotización
+   * Elimina una orden de compra
+   * @param id - ID de la orden de compra
    * @returns true si se eliminó correctamente
    */
   async deleteQuote(id: number): Promise<boolean> {

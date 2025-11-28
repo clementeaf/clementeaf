@@ -6,20 +6,20 @@ import { validateBody, parseBody } from '../../Users/utils/validation';
 import { successResponse, errorResponse } from '../../Users/utils/response';
 
 /**
- * Handler para actualizar una cotización
+ * Handler para actualizar una orden de compra
  * @param event - Evento de API Gateway
- * @returns Respuesta con cotización actualizada
+ * @returns Respuesta con orden de compra actualizada
  */
 const updateQuoteHandler = async (event: APIGatewayProxyEvent) => {
   const id = event.pathParameters?.id;
 
   if (!id) {
-    return errorResponse(400, 'ID de la cotización es requerido');
+    return errorResponse(400, 'ID de la orden de compra es requerido');
   }
 
   const quoteId = parseInt(id, 10);
   if (isNaN(quoteId)) {
-    return errorResponse(400, 'ID de la cotización debe ser un número válido');
+    return errorResponse(400, 'ID de la orden de compra debe ser un número válido');
   }
 
   const bodyError = validateBody(event);
@@ -43,7 +43,7 @@ const updateQuoteHandler = async (event: APIGatewayProxyEvent) => {
       createdAt: quote.createdAt?.toISOString(),
       updatedAt: quote.updatedAt?.toISOString()
     },
-    'Cotización actualizada exitosamente'
+    'Orden de compra actualizada exitosamente'
   );
 };
 

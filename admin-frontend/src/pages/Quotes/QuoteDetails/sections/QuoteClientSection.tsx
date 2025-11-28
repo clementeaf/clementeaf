@@ -5,7 +5,7 @@ import { type Quote } from '../../../../services/quotesService';
  */
 interface QuoteClientSectionProps {
   /**
-   * Datos de la cotización
+   * Datos de la orden de compra
    */
   quote: Quote;
 }

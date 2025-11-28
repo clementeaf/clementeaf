@@ -5,7 +5,7 @@ import { type Quote } from '../../../../services/quotesService';
  */
 interface QuoteProductsSectionProps {
   /**
-   * Datos de la cotización
+   * Datos de la orden de compra
    */
   quote: Quote;
 }
@@ -74,7 +74,7 @@ export const QuoteProductsSection = ({ quote }: QuoteProductsSectionProps) => {
           </table>
         </div>
       ) : (
-        <p className="text-sm text-gray-500">No hay productos en esta cotización.</p>
+        <p className="text-sm text-gray-500">No hay productos en esta orden de compra.</p>
       )}
     </div>
   );

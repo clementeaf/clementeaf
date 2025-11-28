@@ -37,11 +37,11 @@ export const ClientDetails = (): React.ReactElement => {
   }, [navigate]);
 
   /**
-   * Maneja la creación de cotización
+   * Maneja la creación de orden de compra
    */
   const handleCreateQuote = useCallback((): void => {
-    // TODO: Implementar navegación a creación de cotización
-    console.log('Crear cotización para cliente:', clientId);
+    // TODO: Implementar navegación a creación de orden de compra
+    console.log('Crear orden de compra para cliente:', clientId);
   }, [clientId]);
 
   /**
@@ -141,12 +141,12 @@ export const ClientDetails = (): React.ReactElement => {
       return (
         <div className="p-6 flex-1 flex flex-col min-h-0 overflow-hidden">
           <div className="text-center py-12 text-gray-500">
-            <p>No hay cotizaciones registradas</p>
+            <p>No hay órdenes de compra registradas</p>
             <button
               onClick={handleCreateQuote}
               className="mt-4 text-[#004BB7] hover:text-[#003a94] text-sm font-medium"
             >
-              Crear cotización
+              Crear orden de compra
             </button>
           </div>
         </div>
@@ -271,7 +271,7 @@ export const ClientDetails = (): React.ReactElement => {
                   `}
               >
                 <div className="flex items-center justify-center gap-2">
-                  <span>Cotizaciones</span>
+                  <span>Órdenes de compra</span>
                 </div>
                 {mainTab === 'quotes' && (
                   <div className="absolute bottom-[-1px] left-0 right-0 h-[2px] bg-[#004BB7] z-10" />

@@ -4,7 +4,7 @@ import { Checkbox } from '../../components/commons';
 import { DocumentIcon, EyeIcon, MoreOptionsIcon } from '../../components/commons/icons';
 
 /**
- * Tipo de datos para una fila de cotización
+ * Tipo de datos para una fila de orden de compra
  */
 export interface QuoteRow {
   id: string;
@@ -15,7 +15,7 @@ export interface QuoteRow {
 }
 
 /**
- * Definición de columnas para la tabla de cotizaciones
+ * Definición de columnas para la tabla de órdenes de compra
  */
 export const columns: ColumnDef<QuoteRow>[] = [
   {
@@ -53,7 +53,7 @@ export const columns: ColumnDef<QuoteRow>[] = [
   },
   {
     accessorKey: 'numeroCotizacion',
-    header: 'N° Cotización',
+    header: 'N° Orden de compra',
     enableSorting: true
   },
   {

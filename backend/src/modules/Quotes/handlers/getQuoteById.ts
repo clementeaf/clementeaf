@@ -4,21 +4,21 @@ import { handlerWrapper } from '../../Users/utils/handlerWrapper';
 import { successResponse } from '../../Users/utils/response';
 
 /**
- * Handler para obtener una cotización por su ID
+ * Handler para obtener una orden de compra por su ID
  * @param event - Evento de API Gateway
- * @returns Respuesta con cotización encontrada
+ * @returns Respuesta con orden de compra encontrada
  */
 const getQuoteByIdHandler = async (event: APIGatewayProxyEvent) => {
   try {
     const id = event.pathParameters?.id;
 
     if (!id) {
-      return successResponse(400, null, 'ID de la cotización es requerido');
+      return successResponse(400, null, 'ID de la orden de compra es requerido');
     }
 
     const quoteId = parseInt(id, 10);
     if (isNaN(quoteId)) {
-      return successResponse(400, null, 'ID de la cotización debe ser un número válido');
+      return successResponse(400, null, 'ID de la orden de compra debe ser un número válido');
     }
 
     const quotesService = new QuotesService();

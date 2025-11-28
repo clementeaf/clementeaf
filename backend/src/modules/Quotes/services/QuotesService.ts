@@ -3,7 +3,7 @@ import { Quote } from '../entities/Quote.entity';
 import { type CreateQuoteDto, type UpdateQuoteDto } from '../dto/CreateQuoteDto';
 
 /**
- * Servicio para gestionar cotizaciones
+ * Servicio para gestionar órdenes de compra
  */
 export class QuotesService {
   private get quotesRepository() {
@@ -11,9 +11,9 @@ export class QuotesService {
   }
 
   /**
-   * Crea una nueva cotización
-   * @param createQuoteDto - Datos de la cotización a crear
-   * @returns Cotización creada
+   * Crea una nueva orden de compra
+   * @param createQuoteDto - Datos de la orden de compra a crear
+   * @returns Orden de compra creada
    */
   async createQuote(createQuoteDto: CreateQuoteDto): Promise<Quote> {
     const quote = this.quotesRepository.create({
@@ -52,9 +52,9 @@ export class QuotesService {
   }
 
   /**
-   * Obtiene una cotización por su ID
-   * @param id - ID de la cotización
-   * @returns Cotización encontrada
+   * Obtiene una orden de compra por su ID
+   * @param id - ID de la orden de compra
+   * @returns Orden de compra encontrada
    */
   async getQuoteById(id: number): Promise<Quote> {
     try {
@@ -63,22 +63,22 @@ export class QuotesService {
       });
 
       if (!quote) {
-        throw new Error('Cotización no encontrada');
+        throw new Error('Orden de compra no encontrada');
       }
 
       return quote;
     } catch (error) {
       console.error('Error en getQuoteById:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      throw new Error(`Error al obtener cotización: ${errorMessage}`);
+      throw new Error(`Error al obtener orden de compra: ${errorMessage}`);
     }
   }
 
   /**
-   * Obtiene todas las cotizaciones con paginación
+   * Obtiene todas las órdenes de compra con paginación
    * @param page - Número de página
    * @param limit - Límite de resultados por página
-   * @returns Lista de cotizaciones paginada
+   * @returns Lista de órdenes de compra paginada
    */
   async getAllQuotes(page: number = 1, limit: number = 50): Promise<{
     data: Quote[];
@@ -108,15 +108,15 @@ export class QuotesService {
     } catch (error) {
       console.error('Error en getAllQuotes:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      throw new Error(`Error al obtener cotizaciones: ${errorMessage}`);
+      throw new Error(`Error al obtener órdenes de compra: ${errorMessage}`);
     }
   }
 
   /**
-   * Actualiza una cotización
-   * @param id - ID de la cotización
+   * Actualiza una orden de compra
+   * @param id - ID de la orden de compra
    * @param updateData - Datos a actualizar
-   * @returns Cotización actualizada
+   * @returns Orden de compra actualizada
    */
   async updateQuote(id: number, updateData: UpdateQuoteDto): Promise<Quote> {
     const quote = await this.getQuoteById(id);
@@ -152,8 +152,8 @@ export class QuotesService {
   }
 
   /**
-   * Elimina una cotización
-   * @param id - ID de la cotización
+   * Elimina una orden de compra
+   * @param id - ID de la orden de compra
    * @returns true si se eliminó correctamente
    */
   async deleteQuote(id: number): Promise<boolean> {

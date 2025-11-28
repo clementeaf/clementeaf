@@ -4,7 +4,7 @@ import { routes } from '../../../routes';
 import ArrowRightIcon from '../../../assets/right.png';
 
 /**
- * Componente Header de la página crear cotización
+ * Componente Header de la página crear orden de compra
  * @returns Componente CreateQuoteHeader
  */
 export const CreateQuoteHeader = () => {
@@ -21,11 +21,11 @@ export const CreateQuoteHeader = () => {
     <div className="flex items-center justify-between mb-6">
       <div className="flex items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800 mb-1">Crear cotización</h1>
+          <h1 className="text-2xl font-bold text-gray-800 mb-1">Crear orden de compra</h1>
           <nav className="text-sm text-gray-600 flex items-center gap-2">
             <button onClick={handleBackToClients} className='hover:text-black'>Clientes</button>
             <img src={ArrowRightIcon} alt="Arrow right" className="w-4 h-4" />
-            <span className="text-gray-800 font-medium">Crear cotización</span>
+            <span className="text-gray-800 font-medium">Crear orden de compra</span>
           </nav>
         </div>
       </div>
