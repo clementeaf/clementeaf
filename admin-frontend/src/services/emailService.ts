@@ -1,3 +1,4 @@
+import { sum } from 'radashi';
 import { apiClient } from './api';
 import { endpoints } from '../api/endpoints';
 import type { CtasPorCobrar } from '../types/analytics';
@@ -50,7 +51,7 @@ export const generateDebtNotificationEmail = (
   companyRut: string,
   debts: CtasPorCobrar[]
 ): { subject: string; htmlBody: string; textBody: string } => {
-  const totalDebt = debts.reduce((sum, debt) => sum + (debt.deuda || 0), 0);
+  const totalDebt = sum(debts, debt => debt.deuda || 0);
   const totalDocuments = debts.length;
 
   const subject = `Recordatorio de Pago - ${companyName}`;
@@ -94,11 +95,11 @@ export const generateDebtNotificationEmail = (
       </thead>
       <tbody>
         ${debts.map((debt, index) => {
-          const diasVencidos = debt.dias_vencidos ?? null;
-          const statusColor = diasVencidos === null || diasVencidos < 0 ? '#059669' : diasVencidos <= 30 ? '#f59e0b' : '#dc2626';
-          const statusText = diasVencidos === null ? 'Pendiente' : diasVencidos < 0 ? 'Por vencer' : diasVencidos === 0 ? 'Vence hoy' : `${diasVencidos} días`;
-          
-          return `
+    const diasVencidos = debt.dias_vencidos ?? null;
+    const statusColor = diasVencidos === null || diasVencidos < 0 ? '#059669' : diasVencidos <= 30 ? '#f59e0b' : '#dc2626';
+    const statusText = diasVencidos === null ? 'Pendiente' : diasVencidos < 0 ? 'Por vencer' : diasVencidos === 0 ? 'Vence hoy' : `${diasVencidos} días`;
+
+    return `
           <tr style="border-bottom: 1px solid #e5e7eb; ${index % 2 === 0 ? 'background-color: #f9fafb;' : ''}">
             <td style="padding: 12px; font-size: 13px;">
               <strong>${debt.td || '-'} ${debt.numdocto || '-'}</strong>
@@ -111,7 +112,7 @@ export const generateDebtNotificationEmail = (
             </td>
           </tr>
           `;
-        }).join('')}
+  }).join('')}
       </tbody>
     </table>
   </div>
@@ -142,16 +143,16 @@ Resumen de Documentos Pendientes:
 
 Documentos:
 ${debts.map((debt, index) => {
-  const diasVencidos = debt.dias_vencidos ?? null;
-  const statusText = diasVencidos === null ? 'Pendiente' : diasVencidos < 0 ? 'Por vencer' : diasVencidos === 0 ? 'Vence hoy' : `${diasVencidos} días vencidos`;
-  
-  return `
+    const diasVencidos = debt.dias_vencidos ?? null;
+    const statusText = diasVencidos === null ? 'Pendiente' : diasVencidos < 0 ? 'Por vencer' : diasVencidos === 0 ? 'Vence hoy' : `${diasVencidos} días vencidos`;
+
+    return `
 ${index + 1}. ${debt.td || '-'} ${debt.numdocto || '-'}${debt.razsoc && debt.razsoc !== companyName ? ` (${debt.razsoc})` : ''}
    Fecha Vencimiento: ${formatDate(debt.vencimiento)}
    Monto: ${formatCurrency(debt.deuda)}
    Estado: ${statusText}
   `;
-}).join('')}
+  }).join('')}
 
 Importante: Por favor, proceda con el pago de los documentos pendientes para evitar inconvenientes.
 

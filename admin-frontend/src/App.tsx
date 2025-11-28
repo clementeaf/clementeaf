@@ -18,6 +18,7 @@ import { Collections } from './pages/Collections';
 import { Analytics } from './pages/Analytics';
 import { Chat } from './pages/Chat';
 import { Support } from './pages/Support';
+import { Invoices } from './pages/Invoices';
 
 /**
  * Componente principal de la aplicación admin
@@ -45,6 +46,7 @@ function App(): React.ReactNode {
           <Route path={routes.analytics} element={<Analytics />} />
           <Route path={routes.chat} element={<Chat />} />
           <Route path={routes.support} element={<Support />} />
+          <Route path={routes.invoices} element={<Invoices />} />
         </Routes>
       </div>
       <ToastContainer

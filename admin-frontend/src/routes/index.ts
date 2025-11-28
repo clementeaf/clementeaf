@@ -19,6 +19,7 @@ export const routes = {
   analytics: '/analytics',
   chat: '/chat',
   support: '/support',
+  invoices: '/invoices',
   notFound: '/*'
 } as const;
 

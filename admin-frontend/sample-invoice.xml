@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Factura>
+  <Folio>12345</Folio>
+  <Fecha>2025-11-28</Fecha>
+  <FechaVencimiento>2025-12-28</FechaVencimiento>
+  <Moneda>CLP</Moneda>
+  
+  <Emisor>
+    <Nombre>Empresa Ejemplo S.A.</Nombre>
+    <RUT>76.123.456-7</RUT>
+    <Direccion>Av. Principal 123, Santiago</Direccion>
+  </Emisor>
+  
+  <Receptor>
+    <Nombre>Cliente Demo Ltda.</Nombre>
+    <RUT>77.987.654-3</RUT>
+    <Direccion>Calle Secundaria 456, Valparaíso</Direccion>
+  </Receptor>
+  
+  <Items>
+    <Item>
+      <Descripcion>Servicio de Consultoría</Descripcion>
+      <Cantidad>10</Cantidad>
+      <PrecioUnitario>50000</PrecioUnitario>
+      <Total>500000</Total>
+      <IVA>95000</IVA>
+    </Item>
+    <Item>
+      <Descripcion>Desarrollo de Software</Descripcion>
+      <Cantidad>5</Cantidad>
+      <PrecioUnitario>100000</PrecioUnitario>
+      <Total>500000</Total>
+      <IVA>95000</IVA>
+    </Item>
+  </Items>
+  
+  <Totales>
+    <MntNeto>1000000</MntNeto>
+    <IVA>190000</IVA>
+    <MntTotal>1190000</MntTotal>
+  </Totales>
+</Factura>

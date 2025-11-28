@@ -1,4 +1,6 @@
 import React, { useEffect, useRef, useCallback, useMemo, useState } from 'react';
+import { sum } from 'radashi';
+import { cn } from '../utils/cn';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   useEstadisticas,
@@ -86,17 +88,17 @@ export const Collections = () => {
    */
   const handleSort = (field: SortField): void => {
     const newSortBy = sortBy === field ? sortBy : field;
-    const newSortOrder = sortBy === field 
+    const newSortOrder = sortBy === field
       ? (sortOrder === 'asc' ? 'desc' : 'asc')
       : 'asc';
-    
+
     // Actualizar el estado primero
     setSortBy(newSortBy);
     setSortOrder(newSortOrder);
-    
+
     // Resetear y refetch las queries cuando cambia el ordenamiento
     // Esto fuerza a React Query a recargar desde la página 1 con el nuevo ordenamiento
-    queryClient.resetQueries({ 
+    queryClient.resetQueries({
       queryKey: ['deudas-activas-infinite'],
       exact: false
     });
@@ -138,15 +140,15 @@ export const Collections = () => {
     if (!deudasActivasData?.pages || deudasActivasData.pages.length === 0) {
       return [];
     }
-    
+
     // Obtener todos los datos de todas las páginas
     // IMPORTANTE: El backend ya ordena los datos, así que solo necesitamos combinarlos
     const allData = deudasActivasData.pages.flatMap(page => page.data || []);
-    
+
     if (allData.length === 0) {
       return [];
     }
-    
+
     // Debug: verificar el orden de los datos recibidos
     if (sortBy && allData.length > 0) {
       console.log('Frontend - Datos recibidos:', {
@@ -162,11 +164,11 @@ export const Collections = () => {
         })
       });
     }
-    
+
     // Verificar si la primera entrada tiene la estructura de EmpresaConDocumentos (tiene 'documentos' o 'sucursal')
     const firstItem = allData[0];
     const isEmpresaStructure = firstItem && typeof firstItem === 'object' && ('documentos' in firstItem || 'sucursal' in firstItem);
-    
+
     if (isEmpresaStructure) {
       // Estructura nueva: ya viene agrupada por empresa y ordenada del backend
       // Puede tener 'sucursal' (array de sucursales) o 'documentos' (documentos directos)
@@ -175,13 +177,13 @@ export const Collections = () => {
     } else {
       // Estructura antigua: lista de documentos, necesitamos agrupar por empresa
       const empresasMap = new Map<string, EmpresaConDocumentos>();
-      
+
       (allData as unknown as CtasPorCobrar[]).forEach((doc: CtasPorCobrar) => {
         if (!doc.rut) return;
-        
+
         // Usar rutpadre si existe, sino usar rut
         const rutEmpresa = doc.rutpadre || doc.rut;
-        
+
         if (!empresasMap.has(rutEmpresa)) {
           empresasMap.set(rutEmpresa, {
             rut: rutEmpresa,
@@ -194,7 +196,7 @@ export const Collections = () => {
             vencimientoMasReciente: null
           });
         }
-        
+
         const empresa = empresasMap.get(rutEmpresa)!;
         if (!empresa.documentos) {
           empresa.documentos = [];
@@ -205,18 +207,18 @@ export const Collections = () => {
         empresa.total_deuda += isNaN(deudaValue) ? 0 : deudaValue;
         empresa.total_documentos += 1;
       });
-      
+
       // Calcular vencimientoMasReciente para cada empresa
       return Array.from(empresasMap.values()).map((empresa): EmpresaConDocumentos => {
         const documentos = empresa.documentos || [];
         const fechasVencimiento = documentos
           .map((doc: CtasPorCobrar) => doc.vencimiento ? new Date(doc.vencimiento) : null)
           .filter((date): date is Date => date !== null);
-        
+
         const vencimientoMasReciente = fechasVencimiento.length > 0
           ? fechasVencimiento.sort((a, b) => b.getTime() - a.getTime())[0].toISOString()
           : null;
-        
+
         return {
           ...empresa,
           documentos: documentos.length > 0 ? documentos : undefined,
@@ -250,11 +252,11 @@ export const Collections = () => {
 
     const container = tableContainerRef.current;
     const { scrollTop, scrollHeight, clientHeight } = container;
-    
+
     // Cargar cuando queden 200px para el final
     const threshold = 200;
     const distanceFromBottom = scrollHeight - (scrollTop + clientHeight);
-    
+
     if (distanceFromBottom <= threshold) {
       fetchNextPage();
     }
@@ -282,7 +284,7 @@ export const Collections = () => {
   const formatCurrency = (value: number | string | null | undefined): string => {
     // Convertir a número si es string, o usar 0 si es null/undefined
     const numValue = typeof value === 'string' ? parseFloat(value) || 0 : (value ?? 0);
-    
+
     // Verificar que sea un número válido
     if (isNaN(numValue) || !isFinite(numValue)) {
       return new Intl.NumberFormat('es-CL', {
@@ -290,7 +292,7 @@ export const Collections = () => {
         currency: 'CLP'
       }).format(0);
     }
-    
+
     return new Intl.NumberFormat('es-CL', {
       style: 'currency',
       currency: 'CLP'
@@ -338,7 +340,7 @@ export const Collections = () => {
    */
   const handleSelectAll = (): void => {
     const allRutsSelected = uniqueCompanyRuts.every(rut => selectedCompanies.has(rut));
-    
+
     if (allRutsSelected) {
       // Deseleccionar todas las empresas visibles
       setSelectedCompanies(prev => {
@@ -422,7 +424,7 @@ export const Collections = () => {
       // Obtener la primera empresa seleccionada (para envío manual, solo una)
       const selectedRut = Array.from(selectedCompanies)[0];
       const empresa = allEmpresas.find(emp => emp.rut === selectedRut);
-      
+
       if (!empresa) {
         throw new Error('Empresa no encontrada');
       }
@@ -448,7 +450,7 @@ export const Collections = () => {
 
       setManualSendResult({
         success: true,
-        message: `Notificación enviada exitosamente a ${manualSendEmail.trim()}`
+        message: `Notificación enviada exitosamente a ${manualSendEmail.trim()} `
       });
 
       // Cerrar modal después de 2 segundos
@@ -488,7 +490,7 @@ export const Collections = () => {
 
     try {
       const selectedRuts = Array.from(selectedCompanies);
-      
+
       for (const rut of selectedRuts) {
         const empresa = allEmpresas.find(emp => emp.rut === rut);
         if (!empresa) {
@@ -521,12 +523,12 @@ export const Collections = () => {
         } catch (error) {
           results.failed++;
           const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
-          results.errors.push(`${empresa.razsoc || rut}: ${errorMessage}`);
+          results.errors.push(`${empresa.razsoc || rut}: ${errorMessage} `);
         }
       }
 
       setEmailSendResults(results);
-      
+
       if (results.success > 0) {
         // Cerrar modal después de 2 segundos si hubo éxitos
         setTimeout(() => {
@@ -569,19 +571,19 @@ export const Collections = () => {
       const newMap = new Map(prev);
       const sucursalesSet = newMap.get(empresaRut) || new Set<string>();
       const newSucursalesSet = new Set(sucursalesSet);
-      
+
       if (newSucursalesSet.has(sucursalRut)) {
         newSucursalesSet.delete(sucursalRut);
       } else {
         newSucursalesSet.add(sucursalRut);
       }
-      
+
       if (newSucursalesSet.size > 0) {
         newMap.set(empresaRut, newSucursalesSet);
       } else {
         newMap.delete(empresaRut);
       }
-      
+
       return newMap;
     });
   };
@@ -674,343 +676,472 @@ export const Collections = () => {
               )}
             </div>
           </div>
-        {(loadingDeudas || (isFetchingDeudas && allEmpresas.length === 0)) ? (
-          <div
-            ref={tableContainerRef}
-            className="flex-1 overflow-y-auto overflow-x-auto min-h-0"
-          >
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50 sticky top-0 z-10">
-                <tr>
-                  <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-12">
-                    <div className="flex justify-center">
-                      <div className="w-4 h-4 bg-gray-200 rounded animate-pulse" />
-                    </div>
-                  </th>
-                  <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-12">
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Nombre Cliente
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Fecha Vencimiento
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Total Facturado
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Deuda
-                  </th>
-                  <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Acciones
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {Array.from({ length: 10 }).map((_, index) => (
-                  <tr key={`skeleton-${index}`} className="animate-pulse">
-                    <td className="px-4 py-3 text-center">
+          {(loadingDeudas || (isFetchingDeudas && allEmpresas.length === 0)) ? (
+            <div
+              ref={tableContainerRef}
+              className="flex-1 overflow-y-auto overflow-x-auto min-h-0"
+            >
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50 sticky top-0 z-10">
+                  <tr>
+                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-12">
                       <div className="flex justify-center">
-                        <div className="w-4 h-4 bg-gray-200 rounded" />
+                        <div className="w-4 h-4 bg-gray-200 rounded animate-pulse" />
                       </div>
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="space-y-2">
-                        <div className="h-4 bg-gray-200 rounded w-3/4" />
-                        <div className="h-3 bg-gray-100 rounded w-1/2" />
-                      </div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="h-4 bg-gray-200 rounded w-28" />
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="h-4 bg-gray-200 rounded w-24" />
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="space-y-2">
-                        <div className="h-4 bg-gray-200 rounded w-24" />
-                        <div className="h-3 bg-gray-100 rounded w-16" />
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      <div className="flex justify-center">
-                        <div className="w-6 h-6 bg-gray-200 rounded" />
-                      </div>
-                    </td>
+                    </th>
+                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-12">
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Nombre Cliente
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Fecha Vencimiento
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Total Facturado
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Deuda
+                    </th>
+                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Acciones
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : allEmpresas.length === 0 && !loadingDeudas && !isFetchingDeudas ? (
-          <div className="flex items-center justify-center py-12 flex-1">
-            <div className="text-gray-500">No hay empresas para mostrar</div>
-            <div className="text-xs text-gray-400 mt-2">
-              Debug: deudasActivasData = {JSON.stringify(deudasActivasData, null, 2)}
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {Array.from({ length: 10 }).map((_, index) => (
+                    <tr key={`skeleton - ${index} `} className="animate-pulse">
+                      <td className="px-4 py-3 text-center">
+                        <div className="flex justify-center">
+                          <div className="w-4 h-4 bg-gray-200 rounded" />
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="space-y-2">
+                          <div className="h-4 bg-gray-200 rounded w-3/4" />
+                          <div className="h-3 bg-gray-100 rounded w-1/2" />
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="h-4 bg-gray-200 rounded w-28" />
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="h-4 bg-gray-200 rounded w-24" />
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="space-y-2">
+                          <div className="h-4 bg-gray-200 rounded w-24" />
+                          <div className="h-3 bg-gray-100 rounded w-16" />
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <div className="flex justify-center">
+                          <div className="w-6 h-6 bg-gray-200 rounded" />
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-          </div>
-        ) : (
-          <div
-            ref={tableContainerRef}
-            className="flex-1 overflow-y-auto overflow-x-auto min-h-0"
-          >
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50 sticky top-0 z-10">
-                <tr>
-                  <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-12">
-                    <div className="flex justify-center">
-                      <Checkbox
-                        checked={isAllSelected}
-                        onChange={() => handleSelectAll()}
-                        containerClassName=""
-                      />
-                    </div>
-                  </th>
-                  <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-12">
-                  </th>
-                  <th 
-                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
-                    onClick={() => handleSort('razsoc')}
-                  >
-                    <div className="flex items-center gap-2">
-                      <span>Nombre Cliente</span>
-                      {sortBy === 'razsoc' ? (
-                        sortOrder === 'asc' ? (
-                          <ChevronUpIcon color="#6B7280" />
+          ) : allEmpresas.length === 0 && !loadingDeudas && !isFetchingDeudas ? (
+            <div className="flex items-center justify-center py-12 flex-1">
+              <div className="text-gray-500">No hay empresas para mostrar</div>
+              <div className="text-xs text-gray-400 mt-2">
+                Debug: deudasActivasData = {JSON.stringify(deudasActivasData, null, 2)}
+              </div>
+            </div>
+          ) : (
+            <div
+              ref={tableContainerRef}
+              className="flex-1 overflow-y-auto overflow-x-auto min-h-0"
+            >
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50 sticky top-0 z-10">
+                  <tr>
+                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-12">
+                      <div className="flex justify-center">
+                        <Checkbox
+                          checked={isAllSelected}
+                          onChange={() => handleSelectAll()}
+                          containerClassName=""
+                        />
+                      </div>
+                    </th>
+                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-12">
+                    </th>
+                    <th
+                      className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
+                      onClick={() => handleSort('razsoc')}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span>Nombre Cliente</span>
+                        {sortBy === 'razsoc' ? (
+                          sortOrder === 'asc' ? (
+                            <ChevronUpIcon color="#6B7280" />
+                          ) : (
+                            <DropdownIcon color="#6B7280" />
+                          )
                         ) : (
-                          <DropdownIcon color="#6B7280" />
-                        )
-                      ) : (
-                        <DropdownIcon color="#9CA3AF" />
-                      )}
-                    </div>
-                  </th>
-                  <th 
-                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
-                    onClick={() => handleSort('vencimiento')}
-                  >
-                    <div className="flex items-center gap-2">
-                      <span>Fecha Vencimiento</span>
-                      {sortBy === 'vencimiento' ? (
-                        sortOrder === 'asc' ? (
-                          <ChevronUpIcon color="#6B7280" />
+                          <DropdownIcon color="#9CA3AF" />
+                        )}
+                      </div>
+                    </th>
+                    <th
+                      className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
+                      onClick={() => handleSort('vencimiento')}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span>Fecha Vencimiento</span>
+                        {sortBy === 'vencimiento' ? (
+                          sortOrder === 'asc' ? (
+                            <ChevronUpIcon color="#6B7280" />
+                          ) : (
+                            <DropdownIcon color="#6B7280" />
+                          )
                         ) : (
-                          <DropdownIcon color="#6B7280" />
-                        )
-                      ) : (
-                        <DropdownIcon color="#9CA3AF" />
-                      )}
-                    </div>
-                  </th>
-                  <th 
-                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
-                    onClick={() => handleSort('total_deuda')}
-                  >
-                    <div className="flex items-center gap-2">
-                      <span>Total Facturado</span>
-                      {sortBy === 'total_deuda' ? (
-                        sortOrder === 'asc' ? (
-                          <ChevronUpIcon color="#6B7280" />
+                          <DropdownIcon color="#9CA3AF" />
+                        )}
+                      </div>
+                    </th>
+                    <th
+                      className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
+                      onClick={() => handleSort('total_deuda')}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span>Total Facturado</span>
+                        {sortBy === 'total_deuda' ? (
+                          sortOrder === 'asc' ? (
+                            <ChevronUpIcon color="#6B7280" />
+                          ) : (
+                            <DropdownIcon color="#6B7280" />
+                          )
                         ) : (
-                          <DropdownIcon color="#6B7280" />
-                        )
-                      ) : (
-                        <DropdownIcon color="#9CA3AF" />
-                      )}
-                    </div>
-                  </th>
-                  <th 
-                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
-                    onClick={() => handleSort('deuda')}
-                  >
-                    <div className="flex items-center gap-2">
-                      <span>Deuda</span>
-                      {sortBy === 'deuda' ? (
-                        sortOrder === 'asc' ? (
-                          <ChevronUpIcon color="#6B7280" />
+                          <DropdownIcon color="#9CA3AF" />
+                        )}
+                      </div>
+                    </th>
+                    <th
+                      className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
+                      onClick={() => handleSort('deuda')}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span>Deuda</span>
+                        {sortBy === 'deuda' ? (
+                          sortOrder === 'asc' ? (
+                            <ChevronUpIcon color="#6B7280" />
+                          ) : (
+                            <DropdownIcon color="#6B7280" />
+                          )
                         ) : (
-                          <DropdownIcon color="#6B7280" />
-                        )
-                      ) : (
-                        <DropdownIcon color="#9CA3AF" />
-                      )}
-                    </div>
-                  </th>
-                  <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Acciones
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {allEmpresas.map((empresa: EmpresaConDocumentos) => {
-                  const isSelected = empresa.rut ? selectedCompanies.has(empresa.rut) : false;
-                  const isEmpresaExpanded = empresa.rut ? expandedEmpresas.has(empresa.rut) : false;
-                  const sucursalesExpanded = empresa.rut ? expandedSucursales.get(empresa.rut) || new Set<string>() : new Set<string>();
-                  
-                  // Obtener todos los documentos: de sucursales o directos
-                  const documentos = empresa.sucursal && empresa.sucursal.length > 0
-                    ? empresa.sucursal.flatMap((sucursal) => sucursal.documentos || [])
-                    : (empresa.documentos || []);
-                  
-                  // Si no hay documentos, no renderizar nada
-                  if (documentos.length === 0) {
-                    return null;
-                  }
-                  
-                  // Usar la fecha de vencimiento más reciente del backend si está disponible
-                  const fechaVencimientoMasReciente = empresa.vencimientoMasReciente 
-                    ? new Date(empresa.vencimientoMasReciente)
-                    : null;
-                  
-                  // Determinar si la empresa tiene documentos "Por vencer" o "Vencido"
-                  // Si hay al menos un documento con dias_vencidos < 0, es "Por vencer"
-                  // Si todos los documentos tienen dias_vencidos >= 0, es "Vencido"
-                  const tieneDocumentosPorVencer = documentos.some((doc: CtasPorCobrar) => 
-                    doc.dias_vencidos !== null && doc.dias_vencidos !== undefined && doc.dias_vencidos < 0
-                  );
-                  
-                  // Color de la deuda: verde si hay documentos por vencer, rojo si están vencidos
-                  const deudaColor = tieneDocumentosPorVencer ? 'text-green-600' : 'text-red-600';
-                  
-                  // Determinar si la empresa tiene sucursales
-                  const tieneSucursales = empresa.sucursal && empresa.sucursal.length > 0;
-                  // Determinar si la empresa tiene documentos directos (sin sucursales)
-                  const tieneDocumentosDirectos = !tieneSucursales && empresa.documentos && empresa.documentos.length > 0;
-                  // Mostrar flecha si tiene sucursales o documentos directos
-                  const mostrarFlecha = tieneSucursales || tieneDocumentosDirectos;
-                  
-                  return (
-                    <React.Fragment key={empresa.rut}>
-                      {/* Fila de empresa */}
-                      <tr className={`hover:bg-gray-50 ${isSelected ? 'bg-blue-50' : ''}`}>
-                        <td className="px-4 py-3 text-center">
-                          <div className="flex justify-center">
-                            <Checkbox
-                              checked={isSelected}
-                              onChange={() => {
-                                if (empresa.rut) {
-                                  handleRowToggle({ rut: empresa.rut } as CtasPorCobrar);
+                          <DropdownIcon color="#9CA3AF" />
+                        )}
+                      </div>
+                    </th>
+                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Acciones
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {allEmpresas.map((empresa: EmpresaConDocumentos) => {
+                    const isSelected = empresa.rut ? selectedCompanies.has(empresa.rut) : false;
+                    const isEmpresaExpanded = empresa.rut ? expandedEmpresas.has(empresa.rut) : false;
+                    const sucursalesExpanded = empresa.rut ? expandedSucursales.get(empresa.rut) || new Set<string>() : new Set<string>();
+
+                    // Obtener todos los documentos: de sucursales o directos
+                    const documentos = empresa.sucursal && empresa.sucursal.length > 0
+                      ? empresa.sucursal.flatMap((sucursal) => sucursal.documentos || [])
+                      : (empresa.documentos || []);
+
+                    // Si no hay documentos, no renderizar nada
+                    if (documentos.length === 0) {
+                      return null;
+                    }
+
+                    // Usar la fecha de vencimiento más reciente del backend si está disponible
+                    const fechaVencimientoMasReciente = empresa.vencimientoMasReciente
+                      ? new Date(empresa.vencimientoMasReciente)
+                      : null;
+
+                    // Determinar si la empresa tiene documentos "Por vencer" o "Vencido"
+                    // Si hay al menos un documento con dias_vencidos < 0, es "Por vencer"
+                    // Si todos los documentos tienen dias_vencidos >= 0, es "Vencido"
+                    const tieneDocumentosPorVencer = documentos.some((doc: CtasPorCobrar) =>
+                      doc.dias_vencidos !== null && doc.dias_vencidos !== undefined && doc.dias_vencidos < 0
+                    );
+
+                    // Color de la deuda: verde si hay documentos por vencer, rojo si están vencidos
+                    const deudaColor = tieneDocumentosPorVencer ? 'text-green-600' : 'text-red-600';
+
+                    // Determinar si la empresa tiene sucursales
+                    const tieneSucursales = empresa.sucursal && empresa.sucursal.length > 0;
+                    // Determinar si la empresa tiene documentos directos (sin sucursales)
+                    const tieneDocumentosDirectos = !tieneSucursales && empresa.documentos && empresa.documentos.length > 0;
+                    // Mostrar flecha si tiene sucursales o documentos directos
+                    const mostrarFlecha = tieneSucursales || tieneDocumentosDirectos;
+
+                    return (
+                      <React.Fragment key={empresa.rut}>
+                        {/* Fila de empresa */}
+                        <tr className={`hover: bg - gray - 50 ${isSelected ? 'bg-blue-50' : ''} `}>
+                          <td className="px-4 py-3 text-center">
+                            <div className="flex justify-center">
+                              <Checkbox
+                                checked={isSelected}
+                                onChange={() => {
+                                  if (empresa.rut) {
+                                    handleRowToggle({ rut: empresa.rut } as CtasPorCobrar);
+                                  }
+                                }}
+                                containerClassName=""
+                              />
+                            </div>
+                          </td>
+                          <td className="px-4 py-3 text-center">
+                            {mostrarFlecha && (
+                              <button
+                                onClick={() => empresa.rut && handleToggleEmpresa(empresa.rut)}
+                                className="p-1 hover:bg-gray-200 rounded transition-colors"
+                                aria-label={isEmpresaExpanded ? 'Colapsar' : 'Expandir'}
+                              >
+                                {isEmpresaExpanded ? (
+                                  <ChevronUpIcon color="#6B7280" />
+                                ) : (
+                                  <ChevronRightIcon color="#6B7280" />
+                                )}
+                              </button>
+                            )}
+                          </td>
+                          <td className="px-4 py-3 text-sm">
+                            <div>
+                              <p className="font-bold text-gray-900">{empresa.razsoc || '-'}</p>
+                              <p className="text-xs text-gray-500">RUT: {empresa.rut || '-'}</p>
+                            </div>
+                          </td>
+                          <td className="px-4 py-3 text-sm">
+                            <p className="font-medium text-gray-900">
+                              {fechaVencimientoMasReciente ? formatDate(fechaVencimientoMasReciente.toISOString()) : '-'}
+                            </p>
+                          </td>
+                          <td className="px-4 py-3 text-sm">
+                            <p className="font-semibold text-gray-900">
+                              {formatCurrency(empresa.total_deuda)}
+                            </p>
+                          </td>
+                          <td className="px-4 py-3 text-sm">
+                            <p className={`font - semibold ${deudaColor} `}>
+                              {formatCurrency(empresa.total_deuda)}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {tieneDocumentosPorVencer ? 'Por vencer' : 'Vencido'}
+                            </p>
+                          </td>
+                          <td className="px-4 py-3 text-sm text-center">
+                            <ActionsMenu
+                              items={[
+                                {
+                                  id: 'enviar-mail',
+                                  label: 'Enviar mail',
+                                  onClick: () => {
+                                    console.log('Enviar mail a:', empresa.cliente_email);
+                                  },
+                                  icon: <EmailIcon color="#6B7280" />
+                                },
+                                {
+                                  id: 'enviar-notificacion-manual',
+                                  label: 'Enviar notificación manual',
+                                  onClick: () => {
+                                    // Seleccionar automáticamente la empresa de esta fila
+                                    setSelectedCompanies(new Set([empresa.rut]));
+                                    // Prellenar el email con el email registrado de la empresa
+                                    setManualSendEmail(empresa.cliente_email || '');
+                                    // Abrir el modal de envío manual
+                                    setIsManualSendModalOpen(true);
+                                  },
+                                  icon: <EmailIcon color="#6B7280" />
+                                },
+                                {
+                                  id: 'ver-detalle',
+                                  label: 'Ver detalle',
+                                  onClick: () => {
+                                    console.log('Ver detalle de empresa:', empresa);
+                                  },
+                                  icon: <EyeIcon color="#6B7280" />
+                                },
+                                {
+                                  id: 'automatizar-notificacion',
+                                  label: 'Automatizar notificación',
+                                  onClick: () => {
+                                    // Seleccionar automáticamente la empresa de esta fila
+                                    setSelectedCompanies(new Set([empresa.rut]));
+                                    // Marcar que el modal se abrió desde el botón de acciones
+                                    setIsAutomationFromActionButton(true);
+                                    // Abrir el modal de automatización
+                                    setIsAutomationModalOpen(true);
+                                  },
+                                  icon: <AutomationIcon color="#6B7280" />
                                 }
-                              }}
-                              containerClassName=""
+                              ]}
                             />
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 text-center">
-                          {mostrarFlecha && (
-                            <button
-                              onClick={() => empresa.rut && handleToggleEmpresa(empresa.rut)}
-                              className="p-1 hover:bg-gray-200 rounded transition-colors"
-                              aria-label={isEmpresaExpanded ? 'Colapsar' : 'Expandir'}
-                            >
-                              {isEmpresaExpanded ? (
-                                <ChevronUpIcon color="#6B7280" />
-                              ) : (
-                                <ChevronRightIcon color="#6B7280" />
-                              )}
-                            </button>
-                          )}
-                        </td>
-                        <td className="px-4 py-3 text-sm">
-                          <div>
-                            <p className="font-bold text-gray-900">{empresa.razsoc || '-'}</p>
-                            <p className="text-xs text-gray-500">RUT: {empresa.rut || '-'}</p>
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 text-sm">
-                          <p className="font-medium text-gray-900">
-                            {fechaVencimientoMasReciente ? formatDate(fechaVencimientoMasReciente.toISOString()) : '-'}
-                          </p>
-                        </td>
-                        <td className="px-4 py-3 text-sm">
-                          <p className="font-semibold text-gray-900">
-                            {formatCurrency(empresa.total_deuda)}
-                          </p>
-                        </td>
-                        <td className="px-4 py-3 text-sm">
-                          <p className={`font-semibold ${deudaColor}`}>
-                            {formatCurrency(empresa.total_deuda)}
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            {tieneDocumentosPorVencer ? 'Por vencer' : 'Vencido'}
-                          </p>
-                        </td>
-                        <td className="px-4 py-3 text-sm text-center">
-                          <ActionsMenu
-                            items={[
-                              {
-                                id: 'enviar-mail',
-                                label: 'Enviar mail',
-                                onClick: () => {
-                                  console.log('Enviar mail a:', empresa.cliente_email);
-                                },
-                                icon: <EmailIcon color="#6B7280" />
-                              },
-                              {
-                                id: 'enviar-notificacion-manual',
-                                label: 'Enviar notificación manual',
-                                onClick: () => {
-                                  // Seleccionar automáticamente la empresa de esta fila
-                                  setSelectedCompanies(new Set([empresa.rut]));
-                                  // Prellenar el email con el email registrado de la empresa
-                                  setManualSendEmail(empresa.cliente_email || '');
-                                  // Abrir el modal de envío manual
-                                  setIsManualSendModalOpen(true);
-                                },
-                                icon: <EmailIcon color="#6B7280" />
-                              },
-                              {
-                                id: 'ver-detalle',
-                                label: 'Ver detalle',
-                                onClick: () => {
-                                  console.log('Ver detalle de empresa:', empresa);
-                                },
-                                icon: <EyeIcon color="#6B7280" />
-                              },
-                              {
-                                id: 'automatizar-notificacion',
-                                label: 'Automatizar notificación',
-                                onClick: () => {
-                                  // Seleccionar automáticamente la empresa de esta fila
-                                  setSelectedCompanies(new Set([empresa.rut]));
-                                  // Marcar que el modal se abrió desde el botón de acciones
-                                  setIsAutomationFromActionButton(true);
-                                  // Abrir el modal de automatización
-                                  setIsAutomationModalOpen(true);
-                                },
-                                icon: <AutomationIcon color="#6B7280" />
-                              }
-                            ]}
-                          />
-                        </td>
-                      </tr>
-                      
-                      {/* Filas de sucursales (si la empresa está expandida y tiene sucursales) */}
-                      {isEmpresaExpanded && tieneSucursales && empresa.sucursal && empresa.sucursal.map((sucursal) => {
-                        const isSucursalExpanded = sucursalesExpanded.has(sucursal.rut);
-                        const sucursalDocumentos = sucursal.documentos || [];
-                        const sucursalTieneDocumentosPorVencer = sucursalDocumentos.some((doc: CtasPorCobrar) => 
-                          doc.dias_vencidos !== null && doc.dias_vencidos !== undefined && doc.dias_vencidos < 0
-                        );
-                        const sucursalDeudaColor = sucursalTieneDocumentosPorVencer ? 'text-green-600' : 'text-red-600';
-                        const sucursalFechaVencimiento = sucursal.vencimientoMasReciente 
-                          ? new Date(sucursal.vencimientoMasReciente)
-                          : null;
-                        const isSucursalSelected = selectedCompanies.has(sucursal.rut || '');
-                        
-                        return (
-                          <React.Fragment key={sucursal.rut}>
-                            {/* Fila de sucursal */}
-                            <tr className={`bg-gray-50 hover:bg-gray-100 ${isSucursalSelected ? 'bg-blue-100' : ''}`}>
+                          </td>
+                        </tr>
+
+                        {/* Filas de sucursales (si la empresa está expandida y tiene sucursales) */}
+                        {isEmpresaExpanded && tieneSucursales && empresa.sucursal && empresa.sucursal.map((sucursal) => {
+                          const isSucursalExpanded = sucursalesExpanded.has(sucursal.rut);
+                          const sucursalDocumentos = sucursal.documentos || [];
+                          const sucursalTieneDocumentosPorVencer = sucursalDocumentos.some((doc: CtasPorCobrar) =>
+                            doc.dias_vencidos !== null && doc.dias_vencidos !== undefined && doc.dias_vencidos < 0
+                          );
+                          const sucursalDeudaColor = sucursalTieneDocumentosPorVencer ? 'text-green-600' : 'text-red-600';
+                          const sucursalFechaVencimiento = sucursal.vencimientoMasReciente
+                            ? new Date(sucursal.vencimientoMasReciente)
+                            : null;
+                          const isSucursalSelected = selectedCompanies.has(sucursal.rut || '');
+
+                          return (
+                            <React.Fragment key={sucursal.rut}>
+                              {/* Fila de sucursal */}
+                              <tr className={`bg - gray - 50 hover: bg - gray - 100 ${isSucursalSelected ? 'bg-blue-100' : ''} `}>
+                                <td className="px-4 py-3 text-center">
+                                  <div className="flex justify-center">
+                                    <Checkbox
+                                      checked={isSucursalSelected}
+                                      onChange={() => {
+                                        if (sucursal.rut) {
+                                          handleRowToggle({ rut: sucursal.rut } as CtasPorCobrar);
+                                        }
+                                      }}
+                                      containerClassName=""
+                                    />
+                                  </div>
+                                </td>
+                                <td className="px-4 py-3 text-center">
+                                  <button
+                                    onClick={() => empresa.rut && handleToggleSucursal(empresa.rut, sucursal.rut)}
+                                    className="p-1 hover:bg-gray-200 rounded transition-colors"
+                                    aria-label={isSucursalExpanded ? 'Colapsar' : 'Expandir'}
+                                  >
+                                    {isSucursalExpanded ? (
+                                      <ChevronUpIcon color="#6B7280" />
+                                    ) : (
+                                      <ChevronRightIcon color="#6B7280" />
+                                    )}
+                                  </button>
+                                </td>
+                                <td className="px-4 py-3 text-sm">
+                                  <div className="pl-6">
+                                    <p className="font-semibold text-gray-700">
+                                      {sucursal.razsoc || `Sucursal ${sucursal.ultimos_digitos || ''} `}
+                                    </p>
+                                    <p className="text-xs text-gray-500">RUT: {sucursal.rut}</p>
+                                    {sucursal.ultimos_digitos && (
+                                      <p className="text-xs text-gray-400">Código: {sucursal.ultimos_digitos}</p>
+                                    )}
+                                  </div>
+                                </td>
+                                <td className="px-4 py-3 text-sm">
+                                  <p className="font-medium text-gray-700">
+                                    {sucursalFechaVencimiento ? formatDate(sucursalFechaVencimiento.toISOString()) : '-'}
+                                  </p>
+                                </td>
+                                <td className="px-4 py-3 text-sm">
+                                  <p className="font-semibold text-gray-700">
+                                    {formatCurrency(sucursal.total_deuda)}
+                                  </p>
+                                </td>
+                                <td className="px-4 py-3 text-sm">
+                                  <p className={`font - semibold ${sucursalDeudaColor} `}>
+                                    {formatCurrency(sucursal.total_deuda)}
+                                  </p>
+                                  <p className="text-xs text-gray-500">
+                                    {sucursalTieneDocumentosPorVencer ? 'Por vencer' : 'Vencido'}
+                                  </p>
+                                </td>
+                                <td className="px-4 py-3 text-sm text-center"></td>
+                              </tr>
+
+                              {/* Filas de documentos de la sucursal (si está expandida) */}
+                              {isSucursalExpanded && sucursalDocumentos.map((doc: CtasPorCobrar) => {
+                                const docFechaVencimiento = doc.vencimiento ? new Date(doc.vencimiento) : null;
+                                const docTieneDocumentosPorVencer = doc.dias_vencidos !== null && doc.dias_vencidos !== undefined && doc.dias_vencidos < 0;
+                                const docDeudaColor = docTieneDocumentosPorVencer ? 'text-green-600' : 'text-red-600';
+
+                                const isDocSelected = selectedCompanies.has(doc.rut || '');
+
+                                return (
+                                  <tr key={`${doc.td} -${doc.numdocto} `} className={`bg - gray - 100 hover: bg - gray - 200 ${isDocSelected ? 'bg-blue-50' : ''} `}>
+                                    <td className="px-4 py-3 text-center">
+                                      <div className="flex justify-center">
+                                        <Checkbox
+                                          checked={isDocSelected}
+                                          onChange={() => {
+                                            if (doc.rut) {
+                                              handleRowToggle(doc);
+                                            }
+                                          }}
+                                          containerClassName=""
+                                        />
+                                      </div>
+                                    </td>
+                                    <td className="px-4 py-3 text-center">
+                                      {/* Sin flecha para documentos */}
+                                    </td>
+                                    <td className="px-4 py-3 text-sm">
+                                      <div className="pl-12">
+                                        <p className="font-medium text-gray-600">
+                                          {doc.td} {doc.numdocto}
+                                        </p>
+                                        <p className="text-xs text-gray-500">
+                                          {doc.fecha ? formatDate(doc.fecha) : '-'}
+                                        </p>
+                                      </div>
+                                    </td>
+                                    <td className="px-4 py-3 text-sm">
+                                      <p className="font-medium text-gray-600">
+                                        {docFechaVencimiento ? formatDate(docFechaVencimiento.toISOString()) : '-'}
+                                      </p>
+                                    </td>
+                                    <td className="px-4 py-3 text-sm">
+                                      <p className="font-medium text-gray-600">
+                                        {formatCurrency(doc.deuda)}
+                                      </p>
+                                    </td>
+                                    <td className="px-4 py-3 text-sm">
+                                      <p className={`font - semibold ${docDeudaColor} `}>
+                                        {formatCurrency(doc.deuda)}
+                                      </p>
+                                      <p className="text-xs text-gray-500">
+                                        {docTieneDocumentosPorVencer ? 'Por vencer' : 'Vencido'}
+                                      </p>
+                                    </td>
+                                    <td className="px-4 py-3 text-sm text-center"></td>
+                                  </tr>
+                                );
+                              })}
+                            </React.Fragment>
+                          );
+                        })}
+
+                        {/* Filas de documentos directos (si no hay sucursales y la empresa está expandida) */}
+                        {isEmpresaExpanded && !tieneSucursales && empresa.documentos && empresa.documentos.map((doc: CtasPorCobrar) => {
+                          const docFechaVencimiento = doc.vencimiento ? new Date(doc.vencimiento) : null;
+                          const docTieneDocumentosPorVencer = doc.dias_vencidos !== null && doc.dias_vencidos !== undefined && doc.dias_vencidos < 0;
+                          const docDeudaColor = docTieneDocumentosPorVencer ? 'text-green-600' : 'text-red-600';
+                          const isDocSelected = selectedCompanies.has(doc.rut || '');
+
+                          return (
+                            <tr key={`${doc.td} -${doc.numdocto} `} className={cn("bg-gray-50 hover:bg-gray-100", isDocSelected && "bg-blue-50")}>
                               <td className="px-4 py-3 text-center">
                                 <div className="flex justify-center">
                                   <Checkbox
-                                    checked={isSucursalSelected}
+                                    checked={isDocSelected}
                                     onChange={() => {
-                                      if (sucursal.rut) {
-                                        handleRowToggle({ rut: sucursal.rut } as CtasPorCobrar);
+                                      if (doc.rut) {
+                                        handleRowToggle(doc);
                                       }
                                     }}
                                     containerClassName=""
@@ -1018,186 +1149,57 @@ export const Collections = () => {
                                 </div>
                               </td>
                               <td className="px-4 py-3 text-center">
-                                <button
-                                  onClick={() => empresa.rut && handleToggleSucursal(empresa.rut, sucursal.rut)}
-                                  className="p-1 hover:bg-gray-200 rounded transition-colors"
-                                  aria-label={isSucursalExpanded ? 'Colapsar' : 'Expandir'}
-                                >
-                                  {isSucursalExpanded ? (
-                                    <ChevronUpIcon color="#6B7280" />
-                                  ) : (
-                                    <ChevronRightIcon color="#6B7280" />
-                                  )}
-                                </button>
+                                {/* Sin flecha para documentos */}
                               </td>
                               <td className="px-4 py-3 text-sm">
                                 <div className="pl-6">
-                                  <p className="font-semibold text-gray-700">
-                                    {sucursal.razsoc || `Sucursal ${sucursal.ultimos_digitos || ''}`}
+                                  <p className="font-medium text-gray-600">
+                                    {doc.td} {doc.numdocto}
                                   </p>
-                                  <p className="text-xs text-gray-500">RUT: {sucursal.rut}</p>
-                                  {sucursal.ultimos_digitos && (
-                                    <p className="text-xs text-gray-400">Código: {sucursal.ultimos_digitos}</p>
-                                  )}
+                                  <p className="text-xs text-gray-500">
+                                    {doc.fecha ? formatDate(doc.fecha) : '-'}
+                                  </p>
                                 </div>
                               </td>
                               <td className="px-4 py-3 text-sm">
-                                <p className="font-medium text-gray-700">
-                                  {sucursalFechaVencimiento ? formatDate(sucursalFechaVencimiento.toISOString()) : '-'}
+                                <p className="font-medium text-gray-600">
+                                  {docFechaVencimiento ? formatDate(docFechaVencimiento.toISOString()) : '-'}
                                 </p>
                               </td>
                               <td className="px-4 py-3 text-sm">
-                                <p className="font-semibold text-gray-700">
-                                  {formatCurrency(sucursal.total_deuda)}
+                                <p className="font-medium text-gray-600">
+                                  {formatCurrency(doc.deuda)}
                                 </p>
                               </td>
                               <td className="px-4 py-3 text-sm">
-                                <p className={`font-semibold ${sucursalDeudaColor}`}>
-                                  {formatCurrency(sucursal.total_deuda)}
+                                <p className={cn("font-semibold", docDeudaColor)}>
+                                  {formatCurrency(doc.deuda)}
                                 </p>
                                 <p className="text-xs text-gray-500">
-                                  {sucursalTieneDocumentosPorVencer ? 'Por vencer' : 'Vencido'}
+                                  {docTieneDocumentosPorVencer ? 'Por vencer' : 'Vencido'}
                                 </p>
                               </td>
                               <td className="px-4 py-3 text-sm text-center"></td>
                             </tr>
-                            
-                            {/* Filas de documentos de la sucursal (si está expandida) */}
-                            {isSucursalExpanded && sucursalDocumentos.map((doc: CtasPorCobrar) => {
-                              const docFechaVencimiento = doc.vencimiento ? new Date(doc.vencimiento) : null;
-                              const docTieneDocumentosPorVencer = doc.dias_vencidos !== null && doc.dias_vencidos !== undefined && doc.dias_vencidos < 0;
-                              const docDeudaColor = docTieneDocumentosPorVencer ? 'text-green-600' : 'text-red-600';
-                              
-                              const isDocSelected = selectedCompanies.has(doc.rut || '');
-                              
-                              return (
-                                <tr key={`${doc.td}-${doc.numdocto}`} className={`bg-gray-100 hover:bg-gray-200 ${isDocSelected ? 'bg-blue-50' : ''}`}>
-                                  <td className="px-4 py-3 text-center">
-                                    <div className="flex justify-center">
-                                      <Checkbox
-                                        checked={isDocSelected}
-                                        onChange={() => {
-                                          if (doc.rut) {
-                                            handleRowToggle(doc);
-                                          }
-                                        }}
-                                        containerClassName=""
-                                      />
-                                    </div>
-                                  </td>
-                                  <td className="px-4 py-3 text-center">
-                                    {/* Sin flecha para documentos */}
-                                  </td>
-                                  <td className="px-4 py-3 text-sm">
-                                    <div className="pl-12">
-                                      <p className="font-medium text-gray-600">
-                                        {doc.td} {doc.numdocto}
-                                      </p>
-                                      <p className="text-xs text-gray-500">
-                                        {doc.fecha ? formatDate(doc.fecha) : '-'}
-                                      </p>
-                                    </div>
-                                  </td>
-                                  <td className="px-4 py-3 text-sm">
-                                    <p className="font-medium text-gray-600">
-                                      {docFechaVencimiento ? formatDate(docFechaVencimiento.toISOString()) : '-'}
-                                    </p>
-                                  </td>
-                                  <td className="px-4 py-3 text-sm">
-                                    <p className="font-medium text-gray-600">
-                                      {formatCurrency(doc.deuda)}
-                                    </p>
-                                  </td>
-                                  <td className="px-4 py-3 text-sm">
-                                    <p className={`font-semibold ${docDeudaColor}`}>
-                                      {formatCurrency(doc.deuda)}
-                                    </p>
-                                    <p className="text-xs text-gray-500">
-                                      {docTieneDocumentosPorVencer ? 'Por vencer' : 'Vencido'}
-                                    </p>
-                                  </td>
-                                  <td className="px-4 py-3 text-sm text-center"></td>
-                                </tr>
-                              );
-                            })}
-                          </React.Fragment>
-                        );
-                      })}
-                      
-                      {/* Filas de documentos directos (si no hay sucursales y la empresa está expandida) */}
-                      {isEmpresaExpanded && !tieneSucursales && empresa.documentos && empresa.documentos.map((doc: CtasPorCobrar) => {
-                        const docFechaVencimiento = doc.vencimiento ? new Date(doc.vencimiento) : null;
-                        const docTieneDocumentosPorVencer = doc.dias_vencidos !== null && doc.dias_vencidos !== undefined && doc.dias_vencidos < 0;
-                        const docDeudaColor = docTieneDocumentosPorVencer ? 'text-green-600' : 'text-red-600';
-                        const isDocSelected = selectedCompanies.has(doc.rut || '');
-                        
-                        return (
-                          <tr key={`${doc.td}-${doc.numdocto}`} className={`bg-gray-50 hover:bg-gray-100 ${isDocSelected ? 'bg-blue-50' : ''}`}>
-                            <td className="px-4 py-3 text-center">
-                              <div className="flex justify-center">
-                                <Checkbox
-                                  checked={isDocSelected}
-                                  onChange={() => {
-                                    if (doc.rut) {
-                                      handleRowToggle(doc);
-                                    }
-                                  }}
-                                  containerClassName=""
-                                />
-                              </div>
-                            </td>
-                            <td className="px-4 py-3 text-center">
-                              {/* Sin flecha para documentos */}
-                            </td>
-                            <td className="px-4 py-3 text-sm">
-                              <div className="pl-6">
-                                <p className="font-medium text-gray-600">
-                                  {doc.td} {doc.numdocto}
-                                </p>
-                                <p className="text-xs text-gray-500">
-                                  {doc.fecha ? formatDate(doc.fecha) : '-'}
-                                </p>
-                              </div>
-                            </td>
-                            <td className="px-4 py-3 text-sm">
-                              <p className="font-medium text-gray-600">
-                                {docFechaVencimiento ? formatDate(docFechaVencimiento.toISOString()) : '-'}
-                              </p>
-                            </td>
-                            <td className="px-4 py-3 text-sm">
-                              <p className="font-medium text-gray-600">
-                                {formatCurrency(doc.deuda)}
-                              </p>
-                            </td>
-                            <td className="px-4 py-3 text-sm">
-                              <p className={`font-semibold ${docDeudaColor}`}>
-                                {formatCurrency(doc.deuda)}
-                              </p>
-                              <p className="text-xs text-gray-500">
-                                {docTieneDocumentosPorVencer ? 'Por vencer' : 'Vencido'}
-                              </p>
-                            </td>
-                            <td className="px-4 py-3 text-sm text-center"></td>
-                          </tr>
-                        );
-                      })}
-                    </React.Fragment>
-                  );
-                })}
-              </tbody>
-            </table>
-            {isFetchingNextPage && (
-              <div className="flex items-center justify-center py-4">
-                <div className="text-sm text-gray-500">Cargando más registros...</div>
-              </div>
-            )}
-            {!hasNextPage && allEmpresas.length > 0 && (
-              <div className="flex items-center justify-center py-4">
-                <div className="text-sm text-gray-500">No hay más empresas</div>
-              </div>
-            )}
-          </div>
-        )}
+                          );
+                        })}
+                      </React.Fragment>
+                    );
+                  })}
+                </tbody>
+              </table>
+              {isFetchingNextPage && (
+                <div className="flex items-center justify-center py-4">
+                  <div className="text-sm text-gray-500">Cargando más registros...</div>
+                </div>
+              )}
+              {!hasNextPage && allEmpresas.length > 0 && (
+                <div className="flex items-center justify-center py-4">
+                  <div className="text-sm text-gray-500">No hay más empresas</div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
@@ -1233,7 +1235,7 @@ export const Collections = () => {
             <p className="text-gray-600">
               Configura la automatización de cobros para enviar recordatorios de forma automática según las reglas que definas.
             </p>
-            
+
             {/* Buscador de empresas */}
             <AutomationCompanySearch
               deudasData={allDeudas}
@@ -1247,13 +1249,14 @@ export const Collections = () => {
 
           {/* Resultados del envío */}
           {emailSendResults && (
-            <div className={`mt-4 p-4 rounded-lg ${
-              emailSendResults.failed === 0 
-                ? 'bg-green-50 border border-green-200' 
-                : emailSendResults.success > 0 
-                  ? 'bg-yellow-50 border border-yellow-200'
-                  : 'bg-red-50 border border-red-200'
-            }`}>
+            <div className={cn(
+              "mt-4 p-4 rounded-lg",
+              emailSendResults.failed === 0
+                ? "bg-green-50 border border-green-200"
+                : emailSendResults.success > 0
+                  ? "bg-yellow-50 border border-yellow-200"
+                  : "bg-red-50 border border-red-200"
+            )}>
               <div className="flex items-start gap-3">
                 {emailSendResults.failed === 0 ? (
                   <svg className="w-5 h-5 text-green-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1265,12 +1268,13 @@ export const Collections = () => {
                   </svg>
                 )}
                 <div className="flex-1">
-                  <p className={`font-medium ${
-                    emailSendResults.failed === 0 ? 'text-green-800' : 'text-yellow-800'
-                  }`}>
-                    {emailSendResults.failed === 0 
+                  <p className={cn(
+                    "font-medium",
+                    emailSendResults.failed === 0 ? "text-green-800" : "text-yellow-800"
+                  )}>
+                    {emailSendResults.failed === 0
                       ? `✅ ${emailSendResults.success} notificación${emailSendResults.success !== 1 ? 'es' : ''} enviada${emailSendResults.success !== 1 ? 's' : ''} exitosamente`
-                      : `${emailSendResults.success} enviada${emailSendResults.success !== 1 ? 's' : ''}, ${emailSendResults.failed} fallida${emailSendResults.failed !== 1 ? 's' : ''}`
+                      : `${emailSendResults.success} enviada${emailSendResults.success !== 1 ? 's' : ''}, ${emailSendResults.failed} fallida${emailSendResults.failed !== 1 ? 's' : ''} `
                     }
                   </p>
                   {emailSendResults.errors.length > 0 && (
@@ -1369,7 +1373,7 @@ export const Collections = () => {
               const selectedRut = Array.from(selectedCompanies)[0];
               const empresa = allEmpresas.find(emp => emp.rut === selectedRut);
               const debts = empresa ? getCompanyDebts(selectedRut) : [];
-              const totalDebt = debts.reduce((sum, debt) => sum + (debt.deuda || 0), 0);
+              const totalDebt = sum(debts, debt => debt.deuda || 0);
 
               return empresa ? (
                 <>
@@ -1400,11 +1404,12 @@ export const Collections = () => {
                   </div>
 
                   {manualSendResult && (
-                    <div className={`p-4 rounded-lg ${
+                    <div className={cn(
+                      "p-4 rounded-lg",
                       manualSendResult.success
-                        ? 'bg-green-50 border border-green-200'
-                        : 'bg-red-50 border border-red-200'
-                    }`}>
+                        ? "bg-green-50 border border-green-200"
+                        : "bg-red-50 border border-red-200"
+                    )}>
                       <div className="flex items-start gap-3">
                         {manualSendResult.success ? (
                           <svg className="w-5 h-5 text-green-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1415,9 +1420,10 @@ export const Collections = () => {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                           </svg>
                         )}
-                        <p className={`font-medium ${
-                          manualSendResult.success ? 'text-green-800' : 'text-red-800'
-                        }`}>
+                        <p className={cn(
+                          "font-medium",
+                          manualSendResult.success ? "text-green-800" : "text-red-800"
+                        )}>
                           {manualSendResult.message}
                         </p>
                       </div>
