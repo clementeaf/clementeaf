@@ -57,7 +57,7 @@ export const SearchBar = ({
   className = ''
 }: SearchBarProps) => {
   return (
-    <div className={`flex items-center gap-4 mb-4 ${className} bg-white rounded-lg shadow-sm p-4`}>
+    <div className={`flex items-center gap-4 mb-4 ${className} bg-white rounded-lg shadow-sm border border-gray-200 p-4`}>
       <div className="flex-1 relative">
         <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
           <SearchIcon color="#9CA3AF" />

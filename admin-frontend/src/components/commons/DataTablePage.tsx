@@ -50,7 +50,7 @@ export const DataTablePage = <TData,>({
   tableContainerClassName = ''
 }: DataTablePageProps<TData>) => {
   return (
-    <div className={`flex-1 overflow-auto rounded-lg shadow-sm bg-white p-4 ${tableContainerClassName}`}>
+    <div className={`flex-1 overflow-auto rounded-lg shadow-sm bg-white border border-gray-200 p-4 ${tableContainerClassName}`}>
       {error ? (
         <div className="flex flex-col items-center justify-center h-64">
           <div className="text-lg text-red-500 mb-2">{errorMessage}</div>
