@@ -17,6 +17,7 @@ export const navItems: NavItem[] = [
   { name: 'Ventas', path: routes.sells, icon: sellsIcon, hasSubItems: true },
   // { name: 'Analisis', path: routes.analytics, icon: articlesIcon }, // Hidden
   { name: 'Chat', path: routes.chat, icon: articlesIcon },
+  { name: 'Picking', path: routes.picking, icon: checkIcon, hasSubItems: true },
   { name: 'Soporte', path: routes.support, icon: articlesIcon }
 ];
 
@@ -28,5 +29,14 @@ export const sellsSubItems: NavItem[] = [
   { name: 'Órdenes de compra', path: routes.quotes, icon: checkIcon },
   // { name: 'Orden de ventas', path: routes.salesOrder, icon: checkIcon }, // Hidden
   { name: 'Cuentas por cobrar', path: routes.collections, icon: checkIcon }
+];
+
+/**
+ * Configuración de subitems de Picking
+ */
+export const pickingSubItems: NavItem[] = [
+  { name: 'Orden de picking', path: routes.pickingOrder, icon: checkIcon },
+  { name: 'Historial', path: routes.pickingHistory, icon: checkIcon },
+  { name: 'Reportes', path: routes.pickingReports, icon: checkIcon }
 ];
 

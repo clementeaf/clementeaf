@@ -15,6 +15,7 @@ import { CreateQuote } from './pages/Quotes/CreateQuote';
 import { QuoteDetails } from './pages/Quotes/QuoteDetails/QuoteDetails';
 import { SalesOrder } from './pages/SalesOrder';
 import { Collections } from './pages/Collections';
+import { Picking } from './pages/Picking';
 import { Analytics } from './pages/Analytics';
 import { Chat } from './pages/Chat';
 import { Support } from './pages/Support';
@@ -43,6 +44,10 @@ function App(): React.ReactNode {
           <Route path={`${routes.quoteDetails}/:id`} element={<QuoteDetails />} />
           <Route path={routes.salesOrder} element={<SalesOrder />} />
           <Route path={routes.collections} element={<Collections />} />
+          <Route path={routes.picking} element={<Picking />} />
+          <Route path={routes.pickingOrder} element={<Picking />} />
+          <Route path={routes.pickingHistory} element={<Picking />} />
+          <Route path={routes.pickingReports} element={<Picking />} />
           <Route path={routes.analytics} element={<Analytics />} />
           <Route path={routes.chat} element={<Chat />} />
           <Route path={routes.support} element={<Support />} />

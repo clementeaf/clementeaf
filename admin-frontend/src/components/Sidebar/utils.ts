@@ -26,3 +26,15 @@ export const isSellsSectionActive = (currentPath: string, sellsSubItems: NavItem
          currentPath.startsWith(routes.sells);
 };
 
+/**
+ * Verifica si la sección de Picking está activa
+ * @param currentPath - Ruta actual
+ * @param pickingSubItems - Subitems de Picking
+ * @returns true si alguna subruta de Picking está activa
+ */
+export const isPickingSectionActive = (currentPath: string, pickingSubItems: NavItem[]): boolean => {
+  return pickingSubItems.some(item => currentPath.startsWith(item.path)) || 
+         currentPath === routes.picking ||
+         currentPath.startsWith(routes.picking);
+};
+

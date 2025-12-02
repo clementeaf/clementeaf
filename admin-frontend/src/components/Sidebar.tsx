@@ -3,8 +3,8 @@ import { useLocation } from 'react-router-dom';
 import { SidebarHeader } from './Sidebar/SidebarHeader';
 import { NavItem } from './Sidebar/NavItem';
 import { SellsSubMenu } from './Sidebar/SellsSubMenu';
-import { navItems, sellsSubItems } from './Sidebar/navItems.config';
-import { isActive, isSellsSectionActive } from './Sidebar/utils';
+import { navItems, sellsSubItems, pickingSubItems } from './Sidebar/navItems.config';
+import { isActive, isSellsSectionActive, isPickingSectionActive } from './Sidebar/utils';
 import { useLogout } from '../hooks/useAuth';
 
 /**
@@ -15,7 +15,9 @@ export const Sidebar = () => {
   const location = useLocation();
   const { logout } = useLogout();
   const [isSellsExpanded, setIsSellsExpanded] = useState(false);
+  const [isPickingExpanded, setIsPickingExpanded] = useState(false);
   const [manualToggle, setManualToggle] = useState(false);
+  const [manualPickingToggle, setManualPickingToggle] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -27,6 +29,13 @@ export const Sidebar = () => {
     }
   }, [location.pathname, manualToggle]);
 
+  useEffect(() => {
+    if (!manualPickingToggle) {
+      const active = isPickingSectionActive(location.pathname, pickingSubItems);
+      setIsPickingExpanded(active);
+    }
+  }, [location.pathname, manualPickingToggle]);
+
   const handleToggleSells = (): void => {
     setManualToggle(true);
     setIsSellsExpanded((prev) => !prev);
@@ -34,6 +43,15 @@ export const Sidebar = () => {
 
   const handleSellsNavigation = (): void => {
     setManualToggle(false);
+  };
+
+  const handleTogglePicking = (): void => {
+    setManualPickingToggle(true);
+    setIsPickingExpanded((prev) => !prev);
+  };
+
+  const handlePickingNavigation = (): void => {
+    setManualPickingToggle(false);
   };
 
   const handleToggleCollapse = (): void => {
@@ -86,16 +104,18 @@ export const Sidebar = () => {
         {navItems.map((item) => {
           const active = isActive(item.path, location.pathname);
           const isSellsItem = item.name === 'Ventas';
-          const expanded = isSellsItem ? isSellsExpanded : false;
+          const isPickingItem = item.name === 'Picking';
+          const expanded = isSellsItem ? isSellsExpanded : isPickingItem ? isPickingExpanded : false;
           const sellsSectionActive = isSellsItem && isSellsSectionActive(location.pathname, sellsSubItems);
+          const pickingSectionActive = isPickingItem && isPickingSectionActive(location.pathname, pickingSubItems);
 
           return (
             <div key={item.path} className="w-full">
               <NavItem
                 item={item}
-                isActive={isSellsItem ? sellsSectionActive : active}
+                isActive={isSellsItem ? sellsSectionActive : isPickingItem ? pickingSectionActive : active}
                 isExpanded={expanded}
-                onToggle={isSellsItem ? handleToggleSells : undefined}
+                onToggle={isSellsItem ? handleToggleSells : isPickingItem ? handleTogglePicking : undefined}
                 showExpandIcon={item.hasSubItems === true}
                 isCollapsed={!isExpanded}
               />
@@ -105,6 +125,14 @@ export const Sidebar = () => {
                   subItems={sellsSubItems}
                   isExpanded={expanded}
                   onNavigate={handleSellsNavigation}
+                />
+              )}
+
+              {isPickingItem && isExpanded && (
+                <SellsSubMenu
+                  subItems={pickingSubItems}
+                  isExpanded={expanded}
+                  onNavigate={handlePickingNavigation}
                 />
               )}
             </div>
