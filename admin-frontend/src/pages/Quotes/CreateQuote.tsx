@@ -136,7 +136,6 @@ export const CreateQuote = () => {
       <QuoteConditionsForm 
         onDataChange={handleDataChange}
         initialData={formData as Record<string, string>}
-        onBack={handleBack}
       />
     ),
     3: () => (

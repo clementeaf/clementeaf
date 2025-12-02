@@ -13,10 +13,6 @@ interface QuoteConditionsFormProps {
    * Datos iniciales del formulario
    */
   initialData?: Record<string, string>;
-  /**
-   * Función para volver al paso anterior
-   */
-  onBack?: () => void;
 }
 
 /**
@@ -24,7 +20,7 @@ interface QuoteConditionsFormProps {
  * @param props - Props del componente QuoteConditionsForm
  * @returns Componente QuoteConditionsForm
  */
-export const QuoteConditionsForm = ({ onDataChange, initialData, onBack }: QuoteConditionsFormProps) => {
+export const QuoteConditionsForm = ({ onDataChange, initialData }: QuoteConditionsFormProps) => {
   const [formData, setFormData] = useState<Record<string, string>>(
     initialData || {
       numeroCotizacion: '',
