@@ -1,66 +1,196 @@
-import { useLocation } from 'react-router-dom';
-import { routes } from '../../routes';
+import { useState } from 'react';
+import { DropdownIcon, ChevronUpIcon } from '../../components/commons/icons';
+import { Select } from '../../components/commons';
+import type { PickingOrderStatus } from './types';
 
 /**
  * Props del componente PickingSidebar
  */
 interface PickingSidebarProps {
   /**
-   * Tab activo
+   * Filtros aplicados
    */
-  activeTab: string;
+  filters: PickingFilters;
   /**
-   * Función para cambiar el tab activo
+   * Función para actualizar los filtros
    */
-  onTabChange: (tabId: string) => void;
+  onFiltersChange: (filters: PickingFilters) => void;
 }
 
 /**
- * Componente Sidebar para la página de Picking
+ * Filtros para órdenes de picking
+ */
+export interface PickingFilters {
+  estado?: PickingOrderStatus | 'Todos';
+  vendedor?: string;
+  fechaDesde?: string;
+  fechaHasta?: string;
+}
+
+/**
+ * Componente Sidebar para la página de Picking que actúa como panel de filtros
  * @param props - Props del componente PickingSidebar
  * @returns Componente PickingSidebar
  */
-export const PickingSidebar = ({ activeTab, onTabChange }: PickingSidebarProps): React.ReactElement => {
-  const location = useLocation();
-  
-  const tabs = [
-    { id: 'order', label: 'Orden de picking', path: routes.pickingOrder },
-    { id: 'history', label: 'Historial', path: routes.pickingHistory },
-    { id: 'reports', label: 'Reportes', path: routes.pickingReports }
+export const PickingSidebar = ({ filters, onFiltersChange }: PickingSidebarProps): React.ReactElement => {
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['estado']));
+
+  /**
+   * Maneja el toggle de una sección
+   */
+  const toggleSection = (sectionId: string): void => {
+    setExpandedSections(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(sectionId)) {
+        newSet.delete(sectionId);
+      } else {
+        newSet.add(sectionId);
+      }
+      return newSet;
+    });
+  };
+
+  /**
+   * Opciones de estado
+   */
+  const estadoOptions = [
+    { value: 'Todos', label: 'Todos' },
+    { value: 'Solicitud venta', label: 'Solicitud venta' },
+    { value: 'Picking', label: 'Picking' },
+    { value: 'Confirmación', label: 'Confirmación' },
+    { value: 'Despachado', label: 'Despachado' }
   ];
 
+  /**
+   * Maneja el cambio de estado
+   */
+  const handleEstadoChange = (value: string): void => {
+    onFiltersChange({
+      ...filters,
+      estado: value === 'Todos' ? undefined : (value as PickingOrderStatus)
+    });
+  };
+
+  /**
+   * Maneja el cambio de vendedor
+   */
+  const handleVendedorChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
+    onFiltersChange({
+      ...filters,
+      vendedor: e.target.value || undefined
+    });
+  };
+
+  /**
+   * Maneja el cambio de fecha desde
+   */
+  const handleFechaDesdeChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
+    onFiltersChange({
+      ...filters,
+      fechaDesde: e.target.value || undefined
+    });
+  };
+
+  /**
+   * Maneja el cambio de fecha hasta
+   */
+  const handleFechaHastaChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
+    onFiltersChange({
+      ...filters,
+      fechaHasta: e.target.value || undefined
+    });
+  };
+
   return (
-    <div className="w-80 bg-white rounded-lg shadow-sm p-6 flex flex-col h-full">
-      {/* Título */}
-      <div className="mb-6">
-        <h2 className="text-xl font-semibold text-gray-900">
-          Picking
-        </h2>
-        <p className="text-sm text-gray-500 mt-1">
-          Gestión de picking
-        </p>
-      </div>
+    <div className="w-64 bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+      <h2 className="text-lg font-bold text-gray-800 mb-4">Filtros</h2>
+      <div className="flex flex-col gap-4">
+        {/* Filtro por Estado */}
+        <div>
+          <button
+            onClick={() => toggleSection('estado')}
+            className="w-full flex items-center justify-between text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors duration-200"
+          >
+            <span>Por estado</span>
+            {expandedSections.has('estado') ? (
+              <ChevronUpIcon color="#6B7280" />
+            ) : (
+              <DropdownIcon color="#6B7280" />
+            )}
+          </button>
+          {expandedSections.has('estado') && (
+            <div className="mt-2">
+              <Select
+                value={filters.estado || 'Todos'}
+                onChange={(e) => handleEstadoChange(e.target.value)}
+                options={estadoOptions}
+                selectClassName="w-full"
+              />
+            </div>
+          )}
+        </div>
 
-      {/* Separador */}
-      <div className="border-t border-gray-200 mb-6"></div>
+        {/* Filtro por Vendedor */}
+        <div>
+          <button
+            onClick={() => toggleSection('vendedor')}
+            className="w-full flex items-center justify-between text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors duration-200"
+          >
+            <span>Por vendedor</span>
+            {expandedSections.has('vendedor') ? (
+              <ChevronUpIcon color="#6B7280" />
+            ) : (
+              <DropdownIcon color="#6B7280" />
+            )}
+          </button>
+          {expandedSections.has('vendedor') && (
+            <div className="mt-2">
+              <input
+                type="text"
+                placeholder="Buscar vendedor..."
+                value={filters.vendedor || ''}
+                onChange={handleVendedorChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#0052C9] focus:border-transparent"
+              />
+            </div>
+          )}
+        </div>
 
-      {/* Navegación de submódulos */}
-      <div>
-        <h3 className="text-sm font-semibold text-gray-700 mb-3">Módulos</h3>
-        <div className="flex flex-col gap-2">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => onTabChange(tab.id)}
-              className={`text-left px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 ${
-                activeTab === tab.id
-                  ? 'bg-[#0052C9] text-white'
-                  : 'text-gray-700 hover:bg-gray-100'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
+        {/* Filtro por Fecha */}
+        <div>
+          <button
+            onClick={() => toggleSection('fecha')}
+            className="w-full flex items-center justify-between text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors duration-200"
+          >
+            <span>Por fecha</span>
+            {expandedSections.has('fecha') ? (
+              <ChevronUpIcon color="#6B7280" />
+            ) : (
+              <DropdownIcon color="#6B7280" />
+            )}
+          </button>
+          {expandedSections.has('fecha') && (
+            <div className="mt-2 space-y-2">
+              <div>
+                <label className="text-xs text-gray-500 mb-1 block">Desde</label>
+                <input
+                  type="date"
+                  value={filters.fechaDesde || ''}
+                  onChange={handleFechaDesdeChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#0052C9] focus:border-transparent"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-gray-500 mb-1 block">Hasta</label>
+                <input
+                  type="date"
+                  value={filters.fechaHasta || ''}
+                  onChange={handleFechaHastaChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#0052C9] focus:border-transparent"
+                />
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
