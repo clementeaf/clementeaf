@@ -1,7 +1,7 @@
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { PageHeader } from '../components/commons';
-import { PickingSidebar } from './Picking/PickingSidebar';
+import { PickingSidebar, type PickingFilters } from './Picking/PickingSidebar';
 import { routes } from '../routes';
 import {
   OrderSection,
@@ -16,6 +16,7 @@ import {
 export const Picking = (): React.ReactElement => {
   const location = useLocation();
   const navigate = useNavigate();
+  const [filters, setFilters] = useState<PickingFilters>({});
 
   /**
    * Determina el tab activo según la ruta actual
@@ -70,13 +71,13 @@ export const Picking = (): React.ReactElement => {
   const renderContent = (): React.ReactElement => {
     switch (activeTab) {
       case 'order':
-        return <OrderSection />;
+        return <OrderSection filters={filters} />;
       case 'history':
         return <HistorySection />;
       case 'reports':
         return <ReportsSection />;
       default:
-        return <OrderSection />;
+        return <OrderSection filters={filters} />;
     }
   };
 
@@ -84,18 +85,16 @@ export const Picking = (): React.ReactElement => {
     <div className="w-full h-full flex flex-col p-8">
       <PageHeader title="Picking" />
 
-      <div className="flex gap-6 flex-1 min-h-0">
-        <PickingSidebar
-          activeTab={activeTab}
-          onTabChange={handleTabChange}
-        />
+      <div className="flex gap-4 flex-1 min-h-0">
+        {activeTab === 'order' && (
+          <PickingSidebar
+            filters={filters}
+            onFiltersChange={setFilters}
+          />
+        )}
 
-        <div className="flex-1 flex flex-col bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-          <div className="flex-1 overflow-hidden flex flex-col">
-            <div className="flex-1 overflow-y-auto p-6">
-              {renderContent()}
-            </div>
-          </div>
+        <div className="flex-1 flex flex-col min-w-0">
+          {renderContent()}
         </div>
       </div>
     </div>
