@@ -26,7 +26,7 @@ export const navItems: NavItem[] = [
  */
 export const sellsSubItems: NavItem[] = [
   { name: 'Clientes', path: routes.clients, icon: checkIcon },
-  { name: 'Órdenes de compra', path: routes.quotes, icon: checkIcon },
+  { name: 'Nota de venta', path: routes.quotes, icon: checkIcon },
   // { name: 'Orden de ventas', path: routes.salesOrder, icon: checkIcon }, // Hidden
   { name: 'Cuentas por cobrar', path: routes.collections, icon: checkIcon }
 ];

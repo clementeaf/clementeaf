@@ -146,7 +146,7 @@ export const ClientDetails = (): React.ReactElement => {
               onClick={handleCreateQuote}
               className="mt-4 text-[#004BB7] hover:text-[#003a94] text-sm font-medium"
             >
-              Crear orden de compra
+              Crear Nota de venta
             </button>
           </div>
         </div>

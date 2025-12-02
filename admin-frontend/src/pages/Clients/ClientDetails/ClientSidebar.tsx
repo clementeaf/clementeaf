@@ -115,7 +115,7 @@ export const ClientSidebar = ({
           className="w-full bg-[#004BB7] text-white hover:bg-[#003a94]"
           leftIcon={<PlusIcon color="white" />}
         >
-          Crear orden de compra
+          Crear Nota de venta
         </Button>
         <button
           onClick={onAddBranch}
