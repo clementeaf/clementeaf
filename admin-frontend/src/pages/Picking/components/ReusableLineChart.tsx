@@ -56,6 +56,14 @@ interface ReusableLineChartProps {
    */
   height?: number;
   /**
+   * Valor mínimo del eje Y
+   */
+  yAxisMin?: number;
+  /**
+   * Valor máximo del eje Y
+   */
+  yAxisMax?: number;
+  /**
    * Función personalizada para renderizar el tooltip
    */
   customTooltip?: (context: {
@@ -77,6 +85,8 @@ export const ReusableLineChart = ({
   yAxisLabel,
   width = 250,
   height = 200,
+  yAxisMin,
+  yAxisMax,
   customTooltip
 }: ReusableLineChartProps): React.ReactElement => {
   const chartData = {
@@ -182,6 +192,9 @@ export const ReusableLineChart = ({
       },
       y: {
         display: true,
+        min: yAxisMin,
+        max: yAxisMax,
+        beginAtZero: yAxisMin === 0 || yAxisMin === undefined,
         title: {
           display: !!yAxisLabel,
           text: yAxisLabel ?? '',
@@ -193,7 +206,9 @@ export const ReusableLineChart = ({
           font: {
             size: 12
           },
-          color: '#6b7280'
+          color: '#6b7280',
+          stepSize: 1,
+          precision: 0
         },
         grid: {
           display: true,

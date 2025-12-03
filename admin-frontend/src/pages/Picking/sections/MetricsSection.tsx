@@ -177,6 +177,8 @@ export const MetricsSection = (): React.ReactElement => {
             yAxisLabel="Cantidad de notas de ventas"
             width={250}
             height={200}
+            yAxisMin={0}
+            yAxisMax={10}
           />
         </div>
 
