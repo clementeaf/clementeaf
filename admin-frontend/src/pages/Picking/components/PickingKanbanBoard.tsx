@@ -30,7 +30,7 @@ export const PickingKanbanBoard = ({ orders, onStatusChange }: PickingKanbanBoar
   };
 
   return (
-    <div className="flex gap-4 h-full overflow-x-auto">
+    <div className="flex gap-4 overflow-x-auto h-full">
       {columns.map((column) => (
         <PickingKanbanColumn
           key={column.status}

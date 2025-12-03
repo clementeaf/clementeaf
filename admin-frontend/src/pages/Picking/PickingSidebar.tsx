@@ -78,8 +78,8 @@ export const PickingSidebar = ({ filters, onFiltersChange }: PickingSidebarProps
   };
 
   return (
-    <div className="w-64 bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-      <h2 className="text-lg font-bold text-gray-800 mb-4">Filtros</h2>
+    <div className="w-64 bg-white rounded-lg shadow-sm border border-gray-200 p-4 h-full flex flex-col">
+      <h2 className="text-lg font-bold text-gray-800 mb-4 flex-shrink-0">Filtros</h2>
       <div className="flex flex-col gap-4">
         {/* Filtro por Vendedor */}
         <div>

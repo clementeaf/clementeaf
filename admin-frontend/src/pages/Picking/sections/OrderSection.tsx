@@ -212,8 +212,8 @@ export const OrderSection = ({ filters = {} }: OrderSectionProps): React.ReactEl
   }, [orders, filters]);
 
   return (
-    <div className="flex-1 flex flex-col min-w-0">
-      <div className="flex-1 overflow-auto rounded-lg shadow-sm bg-white border border-gray-200 p-4">
+    <div className="flex-1 flex flex-col min-w-0 h-full">
+      <div className="flex-1 overflow-hidden rounded-lg shadow-sm bg-white border border-gray-200 p-4 h-full">
         {filteredOrders.length > 0 ? (
           <PickingKanbanBoard
             orders={filteredOrders}

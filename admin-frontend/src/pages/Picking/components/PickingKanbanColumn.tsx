@@ -26,7 +26,7 @@ export const PickingKanbanColumn = ({
           {orders.length} {orders.length === 1 ? 'orden' : 'órdenes'}
         </span>
       </div>
-      <div className="flex-1 overflow-y-auto space-y-2.5 pr-2">
+      <div className="flex-1 overflow-y-auto space-y-2.5 pr-2 min-h-0">
         {orders.length > 0 ? (
           orders.map((order) => (
             <div key={order.id} className="w-full">
