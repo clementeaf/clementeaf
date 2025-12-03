@@ -84,7 +84,9 @@ export const Select = ({
 }: SelectProps): React.ReactElement => {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedLabel, setSelectedLabel] = useState<string>('');
+  const [dropdownPosition, setDropdownPosition] = useState<{ top: number; left: number; width: number } | null>(null);
   const selectRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
 
   /**
    * Obtiene el label de la opción seleccionada
@@ -99,11 +101,32 @@ export const Select = ({
   }, [value, options]);
 
   /**
+   * Calcula la posición del dropdown cuando se abre
+   */
+  useEffect(() => {
+    if (isOpen && buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      setDropdownPosition({
+        top: rect.bottom + 4,
+        left: rect.left,
+        width: rect.width
+      });
+    } else {
+      setDropdownPosition(null);
+    }
+  }, [isOpen]);
+
+  /**
    * Cierra el dropdown cuando se hace click fuera
    */
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent): void => {
-      if (selectRef.current && !selectRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      if (
+        selectRef.current &&
+        !selectRef.current.contains(target) &&
+        !(target instanceof Element && target.closest('[data-dropdown]'))
+      ) {
         setIsOpen(false);
       }
     };
@@ -149,10 +172,11 @@ export const Select = ({
       )}
       <div className="relative">
         <button
+          ref={buttonRef}
           type="button"
           onClick={handleToggle}
           disabled={disabled}
-          className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#004BB7] focus:border-transparent h-[42px] bg-white text-left flex items-center justify-between gap-2 ${
+          className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none h-[42px] bg-white text-left flex items-center justify-between gap-2 ${
             error ? 'border-red-500' : ''
           } ${
             disabled ? 'bg-gray-100 cursor-not-allowed opacity-60' : 'bg-white cursor-pointer'
@@ -164,20 +188,32 @@ export const Select = ({
           <DropdownIcon color={disabled ? '#9ca3af' : '#6b7280'} />
         </button>
 
-        {isOpen && !disabled && (
-          <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-auto">
-            {options.map((option) => (
-              <button
-                key={option.value}
-                type="button"
-                onClick={() => handleSelect(option.value)}
-                className={`w-full px-4 py-2 text-left hover:bg-gray-100 focus:bg-gray-100 focus:outline-none ${
-                  value === option.value ? 'bg-blue-50 text-[#004BB7] font-medium' : 'text-gray-900'
-                }`}
-              >
-                {option.label}
-              </button>
-            ))}
+        {isOpen && !disabled && dropdownPosition && (
+          <div
+            data-dropdown
+            className="fixed z-[9999] bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-auto"
+            style={{
+              top: `${dropdownPosition.top}px`,
+              left: `${dropdownPosition.left}px`,
+              width: `${dropdownPosition.width}px`
+            }}
+          >
+            {options.length > 0 ? (
+              options.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => handleSelect(option.value)}
+                  className={`w-full px-4 py-2 text-xs text-left hover:bg-gray-100 focus:bg-gray-100 focus:outline-none ${
+                    value === option.value ? 'bg-blue-50 text-[#004BB7] font-medium' : 'text-gray-900'
+                  }`}
+                >
+                  {option.label}
+                </button>
+              ))
+            ) : (
+              <div className="px-4 py-2 text-gray-500 text-xs">No hay opciones disponibles</div>
+            )}
           </div>
         )}
       </div>

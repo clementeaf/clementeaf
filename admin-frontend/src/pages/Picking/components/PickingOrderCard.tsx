@@ -42,11 +42,11 @@ export const PickingOrderCard = ({ order, onStatusChange }: PickingOrderCardProp
    * Obtiene las opciones de estado según el estado actual
    */
   const getStatusOptions = (): Array<{ value: PickingOrderStatus; label: string }> => {
-    // Solo permite cambiar de Picking a Confirmación
+    // En Picking permite devolver a Nota de venta emitida o pasar a Confirmación
     if (order.estado === 'Picking') {
       return [
-        { value: 'Picking', label: 'Picking' },
-        { value: 'Confirmación', label: 'Confirmación' }
+        { value: 'Nota de venta emitida', label: 'Devolver a Nota de venta emitida' },
+        { value: 'Confirmación', label: 'Pasar a Confirmación' }
       ];
     }
     
@@ -64,6 +64,13 @@ export const PickingOrderCard = ({ order, onStatusChange }: PickingOrderCardProp
     if (newStatus !== order.estado) {
       onStatusChange(order.id, newStatus);
     }
+  };
+
+  /**
+   * Maneja el click del botón para pasar a picking
+   */
+  const handleMoveToPicking = (): void => {
+    onStatusChange(order.id, 'Picking');
   };
 
   /**
@@ -112,16 +119,26 @@ export const PickingOrderCard = ({ order, onStatusChange }: PickingOrderCardProp
           </div>
 
           {/* Selector de estado y botón detalle */}
-          <div className="flex items-center justify-between gap-3 pt-3 border-t border-gray-200 mt-auto flex-shrink-0">
-            <div className="flex-1 min-w-0">
-              <Select
-                value={order.estado}
-                onChange={(e) => handleStatusChange(e.target.value)}
-                options={getStatusOptions()}
-                selectClassName="w-full text-xs py-1 min-w-0"
-                disabled={order.estado !== 'Picking'}
-              />
-            </div>
+          <div className="flex items-center justify-between gap-3 pt-3 border-t border-gray-200 mt-auto flex-shrink-0 relative">
+            {order.estado === 'Nota de venta emitida' ? (
+              <Button
+                onClick={handleMoveToPicking}
+                className="bg-[#0052C9] text-white hover:bg-[#004BB7] flex items-center gap-1.5 text-xs px-3 py-1.5 flex-1"
+              >
+                Pasar a picking
+              </Button>
+            ) : (
+              <div className="flex-1 min-w-0 relative z-10">
+                <Select
+                  value={order.estado === 'Picking' ? '' : order.estado}
+                  onChange={(e) => handleStatusChange(e.target.value)}
+                  options={getStatusOptions()}
+                  selectClassName="w-full text-xs py-1 min-w-0"
+                  disabled={order.estado !== 'Picking'}
+                  placeholder={order.estado === 'Picking' ? 'Seleccionar acción' : undefined}
+                />
+              </div>
+            )}
             <Button
               onClick={() => setIsDetailModalOpen(true)}
               className="bg-[#0052C9] text-white hover:bg-[#004BB7] flex items-center gap-1.5 text-xs px-2 py-1 flex-shrink-0"
