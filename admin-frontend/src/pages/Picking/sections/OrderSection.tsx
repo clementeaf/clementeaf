@@ -1,6 +1,5 @@
 import { useState, useMemo } from 'react';
-import { PickingOrderCard } from '../components/PickingOrderCard';
-import { SearchBar } from '../../../components/commons';
+import { PickingKanbanBoard } from '../components/PickingKanbanBoard';
 import type { PickingOrder, PickingOrderStatus } from '../types';
 import type { PickingFilters } from '../PickingSidebar';
 
@@ -14,17 +13,17 @@ interface OrderSectionProps {
  * @returns Componente OrderSection
  */
 export const OrderSection = ({ filters = {} }: OrderSectionProps): React.ReactElement => {
-  const [searchValue, setSearchValue] = useState('');
 
   // Datos de ejemplo - En producción esto vendría de un hook/API
   const [orders, setOrders] = useState<PickingOrder[]>([
+    // Solicitud venta
     {
       id: '1',
       codigoOrden: 'ORD-001',
       fechaHoraOrden: new Date().toISOString(),
       vendedor: 'Juan Pérez',
       cantidadProductos: 5,
-      estado: 'Picking',
+      estado: 'Solicitud venta',
       productos: [
         {
           id: '1',
@@ -62,13 +61,14 @@ export const OrderSection = ({ filters = {} }: OrderSectionProps): React.ReactEl
         }
       ]
     },
+    // Picking
     {
       id: '3',
       codigoOrden: 'ORD-003',
       fechaHoraOrden: new Date(Date.now() - 172800000).toISOString(),
       vendedor: 'Carlos Rodríguez',
       cantidadProductos: 8,
-      estado: 'Confirmación',
+      estado: 'Picking',
       productos: [
         {
           id: '4',
@@ -87,6 +87,80 @@ export const OrderSection = ({ filters = {} }: OrderSectionProps): React.ReactEl
           cantidadSolicitada: 12
         }
       ]
+    },
+    {
+      id: '4',
+      codigoOrden: 'ORD-004',
+      fechaHoraOrden: new Date(Date.now() - 259200000).toISOString(),
+      vendedor: 'Ana Martínez',
+      cantidadProductos: 4,
+      estado: 'Picking',
+      productos: [
+        {
+          id: '6',
+          nombre: 'Producto F',
+          codigo: 'PROD-006',
+          ubicacion: 'F-11-12',
+          stock: 80,
+          cantidadSolicitada: 8
+        }
+      ]
+    },
+    // Confirmación
+    {
+      id: '5',
+      codigoOrden: 'ORD-005',
+      fechaHoraOrden: new Date(Date.now() - 345600000).toISOString(),
+      vendedor: 'Pedro Sánchez',
+      cantidadProductos: 6,
+      estado: 'Confirmación',
+      productos: [
+        {
+          id: '7',
+          nombre: 'Producto G',
+          codigo: 'PROD-007',
+          ubicacion: 'G-13-14',
+          stock: 120,
+          cantidadSolicitada: 15
+        }
+      ]
+    },
+    // Despachado
+    {
+      id: '6',
+      codigoOrden: 'ORD-006',
+      fechaHoraOrden: new Date(Date.now() - 432000000).toISOString(),
+      vendedor: 'Laura Fernández',
+      cantidadProductos: 2,
+      estado: 'Despachado',
+      productos: [
+        {
+          id: '8',
+          nombre: 'Producto H',
+          codigo: 'PROD-008',
+          ubicacion: 'H-15-16',
+          stock: 90,
+          cantidadSolicitada: 5
+        }
+      ]
+    },
+    {
+      id: '7',
+      codigoOrden: 'ORD-007',
+      fechaHoraOrden: new Date(Date.now() - 518400000).toISOString(),
+      vendedor: 'Roberto López',
+      cantidadProductos: 7,
+      estado: 'Despachado',
+      productos: [
+        {
+          id: '9',
+          nombre: 'Producto I',
+          codigo: 'PROD-009',
+          ubicacion: 'I-17-18',
+          stock: 110,
+          cantidadSolicitada: 12
+        }
+      ]
     }
   ]);
 
@@ -102,24 +176,11 @@ export const OrderSection = ({ filters = {} }: OrderSectionProps): React.ReactEl
   };
 
   /**
-   * Filtra las órdenes según los filtros aplicados y búsqueda
+   * Filtra las órdenes según los filtros aplicados
+   * Nota: El filtro por estado no se aplica aquí porque el Kanban organiza por estado
    */
   const filteredOrders = useMemo(() => {
     let result = orders;
-
-    // Filtro por búsqueda
-    if (searchValue) {
-      const searchLower = searchValue.toLowerCase();
-      result = result.filter(order =>
-        order.codigoOrden.toLowerCase().includes(searchLower) ||
-        order.vendedor.toLowerCase().includes(searchLower)
-      );
-    }
-
-    // Filtro por estado
-    if (filters.estado) {
-      result = result.filter(order => order.estado === filters.estado);
-    }
 
     // Filtro por vendedor
     if (filters.vendedor) {
@@ -148,34 +209,16 @@ export const OrderSection = ({ filters = {} }: OrderSectionProps): React.ReactEl
     }
 
     return result;
-  }, [orders, filters, searchValue]);
-
-  /**
-   * Maneja el cambio en el input de búsqueda
-   */
-  const handleSearchChange = (value: string): void => {
-    setSearchValue(value);
-  };
+  }, [orders, filters]);
 
   return (
     <div className="flex-1 flex flex-col min-w-0">
-      <SearchBar 
-        searchValue={searchValue} 
-        onSearchChange={handleSearchChange}
-        placeholder="Buscar por código de orden o vendedor..."
-      />
-
       <div className="flex-1 overflow-auto rounded-lg shadow-sm bg-white border border-gray-200 p-4">
         {filteredOrders.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredOrders.map((order) => (
-              <PickingOrderCard
-                key={order.id}
-                order={order}
-                onStatusChange={handleStatusChange}
-              />
-            ))}
-          </div>
+          <PickingKanbanBoard
+            orders={filteredOrders}
+            onStatusChange={handleStatusChange}
+          />
         ) : (
           <div className="flex flex-col items-center justify-center h-64">
             <p className="text-gray-500">

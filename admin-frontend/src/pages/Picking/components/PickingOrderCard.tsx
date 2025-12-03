@@ -86,45 +86,45 @@ export const PickingOrderCard = ({ order, onStatusChange }: PickingOrderCardProp
 
   return (
     <>
-      <div className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-md transition-shadow duration-200">
-        <div className="flex flex-col gap-4">
+      <div className="bg-white rounded-lg border border-gray-200 p-5 hover:shadow-md transition-shadow duration-200">
+        <div className="flex flex-col gap-3">
           {/* Header con código de orden y estado */}
           <div className="flex items-start justify-between">
             <div>
-              <h3 className="text-lg font-semibold text-gray-900">Código: {order.codigoOrden}</h3>
-              <p className="text-sm text-gray-500 mt-1">{formatDateTime(order.fechaHoraOrden)}</p>
+              <h3 className="text-base font-semibold text-gray-900">Código: {order.codigoOrden}</h3>
+              <p className="text-xs text-gray-500 mt-0.5">{formatDateTime(order.fechaHoraOrden)}</p>
             </div>
-            <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(order.estado)}`}>
+            <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${getStatusColor(order.estado)}`}>
               {order.estado}
             </span>
           </div>
 
           {/* Información de la orden */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-xs text-gray-500">Vendedor</label>
-              <p className="text-sm font-medium text-gray-900 mt-1">{order.vendedor}</p>
+              <label className="text-[10px] text-gray-500">Vendedor</label>
+              <p className="text-xs font-medium text-gray-900 mt-0.5">{order.vendedor}</p>
             </div>
             <div>
-              <label className="text-xs text-gray-500">Cantidad de productos</label>
-              <p className="text-sm font-medium text-gray-900 mt-1">{order.cantidadProductos}</p>
+              <label className="text-[10px] text-gray-500">Cantidad de productos</label>
+              <p className="text-xs font-medium text-gray-900 mt-0.5">{order.cantidadProductos}</p>
             </div>
           </div>
 
           {/* Selector de estado y botón detalle */}
-          <div className="flex items-center justify-between gap-4 pt-4 border-t border-gray-200">
+          <div className="flex items-center justify-between gap-3 pt-3 border-t border-gray-200">
             <div className="flex-1">
               <Select
                 value={order.estado}
                 onChange={(e) => handleStatusChange(e.target.value)}
                 options={getStatusOptions()}
-                selectClassName="w-full"
+                selectClassName="w-full text-xs py-1"
                 disabled={order.estado !== 'Picking'}
               />
             </div>
             <Button
               onClick={() => setIsDetailModalOpen(true)}
-              className="bg-[#0052C9] text-white hover:bg-[#004BB7] flex items-center gap-2"
+              className="bg-[#0052C9] text-white hover:bg-[#004BB7] flex items-center gap-1.5 text-xs px-2 py-1"
               leftIcon={<EyeIcon color="white" />}
             >
               Detalle
