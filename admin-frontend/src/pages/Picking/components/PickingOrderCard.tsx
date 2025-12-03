@@ -50,6 +50,22 @@ export const PickingOrderCard = ({ order, onStatusChange }: PickingOrderCardProp
       ];
     }
     
+    // En Confirmación permite devolver a Picking o pasar a Despachado
+    if (order.estado === 'Confirmación') {
+      return [
+        { value: 'Picking', label: 'Devolver a Picking' },
+        { value: 'Despachado', label: 'Pasar a Despachado' }
+      ];
+    }
+    
+    // En Despachado permite devolver a Confirmación o confirmar despacho a ruta
+    if (order.estado === 'Despachado') {
+      return [
+        { value: 'Confirmación', label: 'Devolver a Confirmación' },
+        { value: 'Despachado', label: 'Confirmar despacho a ruta' }
+      ];
+    }
+    
     // Para otros estados, solo muestra el estado actual
     return [
       { value: order.estado, label: order.estado }
@@ -61,6 +77,12 @@ export const PickingOrderCard = ({ order, onStatusChange }: PickingOrderCardProp
    */
   const handleStatusChange = (value: string): void => {
     const newStatus = value as PickingOrderStatus;
+    // Si está en Despachado y selecciona "Confirmar despacho a ruta", mantiene el estado pero podría ejecutar lógica adicional
+    if (order.estado === 'Despachado' && newStatus === 'Despachado') {
+      // Aquí se podría agregar lógica adicional para confirmar el despacho a ruta
+      // Por ahora, no hace nada ya que el estado no cambia
+      return;
+    }
     if (newStatus !== order.estado) {
       onStatusChange(order.id, newStatus);
     }
@@ -130,12 +152,12 @@ export const PickingOrderCard = ({ order, onStatusChange }: PickingOrderCardProp
             ) : (
               <div className="flex-1 min-w-0 relative z-10">
                 <Select
-                  value={order.estado === 'Picking' ? '' : order.estado}
+                  value={order.estado === 'Picking' || order.estado === 'Confirmación' || order.estado === 'Despachado' ? '' : order.estado}
                   onChange={(e) => handleStatusChange(e.target.value)}
                   options={getStatusOptions()}
                   selectClassName="w-full text-xs py-1 min-w-0"
-                  disabled={order.estado !== 'Picking'}
-                  placeholder={order.estado === 'Picking' ? 'Seleccionar acción' : undefined}
+                  disabled={order.estado !== 'Picking' && order.estado !== 'Confirmación' && order.estado !== 'Despachado'}
+                  placeholder={order.estado === 'Picking' || order.estado === 'Confirmación' || order.estado === 'Despachado' ? 'Seleccionar acción' : undefined}
                 />
               </div>
             )}
