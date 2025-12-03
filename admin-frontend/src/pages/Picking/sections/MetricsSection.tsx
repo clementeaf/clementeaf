@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { useState, useMemo } from 'react';
+import { ReusableLineChart } from '../components/ReusableLineChart';
 
 
 /**
@@ -10,9 +10,11 @@ type Temporalidad = 'Día' | 'Semana' | 'Mes';
 /**
  * Interfaz para los datos del gráfico de notas de ventas emitidas
  */
-interface NotaVentaChartData {
+interface NotaVentaChartData extends Record<string, string | number | undefined> {
   periodo: string; // Día, Semana o Mes según la temporalidad seleccionada
   cantidad: number; // Cantidad de notas de ventas emitidas
+  vendedor?: string; // Nombre del vendedor
+  horaEmision?: string; // Hora de emisión de la nota de venta
 }
 
 /**
@@ -50,8 +52,22 @@ export const MetricsSection = (): React.ReactElement => {
   // Estado para la temporalidad seleccionada
   const [temporalidad, setTemporalidad] = useState<Temporalidad>('Día');
 
-  // Datos de ejemplo para el gráfico - En producción esto vendría de un hook/API y eventualmente WebSocket
-  const [chartData, setChartData] = useState<NotaVentaChartData[]>([]);
+  // Datos del gráfico con un punto de hoy
+  const chartData = useMemo<NotaVentaChartData[]>(() => {
+    const hoy = new Date();
+    const dia = String(hoy.getDate()).padStart(2, '0');
+    const mes = String(hoy.getMonth() + 1).padStart(2, '0');
+    const anio = hoy.getFullYear();
+    const fechaFormateada = `${dia}/${mes}/${anio}`;
+    return [
+      {
+        periodo: fechaFormateada,
+        cantidad: 1,
+        vendedor: 'Clemente Arriagada',
+        horaEmision: '08:45'
+      }
+    ];
+  }, []);
 
 
   /**
@@ -153,37 +169,15 @@ export const MetricsSection = (): React.ReactElement => {
             </div>
           </div>
           {/* Gráfico de Notas de Ventas Emitidas */}
-          <div className="w-[250px] h-[200px] flex items-center justify-center">
-            <ResponsiveContainer width={250} height={200}>
-              <LineChart 
-                data={chartData} 
-                margin={{ top: 10, right: 10, left: -5, bottom: 5 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                <XAxis
-                  dataKey="periodo"
-                  stroke="#6b7280"
-                  style={{ fontSize: '12px' }}
-                  height={20}
-                  label={{ value: 'Fecha', style: { fontSize: '12px' } }}
-                />
-                <YAxis
-                  stroke="#6b7280"
-                  style={{ fontSize: '12px' }}
-                  width={20}
-                  label={{ value: 'Cantidad de notas de ventas', angle: -90, style: { fontSize: '12px' } }}
-                />
-                <Tooltip />
-                <Line
-                  type="monotone"
-                  dataKey="cantidad"
-                  stroke="#0052C9"
-                  strokeWidth={2}
-                  dot={{ fill: '#0052C9', r: 4 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
+          <ReusableLineChart
+            data={chartData}
+            xAxisDataKey="periodo"
+            yAxisDataKey="cantidad"
+            xAxisLabel="Fecha"
+            yAxisLabel="Cantidad de notas de ventas"
+            width={250}
+            height={200}
+          />
         </div>
 
         {/* Nota sobre actualización en tiempo real */}
