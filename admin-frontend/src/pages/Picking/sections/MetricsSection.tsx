@@ -132,15 +132,16 @@ export const MetricsSection = (): React.ReactElement => {
         </div>
 
         {/* Gráfico de Notas de Ventas Emitidas */}
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <h4 className="text-lg font-bold text-gray-800">Notas de ventas emitidas</h4>
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6 w-[300px] flex flex-col items-center">
+          <div className="flex items-center justify-between w-full mb-4">
+            <p className="text-[12px] font-bold text-gray-800">Notas de ventas emitidas</p>
+            {/* Viñetas de temporalidad */}
             <div className="flex gap-2">
               {(['Día', 'Semana', 'Mes'] as Temporalidad[]).map((temp) => (
                 <button
                   key={temp}
                   onClick={() => setTemporalidad(temp)}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  className={`px-2 py-1 rounded-lg text-xs font-medium transition-colors ${
                     temporalidad === temp
                       ? 'bg-[#0052C9] text-white'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -151,9 +152,13 @@ export const MetricsSection = (): React.ReactElement => {
               ))}
             </div>
           </div>
-          <div className="w-full h-96">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData}>
+          {/* Gráfico de Notas de Ventas Emitidas */}
+          <div className="w-[250px] h-[250px] flex items-center justify-center">
+            <ResponsiveContainer width={250} height={200}>
+              <LineChart 
+                data={chartData} 
+                margin={{ top: 10, right: 10, left: -5, bottom: -80 }}
+              >
                 <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                 <XAxis
                   dataKey="periodo"
@@ -166,7 +171,8 @@ export const MetricsSection = (): React.ReactElement => {
                 <YAxis
                   stroke="#6b7280"
                   style={{ fontSize: '12px' }}
-                  label={{ value: 'Cantidad de notas de ventas', angle: -90, position: 'insideLeft', style: { fontSize: '12px' } }}
+                  width={20}
+                  label={{ value: 'Cantidad de notas de ventas', angle: -90, style: { fontSize: '12px' } }}
                 />
                 <Tooltip />
                 <Line
