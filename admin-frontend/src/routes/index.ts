@@ -18,8 +18,6 @@ export const routes = {
   collections: '/sells/collections',
   picking: '/picking',
   pickingOrder: '/picking/order',
-  pickingHistory: '/picking/history',
-  pickingReports: '/picking/reports',
   pickingMetrics: '/picking/metrics',
   analytics: '/analytics',
   chat: '/chat',

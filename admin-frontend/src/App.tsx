@@ -46,8 +46,6 @@ function App(): React.ReactNode {
           <Route path={routes.collections} element={<Collections />} />
           <Route path={routes.picking} element={<Picking />} />
           <Route path={routes.pickingOrder} element={<Picking />} />
-          <Route path={routes.pickingHistory} element={<Picking />} />
-          <Route path={routes.pickingReports} element={<Picking />} />
           <Route path={routes.pickingMetrics} element={<Picking />} />
           <Route path={routes.analytics} element={<Analytics />} />
           <Route path={routes.chat} element={<Chat />} />

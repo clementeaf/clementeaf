@@ -5,8 +5,6 @@ import { PickingSidebar, type PickingFilters } from './Picking/PickingSidebar';
 import { routes } from '../routes';
 import {
   OrderSection,
-  HistorySection,
-  ReportsSection,
   MetricsSection
 } from './Picking/sections';
 
@@ -25,12 +23,6 @@ export const Picking = (): React.ReactElement => {
   const getActiveTab = (): string => {
     if (location.pathname === routes.pickingOrder || location.pathname.startsWith(routes.pickingOrder)) {
       return 'order';
-    }
-    if (location.pathname === routes.pickingHistory || location.pathname.startsWith(routes.pickingHistory)) {
-      return 'history';
-    }
-    if (location.pathname === routes.pickingReports || location.pathname.startsWith(routes.pickingReports)) {
-      return 'reports';
     }
     if (location.pathname === routes.pickingMetrics || location.pathname.startsWith(routes.pickingMetrics)) {
       return 'metrics';
@@ -58,12 +50,6 @@ export const Picking = (): React.ReactElement => {
       case 'order':
         navigate(routes.pickingOrder);
         break;
-      case 'history':
-        navigate(routes.pickingHistory);
-        break;
-      case 'reports':
-        navigate(routes.pickingReports);
-        break;
       case 'metrics':
         navigate(routes.pickingMetrics);
         break;
@@ -79,10 +65,6 @@ export const Picking = (): React.ReactElement => {
     switch (activeTab) {
       case 'order':
         return <OrderSection filters={filters} />;
-      case 'history':
-        return <HistorySection />;
-      case 'reports':
-        return <ReportsSection />;
       case 'metrics':
         return <MetricsSection />;
       default:
