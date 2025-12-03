@@ -83,18 +83,22 @@ export const CreateQuote = () => {
   const getStepData = (step: number): Record<string, unknown> => {
     switch (step) {
       case 1:
-        // Combinar región y comuna para compatibilidad con backend
-        const regionComunaCodigo = [
+        // Si retiroEnBodega está marcado, ignorar dirección, región y comuna
+        const retiroEnBodega = formData.retiroEnBodega === 'true';
+        
+        // Combinar región y comuna para compatibilidad con backend (solo si no es retiro en bodega)
+        const regionComunaCodigo = retiroEnBodega ? '' : [
           formData.region || '',
           formData.comuna || ''
         ].filter(Boolean).join(' / ') || '';
         
         return {
           clienteNombre: formData.clienteNombre || '',
-          direccionFacturacion: formData.direccionDespacho || '', // Enviar direccionDespacho como direccionFacturacion para compatibilidad
+          direccionFacturacion: retiroEnBodega ? '' : (formData.direccionDespacho || ''), // Enviar direccionDespacho como direccionFacturacion para compatibilidad
           telefono: formData.telefono || '',
           regionComunaCodigo: regionComunaCodigo,
           asesorAsignado: formData.asesorAsignado || '',
+          retiroEnBodega: retiroEnBodega ? 'true' : 'false',
           contactoNombre: formData.contactoNombre || '',
           contactoTelefono: formData.contactoTelefono || '',
           contactoEmail: formData.contactoEmail || '',

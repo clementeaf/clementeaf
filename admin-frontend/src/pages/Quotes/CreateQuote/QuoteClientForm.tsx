@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Input, CountrySelector, ClientSearchInput, Select, type Country } from '../../../components/commons';
+import { Input, CountrySelector, ClientSearchInput, Select, Checkbox, type Country } from '../../../components/commons';
 import { DropdownIcon } from '../../../components/commons/icons';
 import { getCountryByCode } from '../../../components/commons/countries';
 import { getAllRegions, getCommunesByRegion } from '../../../components/commons/chileRegions';
@@ -35,6 +35,7 @@ export const QuoteClientForm = ({ onDataChange, initialData }: QuoteClientFormPr
       direccionDespacho: '',
       telefono: '',
       asesorAsignado: '',
+      retiroEnBodega: 'false',
       contactoNombre: '',
       contactoTelefono: '',
       contactoEmail: ''
@@ -239,6 +240,7 @@ export const QuoteClientForm = ({ onDataChange, initialData }: QuoteClientFormPr
             options={getAllRegions()}
             placeholder="Selecciona una región"
             selectClassName="bg-white"
+            disabled={formData.retiroEnBodega === 'true'}
             error={errors.region || undefined}
           />
         </div>
@@ -252,7 +254,7 @@ export const QuoteClientForm = ({ onDataChange, initialData }: QuoteClientFormPr
             options={availableCommunes}
             placeholder={formData.region ? "Selecciona una comuna" : "Primero selecciona una región"}
             selectClassName="bg-white"
-            disabled={!formData.region}
+            disabled={!formData.region || formData.retiroEnBodega === 'true'}
             error={errors.comuna || undefined}
           />
         </div>
@@ -266,6 +268,7 @@ export const QuoteClientForm = ({ onDataChange, initialData }: QuoteClientFormPr
             onChange={(e): void => handleFieldChange('direccionDespacho', e.target.value)}
             placeholder="Av. Domingo Santa María 1946"
             inputClassName="bg-white"
+            disabled={formData.retiroEnBodega === 'true'}
             error={errors.direccionDespacho || undefined}
           />
         </div>
@@ -290,18 +293,29 @@ export const QuoteClientForm = ({ onDataChange, initialData }: QuoteClientFormPr
           </div>
         </div>
 
-        <div>
-          <Input
-            id="asesorAsignado"
-            label="Asesor asignado"
-            type="text"
-            value={formData.asesorAsignado || ''}
-            onChange={(e): void => handleFieldChange('asesorAsignado', e.target.value)}
-            placeholder="Nicolás Suazo"
-            inputClassName="bg-white"
-            rightIcon={<DropdownIcon color="#6b7280" />}
-            error={errors.asesorAsignado || undefined}
-          />
+        <div className="flex items-end gap-4">
+          <div className="flex-1">
+            <Input
+              id="asesorAsignado"
+              label="Asesor asignado"
+              type="text"
+              value={formData.asesorAsignado || ''}
+              onChange={(e): void => handleFieldChange('asesorAsignado', e.target.value)}
+              placeholder="Nicolás Suazo"
+              inputClassName="bg-white"
+              rightIcon={<DropdownIcon color="#6b7280" />}
+              error={errors.asesorAsignado || undefined}
+            />
+          </div>
+          <div className="pb-3 ml-5">
+            <Checkbox
+              id="retiroEnBodega"
+              label="Retiro en bodega"
+              checked={formData.retiroEnBodega === 'true'}
+              onChange={(e): void => handleFieldChange('retiroEnBodega', e.target.checked ? 'true' : 'false')}
+              containerClassName="whitespace-nowrap"
+            />
+          </div>
         </div>
       </div>
 

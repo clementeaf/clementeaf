@@ -58,6 +58,7 @@ export const QuoteReviewForm = ({ onDataChange, initialData, onBack }: QuoteRevi
       comuna: comuna,
       regionComunaCodigo: regionComunaCodigo,
       asesorAsignado: formData.asesorAsignado || '',
+      retiroEnBodega: formData.retiroEnBodega === 'true',
       contactoNombre: formData.contactoNombre || 'María González',
       contactoTelefono: formData.contactoTelefono || '+56 983146890',
       contactoEmail: formData.contactoEmail || 'maria.gonzalez@empresa.com',
@@ -113,18 +114,27 @@ export const QuoteReviewForm = ({ onDataChange, initialData, onBack }: QuoteRevi
               <p className="text-sm text-gray-600 mb-1">Asesor asignado</p>
               <p className="text-sm font-medium text-gray-800">{reviewData.asesorAsignado || '-'}</p>
             </div>
-            <div>
-              <p className="text-sm text-gray-600 mb-1">Región</p>
-              <p className="text-sm font-medium text-gray-800">{reviewData.region || '-'}</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-600 mb-1">Comuna</p>
-              <p className="text-sm font-medium text-gray-800">{reviewData.comuna || '-'}</p>
-            </div>
-            <div className="col-span-2">
-              <p className="text-sm text-gray-600 mb-1">Dirección de despacho</p>
-              <p className="text-sm font-medium text-gray-800">{reviewData.direccionDespacho || '-'}</p>
-            </div>
+            {!reviewData.retiroEnBodega ? (
+              <>
+                <div>
+                  <p className="text-sm text-gray-600 mb-1">Región</p>
+                  <p className="text-sm font-medium text-gray-800">{reviewData.region || '-'}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600 mb-1">Comuna</p>
+                  <p className="text-sm font-medium text-gray-800">{reviewData.comuna || '-'}</p>
+                </div>
+                <div className="col-span-2">
+                  <p className="text-sm text-gray-600 mb-1">Dirección de despacho</p>
+                  <p className="text-sm font-medium text-gray-800">{reviewData.direccionDespacho || '-'}</p>
+                </div>
+              </>
+            ) : (
+              <div className="col-span-2">
+                <p className="text-sm text-gray-600 mb-1">Retiro en bodega</p>
+                <p className="text-sm font-medium text-gray-800">Sí - El cliente retirará el producto en bodega</p>
+              </div>
+            )}
             <div>
               <p className="text-sm text-gray-600 mb-1">Teléfono</p>
               <p className="text-sm font-medium text-gray-800">{reviewData.telefono || '-'}</p>
