@@ -153,20 +153,19 @@ export const MetricsSection = (): React.ReactElement => {
             </div>
           </div>
           {/* Gráfico de Notas de Ventas Emitidas */}
-          <div className="w-[250px] h-[250px] flex items-center justify-center">
+          <div className="w-[250px] h-[200px] flex items-center justify-center">
             <ResponsiveContainer width={250} height={200}>
               <LineChart 
                 data={chartData} 
-                margin={{ top: 10, right: 10, left: -5, bottom: -80 }}
+                margin={{ top: 10, right: 10, left: -5, bottom: 5 }}
               >
                 <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                 <XAxis
                   dataKey="periodo"
                   stroke="#6b7280"
                   style={{ fontSize: '12px' }}
-                  angle={-45}
-                  textAnchor="end"
-                  height={80}
+                  height={20}
+                  label={{ value: 'Fecha', style: { fontSize: '12px' } }}
                 />
                 <YAxis
                   stroke="#6b7280"
