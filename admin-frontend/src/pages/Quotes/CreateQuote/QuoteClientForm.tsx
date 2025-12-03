@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
-import { Input, CountrySelector, ClientSearchInput, type Country } from '../../../components/commons';
+import { useState, useEffect, useMemo } from 'react';
+import { Input, CountrySelector, ClientSearchInput, Select, type Country } from '../../../components/commons';
 import { DropdownIcon } from '../../../components/commons/icons';
 import { getCountryByCode } from '../../../components/commons/countries';
+import { getAllRegions, getCommunesByRegion } from '../../../components/commons/chileRegions';
 import type { Client } from '../../../services/clientsService';
 
 /**
@@ -28,9 +29,11 @@ export const QuoteClientForm = ({ onDataChange, initialData }: QuoteClientFormPr
   const [formData, setFormData] = useState<Record<string, string>>(
     initialData || {
       clienteNombre: '',
-      direccionFacturacion: '',
+      clienteRut: '',
+      region: '',
+      comuna: '',
+      direccionDespacho: '',
       telefono: '',
-      regionComunaCodigo: '',
       asesorAsignado: '',
       contactoNombre: '',
       contactoTelefono: '',
@@ -117,22 +120,61 @@ export const QuoteClientForm = ({ onDataChange, initialData }: QuoteClientFormPr
   };
 
   /**
+   * Obtiene las comunas disponibles según la región seleccionada
+   */
+  const availableCommunes = useMemo(() => {
+    if (!formData.region) {
+      return [];
+    }
+    return getCommunesByRegion(formData.region);
+  }, [formData.region]);
+
+  /**
+   * Maneja el cambio de región
+   */
+  const handleRegionChange = (e: React.ChangeEvent<HTMLSelectElement>): void => {
+    const newRegion = e.target.value;
+    handleFieldChange('region', newRegion);
+    // Limpiar comuna cuando cambia la región
+    handleFieldChange('comuna', '');
+  };
+
+  /**
    * Maneja la selección de un cliente desde el buscador
    */
   const handleClientSelect = (client: Client): void => {
-    // Construir región/comuna/código postal
-    const regionParts: string[] = [];
-    if (client.regionFacturacion) regionParts.push(client.regionFacturacion);
-    if (client.comunaFacturacion) regionParts.push(client.comunaFacturacion);
-    if (client.codigoPostalFacturacion) regionParts.push(client.codigoPostalFacturacion);
-    const regionComunaCodigo = regionParts.length > 0 ? regionParts.join(' / ') : '';
+    // Mapear nombres de regiones a valores del selector
+    const regionName = client.regionDespacho || client.regionFacturacion || '';
+    const comunaName = client.comunaDespacho || client.comunaFacturacion || '';
+    
+    // Buscar el valor de la región por nombre (necesitamos mapear el nombre al value)
+    const allRegions = getAllRegions();
+    const matchedRegion = allRegions.find(r => 
+      r.label.toLowerCase() === regionName.toLowerCase() || 
+      r.value === regionName.toLowerCase().replace(/\s+/g, '_')
+    );
+    
+    const regionValue = matchedRegion?.value || '';
+    
+    // Si encontramos la región, buscar la comuna
+    let comunaValue = '';
+    if (regionValue) {
+      const communes = getCommunesByRegion(regionValue);
+      const matchedCommune = communes.find(c => 
+        c.label.toLowerCase() === comunaName.toLowerCase() ||
+        c.value === comunaName.toLowerCase().replace(/\s+/g, '_')
+      );
+      comunaValue = matchedCommune?.value || '';
+    }
 
     const newData: Record<string, string> = {
       ...formData,
       clienteNombre: client.nombreCliente || client.razonSocial || '',
-      direccionFacturacion: client.direccionFacturacion || '',
+      clienteRut: client.rut || '',
+      region: regionValue,
+      comuna: comunaValue,
+      direccionDespacho: client.direccionDespacho || client.direccionFacturacion || '',
       telefono: '', // El teléfono del cliente se mantiene vacío ya que no existe en la entidad
-      regionComunaCodigo: regionComunaCodigo,
       contactoNombre: client.contactoNombre || '',
       contactoEmail: client.contactoCorreoElectronico || '',
       contactoTelefono: client.contactoTelefono || '',
@@ -161,29 +203,70 @@ export const QuoteClientForm = ({ onDataChange, initialData }: QuoteClientFormPr
     <div className="flex-1 p-6">
       <h2 className="text-lg font-bold text-gray-800 mb-6">Información del cliente</h2>
       <div className="grid grid-cols-2 gap-6">
-        <div className="col-span-2">
+        <div>
           <ClientSearchInput
             id="clienteNombre"
             label="Nombre del cliente"
             value={formData.clienteNombre || ''}
             onChange={(value): void => handleFieldChange('clienteNombre', value)}
             onClientSelect={handleClientSelect}
-            placeholder="Busca o selecciona un cliente existente"
+            placeholder="Busca por nombre"
             inputClassName="bg-white"
             error={errors.clienteNombre || undefined}
+            searchType="nombre"
+          />
+        </div>
+        <div>
+          <ClientSearchInput
+            id="clienteRut"
+            label="RUT del cliente"
+            value={formData.clienteRut || ''}
+            onChange={(value): void => handleFieldChange('clienteRut', value)}
+            onClientSelect={handleClientSelect}
+            placeholder="Busca por RUT"
+            inputClassName="bg-white"
+            error={errors.clienteRut || undefined}
+            searchType="rut"
+          />
+        </div>
+
+        <div>
+          <Select
+            id="region"
+            label="Región"
+            value={formData.region || ''}
+            onChange={handleRegionChange}
+            options={getAllRegions()}
+            placeholder="Selecciona una región"
+            selectClassName="bg-white"
+            error={errors.region || undefined}
+          />
+        </div>
+
+        <div>
+          <Select
+            id="comuna"
+            label="Comuna"
+            value={formData.comuna || ''}
+            onChange={(e): void => handleFieldChange('comuna', e.target.value)}
+            options={availableCommunes}
+            placeholder={formData.region ? "Selecciona una comuna" : "Primero selecciona una región"}
+            selectClassName="bg-white"
+            disabled={!formData.region}
+            error={errors.comuna || undefined}
           />
         </div>
 
         <div>
           <Input
-            id="direccionFacturacion"
-            label="Dirección de facturación"
+            id="direccionDespacho"
+            label="Dirección de despacho"
             type="text"
-            value={formData.direccionFacturacion || ''}
-            onChange={(e): void => handleFieldChange('direccionFacturacion', e.target.value)}
-            placeholder="Av. Domingo Santa María 1946, Independencia"
+            value={formData.direccionDespacho || ''}
+            onChange={(e): void => handleFieldChange('direccionDespacho', e.target.value)}
+            placeholder="Av. Domingo Santa María 1946"
             inputClassName="bg-white"
-            error={errors.direccionFacturacion || undefined}
+            error={errors.direccionDespacho || undefined}
           />
         </div>
 
@@ -205,19 +288,6 @@ export const QuoteClientForm = ({ onDataChange, initialData }: QuoteClientFormPr
               error={errors.telefono || undefined}
             />
           </div>
-        </div>
-
-        <div>
-          <Input
-            id="regionComunaCodigo"
-            label="Región / Comuna / Código postal"
-            type="text"
-            value={formData.regionComunaCodigo || ''}
-            onChange={(e): void => handleFieldChange('regionComunaCodigo', e.target.value)}
-            placeholder="Región Metropolitana / Independencia / 8340290"
-            inputClassName="bg-white"
-            error={errors.regionComunaCodigo || undefined}
-          />
         </div>
 
         <div>

@@ -5,6 +5,11 @@ import { SearchIcon, DropdownIcon } from './icons';
 import type { Client } from '../../services/clientsService';
 
 /**
+ * Tipo de búsqueda permitido
+ */
+export type SearchType = 'nombre' | 'rut' | 'both';
+
+/**
  * Props del componente ClientSearchInput
  */
 interface ClientSearchInputProps {
@@ -40,6 +45,10 @@ interface ClientSearchInputProps {
    * ID del input
    */
   id?: string;
+  /**
+   * Tipo de búsqueda: 'nombre' para buscar solo por nombre, 'rut' para buscar solo por RUT, 'both' para ambos
+   */
+  searchType?: SearchType;
 }
 
 /**
@@ -55,7 +64,8 @@ export const ClientSearchInput = ({
   label,
   inputClassName = '',
   error,
-  id
+  id,
+  searchType = 'both'
 }: ClientSearchInputProps) => {
   const [searchTerm, setSearchTerm] = useState(value);
   const [isOpen, setIsOpen] = useState(false);
@@ -66,34 +76,32 @@ export const ClientSearchInput = ({
   /**
    * Busca clientes cuando hay un término de búsqueda
    */
-  const { data: clientsData, isLoading } = useQuery({
-    queryKey: ['clients', 'search', searchTerm],
+  const { data: clients, isLoading } = useQuery({
+    queryKey: ['clients', 'search', searchType, searchTerm],
     queryFn: async () => {
       if (!searchTerm || searchTerm.trim().length < 2) {
-        return { data: [], total: 0, page: 1, limit: 50, totalPages: 0 };
+        return [];
       }
-      return await clientsService.getAllClients(1, 50);
+
+      const searchOptions: { nombre?: string; rut?: string; limit?: number } = { limit: 10 };
+      
+      if (searchType === 'nombre') {
+        searchOptions.nombre = searchTerm;
+      } else if (searchType === 'rut') {
+        searchOptions.rut = searchTerm;
+      } else {
+        // 'both' - buscar en ambos campos
+        searchOptions.nombre = searchTerm;
+        searchOptions.rut = searchTerm;
+      }
+
+      return await clientsService.searchClients(searchOptions);
     },
     enabled: searchTerm.trim().length >= 2,
     staleTime: 1000 * 60 * 5
   });
 
-  /**
-   * Filtra los clientes según el término de búsqueda
-   */
-  const filteredClients = useMemo(() => {
-    if (!clientsData?.data || !searchTerm || searchTerm.trim().length < 2) {
-      return [];
-    }
-
-    const searchLower = searchTerm.toLowerCase().trim();
-    return clientsData.data.filter(client => {
-      const nombreMatch = client.nombreCliente?.toLowerCase().includes(searchLower);
-      const razonSocialMatch = client.razonSocial?.toLowerCase().includes(searchLower);
-      const rutMatch = client.rut?.toLowerCase().includes(searchLower);
-      return nombreMatch || razonSocialMatch || rutMatch;
-    }).slice(0, 10); // Limitar a 10 resultados
-  }, [clientsData, searchTerm]);
+  const filteredClients = clients || [];
 
   /**
    * Sincroniza el valor del input con el estado local
@@ -142,9 +150,16 @@ export const ClientSearchInput = ({
    * Maneja la selección de un cliente
    */
   const handleClientSelect = (client: Client): void => {
-    const displayName = client.nombreCliente || client.razonSocial || '';
-    setSearchTerm(displayName);
-    onChange(displayName);
+    // Mostrar el valor apropiado según el tipo de búsqueda
+    let displayValue = '';
+    if (searchType === 'rut') {
+      displayValue = client.rut || '';
+    } else {
+      displayValue = client.nombreCliente || client.razonSocial || '';
+    }
+    
+    setSearchTerm(displayValue);
+    onChange(displayValue);
     setSelectedClientId(client.id);
     setIsOpen(false);
     
@@ -196,7 +211,7 @@ export const ClientSearchInput = ({
       )}
 
       {/* Dropdown de resultados */}
-      {isOpen && (filteredClients.length > 0 || isLoading) && (
+      {isOpen && (filteredClients.length > 0 || (isLoading && searchTerm.trim().length >= 2)) && (
         <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-auto">
           {isLoading ? (
             <div className="p-4 text-center text-gray-500">

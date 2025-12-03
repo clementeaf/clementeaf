@@ -40,6 +40,7 @@ export const endpoints = {
     create: '',
     getById: '{id}',
     getAll: '',
+    search: 'search/query',
     update: '{id}',
     delete: '{id}'
   }),

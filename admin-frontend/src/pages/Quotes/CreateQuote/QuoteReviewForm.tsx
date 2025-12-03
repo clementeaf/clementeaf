@@ -42,12 +42,21 @@ export const QuoteReviewForm = ({ onDataChange, initialData, onBack }: QuoteRevi
 
   // Función para obtener datos de ejemplo (en producción vendrían de los pasos anteriores)
   const getReviewData = () => {
+    // Si tenemos region y comuna separados, combinarlos; si no, usar regionComunaCodigo (compatibilidad)
+    const region = formData.region || '';
+    const comuna = formData.comuna || '';
+    const regionComunaCodigo = region && comuna 
+      ? `${region} / ${comuna}` 
+      : (formData.regionComunaCodigo || '');
+    
     return {
       // Paso 1: Cliente
       clienteNombre: formData.clienteNombre || '',
-      direccionFacturacion: formData.direccionFacturacion || '',
+      direccionDespacho: formData.direccionDespacho || formData.direccionFacturacion || '',
       telefono: formData.telefono || '',
-      regionComunaCodigo: formData.regionComunaCodigo || '',
+      region: region,
+      comuna: comuna,
+      regionComunaCodigo: regionComunaCodigo,
       asesorAsignado: formData.asesorAsignado || '',
       contactoNombre: formData.contactoNombre || 'María González',
       contactoTelefono: formData.contactoTelefono || '+56 983146890',
@@ -105,12 +114,16 @@ export const QuoteReviewForm = ({ onDataChange, initialData, onBack }: QuoteRevi
               <p className="text-sm font-medium text-gray-800">{reviewData.asesorAsignado || '-'}</p>
             </div>
             <div>
-              <p className="text-sm text-gray-600 mb-1">Dirección de facturación</p>
-              <p className="text-sm font-medium text-gray-800">{reviewData.direccionFacturacion || '-'}</p>
+              <p className="text-sm text-gray-600 mb-1">Región</p>
+              <p className="text-sm font-medium text-gray-800">{reviewData.region || '-'}</p>
             </div>
             <div>
-              <p className="text-sm text-gray-600 mb-1">Región / Comuna / Código postal</p>
-              <p className="text-sm font-medium text-gray-800">{reviewData.regionComunaCodigo || '-'}</p>
+              <p className="text-sm text-gray-600 mb-1">Comuna</p>
+              <p className="text-sm font-medium text-gray-800">{reviewData.comuna || '-'}</p>
+            </div>
+            <div className="col-span-2">
+              <p className="text-sm text-gray-600 mb-1">Dirección de despacho</p>
+              <p className="text-sm font-medium text-gray-800">{reviewData.direccionDespacho || '-'}</p>
             </div>
             <div>
               <p className="text-sm text-gray-600 mb-1">Teléfono</p>

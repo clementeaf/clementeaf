@@ -1,6 +1,7 @@
 import { AppDataSource } from '../../../config/database';
 import { Clients } from '../entities/Clients.entity';
 import { type CreateClientDto } from '../dto/CreateClientDto';
+import { Like, type FindOptionsWhere } from 'typeorm';
 
 /**
  * Servicio para gestionar clientes
@@ -141,6 +142,54 @@ export class ClientsService {
       limit,
       totalPages
     };
+  }
+
+  /**
+   * Busca clientes por nombre o RUT
+   * @param options - Opciones de búsqueda
+   * @param options.nombre - Término de búsqueda por nombre
+   * @param options.rut - Término de búsqueda por RUT
+   * @param options.limit - Límite de resultados (default: 10)
+   * @returns Lista de clientes encontrados
+   */
+  async searchClients(options: { nombre?: string; rut?: string; limit?: number }): Promise<Clients[]> {
+    const { nombre, rut, limit = 10 } = options;
+    
+    // Si no hay ningún término de búsqueda, retornar vacío
+    if ((!nombre || nombre.trim().length < 2) && (!rut || rut.trim().length < 2)) {
+      return [];
+    }
+
+    const whereConditions: Array<FindOptionsWhere<Clients>> = [];
+
+    // Si hay término de búsqueda por nombre
+    if (nombre && nombre.trim().length >= 2) {
+      const nombrePattern = `%${nombre.trim()}%`;
+      whereConditions.push(
+        { nombreCliente: Like(nombrePattern) },
+        { razonSocial: Like(nombrePattern) }
+      );
+    }
+
+    // Si hay término de búsqueda por RUT
+    if (rut && rut.trim().length >= 2) {
+      const rutPattern = `%${rut.trim()}%`;
+      whereConditions.push({ rut: Like(rutPattern) });
+    }
+
+    // Si no hay condiciones, retornar vacío
+    if (whereConditions.length === 0) {
+      return [];
+    }
+
+    // TypeORM trata un array en where como OR automáticamente
+    const clients = await this.clientsRepository.find({
+      where: whereConditions,
+      take: limit,
+      order: { createdAt: 'DESC' }
+    });
+
+    return clients;
   }
 
   /**

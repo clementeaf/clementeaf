@@ -83,11 +83,17 @@ export const CreateQuote = () => {
   const getStepData = (step: number): Record<string, unknown> => {
     switch (step) {
       case 1:
+        // Combinar región y comuna para compatibilidad con backend
+        const regionComunaCodigo = [
+          formData.region || '',
+          formData.comuna || ''
+        ].filter(Boolean).join(' / ') || '';
+        
         return {
           clienteNombre: formData.clienteNombre || '',
-          direccionFacturacion: formData.direccionFacturacion || '',
+          direccionFacturacion: formData.direccionDespacho || '', // Enviar direccionDespacho como direccionFacturacion para compatibilidad
           telefono: formData.telefono || '',
-          regionComunaCodigo: formData.regionComunaCodigo || '',
+          regionComunaCodigo: regionComunaCodigo,
           asesorAsignado: formData.asesorAsignado || '',
           contactoNombre: formData.contactoNombre || '',
           contactoTelefono: formData.contactoTelefono || '',

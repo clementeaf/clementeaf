@@ -337,16 +337,6 @@ functions:
           method: post
           cors: true
 
-  getClientById:
-    handler: dist/modules/Clients/handlers/getClientById.handler
-    timeout: 30
-    memorySize: 512
-    events:
-      - http:
-          path: clients/{id}
-          method: get
-          cors: true
-
   getAllClients:
     handler: dist/modules/Clients/handlers/getAllClients.handler
     timeout: 30
@@ -354,6 +344,26 @@ functions:
     events:
       - http:
           path: clients
+          method: get
+          cors: true
+
+  searchClients:
+    handler: dist/modules/Clients/handlers/searchClients.handler
+    timeout: 30
+    memorySize: 512
+    events:
+      - http:
+          path: clients/search/query
+          method: get
+          cors: true
+
+  getClientById:
+    handler: dist/modules/Clients/handlers/getClientById.handler
+    timeout: 30
+    memorySize: 512
+    events:
+      - http:
+          path: clients/{id}
           method: get
           cors: true
 

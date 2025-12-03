@@ -191,6 +191,37 @@ export const clientsService = {
   },
 
   /**
+   * Busca clientes por nombre o RUT
+   * @param options - Opciones de búsqueda
+   * @param options.nombre - Término de búsqueda por nombre
+   * @param options.rut - Término de búsqueda por RUT
+   * @param options.limit - Límite de resultados (default: 10)
+   * @returns Lista de clientes encontrados
+   */
+  async searchClients(options: { nombre?: string; rut?: string; limit?: number }): Promise<Client[]> {
+    const { nombre, rut, limit = 10 } = options;
+
+    // Si no hay ningún término de búsqueda válido, retornar vacío
+    if ((!nombre || nombre.trim().length < 2) && (!rut || rut.trim().length < 2)) {
+      return [];
+    }
+
+    const params: Record<string, string | number> = { limit };
+    if (nombre && nombre.trim().length >= 2) {
+      params.nombre = nombre.trim();
+    }
+    if (rut && rut.trim().length >= 2) {
+      params.rut = rut.trim();
+    }
+
+    const { data } = await apiClient.get<{ data: { data: Client[]; total: number } }>(
+      endpoints.clients.search,
+      { params }
+    );
+    return data.data.data;
+  },
+
+  /**
    * Actualiza un cliente
    * @param id - ID del cliente
    * @param clientData - Datos a actualizar
