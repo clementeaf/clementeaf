@@ -86,24 +86,24 @@ export const PickingOrderCard = ({ order, onStatusChange }: PickingOrderCardProp
 
   return (
     <>
-      <div className="bg-white rounded-lg border border-gray-200 p-5 hover:shadow-md transition-shadow duration-200 w-full h-[200px] flex flex-col">
-        <div className="flex flex-col gap-3 min-w-0 flex-1">
+      <div className="bg-white rounded-lg border border-gray-200 p-5 hover:shadow-md transition-shadow duration-200 w-full h-[220px] flex flex-col overflow-hidden">
+        <div className="flex flex-col gap-3 min-w-0 flex-1 overflow-hidden">
           {/* Header con código de orden y estado */}
-          <div className="flex items-start justify-between gap-2">
+          <div className="flex items-start justify-between gap-2 flex-shrink-0">
             <div className="flex-1 min-w-0">
-              <h3 className="text-base font-semibold text-gray-900">Código: {order.codigoOrden}</h3>
+              <h3 className="text-base font-semibold text-gray-900 leading-tight whitespace-nowrap overflow-hidden text-ellipsis">Código: {order.codigoOrden}</h3>
               <p className="text-xs text-gray-500 mt-0.5">{formatDateTime(order.fechaHoraOrden)}</p>
             </div>
-            <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium whitespace-nowrap flex-shrink-0 ${getStatusColor(order.estado)}`}>
+            <span className={`px-2 py-0.5 rounded-full text-[9px] font-medium whitespace-nowrap flex-shrink-0 ${getStatusColor(order.estado)}`}>
               {order.estado}
             </span>
           </div>
 
           {/* Información de la orden */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-3 flex-shrink-0">
             <div>
               <label className="text-[10px] text-gray-500">Vendedor</label>
-              <p className="text-xs font-medium text-gray-900 mt-0.5">{order.vendedor}</p>
+              <p className="text-xs font-medium text-gray-900 mt-0.5 break-words">{order.vendedor}</p>
             </div>
             <div>
               <label className="text-[10px] text-gray-500">Cantidad de productos</label>
@@ -112,7 +112,7 @@ export const PickingOrderCard = ({ order, onStatusChange }: PickingOrderCardProp
           </div>
 
           {/* Selector de estado y botón detalle */}
-          <div className="flex items-center justify-between gap-3 pt-3 border-t border-gray-200 mt-auto">
+          <div className="flex items-center justify-between gap-3 pt-3 border-t border-gray-200 mt-auto flex-shrink-0">
             <div className="flex-1 min-w-0">
               <Select
                 value={order.estado}
