@@ -20,6 +20,7 @@ export const routes = {
   pickingOrder: '/picking/order',
   pickingHistory: '/picking/history',
   pickingReports: '/picking/reports',
+  pickingMetrics: '/picking/metrics',
   analytics: '/analytics',
   chat: '/chat',
   support: '/support',

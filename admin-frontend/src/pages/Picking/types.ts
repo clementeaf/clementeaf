@@ -1,7 +1,7 @@
 /**
  * Estados posibles de una orden de picking
  */
-export type PickingOrderStatus = 'Solicitud venta' | 'Picking' | 'Confirmación' | 'Despachado';
+export type PickingOrderStatus = 'Nota de venta emitida' | 'Picking' | 'Confirmación' | 'Despachado';
 
 /**
  * Producto en una orden de picking

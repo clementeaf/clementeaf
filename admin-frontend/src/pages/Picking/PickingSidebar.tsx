@@ -1,7 +1,5 @@
 import { useState } from 'react';
 import { DropdownIcon, ChevronUpIcon } from '../../components/commons/icons';
-import { Select } from '../../components/commons';
-import type { PickingOrderStatus } from './types';
 
 /**
  * Props del componente PickingSidebar
@@ -21,7 +19,6 @@ interface PickingSidebarProps {
  * Filtros para órdenes de picking
  */
 export interface PickingFilters {
-  estado?: PickingOrderStatus | 'Todos';
   vendedor?: string;
   fechaDesde?: string;
   fechaHasta?: string;
@@ -33,7 +30,7 @@ export interface PickingFilters {
  * @returns Componente PickingSidebar
  */
 export const PickingSidebar = ({ filters, onFiltersChange }: PickingSidebarProps): React.ReactElement => {
-  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['estado']));
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['vendedor', 'fecha']));
 
   /**
    * Maneja el toggle de una sección
@@ -47,27 +44,6 @@ export const PickingSidebar = ({ filters, onFiltersChange }: PickingSidebarProps
         newSet.add(sectionId);
       }
       return newSet;
-    });
-  };
-
-  /**
-   * Opciones de estado
-   */
-  const estadoOptions = [
-    { value: 'Todos', label: 'Todos' },
-    { value: 'Solicitud venta', label: 'Solicitud venta' },
-    { value: 'Picking', label: 'Picking' },
-    { value: 'Confirmación', label: 'Confirmación' },
-    { value: 'Despachado', label: 'Despachado' }
-  ];
-
-  /**
-   * Maneja el cambio de estado
-   */
-  const handleEstadoChange = (value: string): void => {
-    onFiltersChange({
-      ...filters,
-      estado: value === 'Todos' ? undefined : (value as PickingOrderStatus)
     });
   };
 
@@ -105,31 +81,6 @@ export const PickingSidebar = ({ filters, onFiltersChange }: PickingSidebarProps
     <div className="w-64 bg-white rounded-lg shadow-sm border border-gray-200 p-4">
       <h2 className="text-lg font-bold text-gray-800 mb-4">Filtros</h2>
       <div className="flex flex-col gap-4">
-        {/* Filtro por Estado */}
-        <div>
-          <button
-            onClick={() => toggleSection('estado')}
-            className="w-full flex items-center justify-between text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors duration-200"
-          >
-            <span>Por estado</span>
-            {expandedSections.has('estado') ? (
-              <ChevronUpIcon color="#6B7280" />
-            ) : (
-              <DropdownIcon color="#6B7280" />
-            )}
-          </button>
-          {expandedSections.has('estado') && (
-            <div className="mt-2">
-              <Select
-                value={filters.estado || 'Todos'}
-                onChange={(e) => handleEstadoChange(e.target.value)}
-                options={estadoOptions}
-                selectClassName="w-full"
-              />
-            </div>
-          )}
-        </div>
-
         {/* Filtro por Vendedor */}
         <div>
           <button

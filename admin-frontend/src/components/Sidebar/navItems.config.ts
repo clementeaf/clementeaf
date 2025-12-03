@@ -37,6 +37,7 @@ export const sellsSubItems: NavItem[] = [
 export const pickingSubItems: NavItem[] = [
   { name: 'Orden de picking', path: routes.pickingOrder, icon: checkIcon },
   { name: 'Historial', path: routes.pickingHistory, icon: checkIcon },
-  { name: 'Reportes', path: routes.pickingReports, icon: checkIcon }
+  { name: 'Reportes', path: routes.pickingReports, icon: checkIcon },
+  { name: 'Métricas', path: routes.pickingMetrics, icon: checkIcon }
 ];
 

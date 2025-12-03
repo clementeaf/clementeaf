@@ -71,7 +71,7 @@ export const PickingOrderCard = ({ order, onStatusChange }: PickingOrderCardProp
    */
   const getStatusColor = (status: PickingOrderStatus): string => {
     switch (status) {
-      case 'Solicitud venta':
+      case 'Nota de venta emitida':
         return 'bg-yellow-100 text-yellow-800';
       case 'Picking':
         return 'bg-blue-100 text-blue-800';
@@ -86,15 +86,15 @@ export const PickingOrderCard = ({ order, onStatusChange }: PickingOrderCardProp
 
   return (
     <>
-      <div className="bg-white rounded-lg border border-gray-200 p-5 hover:shadow-md transition-shadow duration-200">
-        <div className="flex flex-col gap-3">
+      <div className="bg-white rounded-lg border border-gray-200 p-5 hover:shadow-md transition-shadow duration-200 w-full">
+        <div className="flex flex-col gap-3 min-w-0">
           {/* Header con código de orden y estado */}
-          <div className="flex items-start justify-between">
-            <div>
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex-1 min-w-0">
               <h3 className="text-base font-semibold text-gray-900">Código: {order.codigoOrden}</h3>
               <p className="text-xs text-gray-500 mt-0.5">{formatDateTime(order.fechaHoraOrden)}</p>
             </div>
-            <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${getStatusColor(order.estado)}`}>
+            <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium whitespace-nowrap flex-shrink-0 ${getStatusColor(order.estado)}`}>
               {order.estado}
             </span>
           </div>
@@ -113,18 +113,18 @@ export const PickingOrderCard = ({ order, onStatusChange }: PickingOrderCardProp
 
           {/* Selector de estado y botón detalle */}
           <div className="flex items-center justify-between gap-3 pt-3 border-t border-gray-200">
-            <div className="flex-1">
+            <div className="flex-1 min-w-0">
               <Select
                 value={order.estado}
                 onChange={(e) => handleStatusChange(e.target.value)}
                 options={getStatusOptions()}
-                selectClassName="w-full text-xs py-1"
+                selectClassName="w-full text-xs py-1 min-w-0"
                 disabled={order.estado !== 'Picking'}
               />
             </div>
             <Button
               onClick={() => setIsDetailModalOpen(true)}
-              className="bg-[#0052C9] text-white hover:bg-[#004BB7] flex items-center gap-1.5 text-xs px-2 py-1"
+              className="bg-[#0052C9] text-white hover:bg-[#004BB7] flex items-center gap-1.5 text-xs px-2 py-1 flex-shrink-0"
               leftIcon={<EyeIcon color="white" />}
             >
               Detalle

@@ -16,14 +16,14 @@ export const OrderSection = ({ filters = {} }: OrderSectionProps): React.ReactEl
 
   // Datos de ejemplo - En producción esto vendría de un hook/API
   const [orders, setOrders] = useState<PickingOrder[]>([
-    // Solicitud venta
+    // Nota de venta emitida
     {
       id: '1',
       codigoOrden: 'ORD-001',
       fechaHoraOrden: new Date().toISOString(),
       vendedor: 'Juan Pérez',
       cantidadProductos: 5,
-      estado: 'Solicitud venta',
+      estado: 'Nota de venta emitida',
       productos: [
         {
           id: '1',
@@ -49,7 +49,7 @@ export const OrderSection = ({ filters = {} }: OrderSectionProps): React.ReactEl
       fechaHoraOrden: new Date(Date.now() - 86400000).toISOString(),
       vendedor: 'María González',
       cantidadProductos: 3,
-      estado: 'Solicitud venta',
+      estado: 'Nota de venta emitida',
       productos: [
         {
           id: '3',

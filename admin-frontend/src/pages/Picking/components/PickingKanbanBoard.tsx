@@ -10,7 +10,7 @@ interface PickingKanbanBoardProps {
  * Configuración de las columnas del tablero Kanban
  */
 const columns: Array<{ title: string; status: PickingOrderStatus }> = [
-  { title: 'Solicitud venta', status: 'Solicitud venta' },
+  { title: 'Nota de venta emitida', status: 'Nota de venta emitida' },
   { title: 'Picking', status: 'Picking' },
   { title: 'Confirmación', status: 'Confirmación' },
   { title: 'Despachado', status: 'Despachado' }

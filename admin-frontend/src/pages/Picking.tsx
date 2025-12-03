@@ -6,7 +6,8 @@ import { routes } from '../routes';
 import {
   OrderSection,
   HistorySection,
-  ReportsSection
+  ReportsSection,
+  MetricsSection
 } from './Picking/sections';
 
 /**
@@ -30,6 +31,9 @@ export const Picking = (): React.ReactElement => {
     }
     if (location.pathname === routes.pickingReports || location.pathname.startsWith(routes.pickingReports)) {
       return 'reports';
+    }
+    if (location.pathname === routes.pickingMetrics || location.pathname.startsWith(routes.pickingMetrics)) {
+      return 'metrics';
     }
     // Por defecto, redirigir a orden de picking
     return 'order';
@@ -60,6 +64,9 @@ export const Picking = (): React.ReactElement => {
       case 'reports':
         navigate(routes.pickingReports);
         break;
+      case 'metrics':
+        navigate(routes.pickingMetrics);
+        break;
       default:
         navigate(routes.pickingOrder);
     }
@@ -76,6 +83,8 @@ export const Picking = (): React.ReactElement => {
         return <HistorySection />;
       case 'reports':
         return <ReportsSection />;
+      case 'metrics':
+        return <MetricsSection />;
       default:
         return <OrderSection filters={filters} />;
     }
