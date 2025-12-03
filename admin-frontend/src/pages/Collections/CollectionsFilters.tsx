@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { DropdownIcon, ChevronUpIcon } from '../../components/commons/icons';
 import { Input, Checkbox } from '../../components/commons';
-import type { QueryFilters, DiasVencidosRange } from '../../types/analytics';
+import type { QueryFilters, DiasVencidosRange, CtasPorCobrar } from '../../types/analytics';
 
 /**
  * Props del componente CollectionsFilters
@@ -19,6 +19,10 @@ interface CollectionsFiltersProps {
    * Clases CSS adicionales
    */
   className?: string;
+  /**
+   * Datos de deudas para calcular totales
+   */
+  deudas?: CtasPorCobrar[];
 }
 
 /**
@@ -29,11 +33,11 @@ interface CollectionsFiltersProps {
 export const CollectionsFilters = ({
   filters,
   onFiltersChange,
-  className = ''
+  className = '',
+  deudas = []
 }: CollectionsFiltersProps) => {
   const [datesExpanded, setDatesExpanded] = useState(false);
   const [amountExpanded, setAmountExpanded] = useState(false);
-  const [statusExpanded, setStatusExpanded] = useState(false);
   const [daysExpanded, setDaysExpanded] = useState(false);
 
   /**
@@ -46,6 +50,63 @@ export const CollectionsFilters = ({
     { id: 'vencido-60', label: 'Vencido (31-60 días)', min: 31, max: 60 },
     { id: 'vencido-60-plus', label: 'Vencido (+60 días)', min: 61, max: undefined }
   ] as const;
+
+  /**
+   * Formatea un monto a formato de moneda
+   */
+  const formatCurrency = (amount: number): string => {
+    return new Intl.NumberFormat('es-CL', {
+      style: 'currency',
+      currency: 'CLP'
+    }).format(amount);
+  };
+
+  /**
+   * Calcula el total de deuda para cada estado de pago
+   */
+  const statusTotals = useMemo(() => {
+    const totals: Record<string, number> = {};
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    
+    statusOptions.forEach(option => {
+      let total = 0;
+      
+      deudas.forEach((deuda: CtasPorCobrar) => {
+        const diasVencidos = deuda.dias_vencidos ?? 0;
+        const deudaValue = typeof deuda.deuda === 'string' ? parseFloat(deuda.deuda) || 0 : (deuda.deuda ?? 0);
+        
+        let matches = false;
+        
+        if (option.min === undefined && option.max === -1) {
+          matches = diasVencidos < 0;
+        } else if (option.min === 0 && option.max === 0) {
+          // Para "Vence hoy", comparar la fecha de vencimiento con la fecha actual
+          if (deuda.vencimiento) {
+            const fechaVencimiento = new Date(deuda.vencimiento);
+            fechaVencimiento.setHours(0, 0, 0, 0);
+            matches = fechaVencimiento.getTime() === hoy.getTime();
+          } else {
+            matches = false;
+          }
+        } else if (option.min === 1 && option.max === 30) {
+          matches = diasVencidos >= 1 && diasVencidos <= 30;
+        } else if (option.min === 31 && option.max === 60) {
+          matches = diasVencidos >= 31 && diasVencidos <= 60;
+        } else if (option.min === 61 && option.max === undefined) {
+          matches = diasVencidos >= 61;
+        }
+        
+        if (matches) {
+          total += isNaN(deudaValue) ? 0 : deudaValue;
+        }
+      });
+      
+      totals[option.id] = total;
+    });
+    
+    return totals;
+  }, [deudas]);
 
   /**
    * Determina qué estados están seleccionados basándose en los filtros actuales
@@ -184,6 +245,36 @@ export const CollectionsFilters = ({
       </div>
       
       <div className="flex flex-col gap-4 flex-1 overflow-y-auto">
+        {/* Filtro por Estado de Pago - Siempre visible, primero */}
+        <div>
+          <label className="text-sm font-medium text-gray-700 mb-2 block">Estado de Pago</label>
+          <div className="space-y-2">
+            {statusOptions.map((option) => {
+              const isSelected = selectedStatuses.has(option.id);
+              const total = statusTotals[option.id] || 0;
+              return (
+                <div
+                  key={option.id}
+                  className="flex flex-col px-3 py-2 rounded transition-colors hover:bg-gray-50"
+                >
+                  <div className="flex items-center">
+                    <Checkbox
+                      checked={isSelected}
+                      onChange={() => handleStatusToggle(option.id)}
+                      label={option.label}
+                      containerClassName="w-full"
+                      className="text-blue-600 focus:ring-blue-500"
+                    />
+                  </div>
+                  <p className="text-xs text-gray-600 ml-6 mt-0.5">
+                    {formatCurrency(total)}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
         {/* Filtro por Cliente/RUT - Siempre visible */}
         <div>
           <div className="space-y-3">
@@ -288,42 +379,6 @@ export const CollectionsFilters = ({
                   inputClassName="w-full"
                 />
               </div>
-            </div>
-          )}
-        </div>
-
-        {/* Filtro por Estado de Pago */}
-        <div>
-          <button
-            onClick={() => setStatusExpanded(!statusExpanded)}
-            className="w-full flex items-center justify-between text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors duration-200"
-          >
-            <span>Estado de Pago</span>
-            {statusExpanded ? (
-              <ChevronUpIcon color="#6B7280" />
-            ) : (
-              <DropdownIcon color="#6B7280" />
-            )}
-          </button>
-          {statusExpanded && (
-            <div className="mt-2 space-y-2">
-              {statusOptions.map((option) => {
-                const isSelected = selectedStatuses.has(option.id);
-                return (
-                  <div
-                    key={option.id}
-                    className="flex items-center px-3 py-2 rounded transition-colors hover:bg-gray-50"
-                  >
-                    <Checkbox
-                      checked={isSelected}
-                      onChange={() => handleStatusToggle(option.id)}
-                      label={option.label}
-                      containerClassName="w-full"
-                      className="text-blue-600 focus:ring-blue-500"
-                    />
-                  </div>
-                );
-              })}
             </div>
           )}
         </div>

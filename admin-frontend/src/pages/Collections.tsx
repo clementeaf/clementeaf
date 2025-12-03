@@ -658,6 +658,7 @@ export const Collections = () => {
           filters={filters}
           onFiltersChange={setFilters}
           className="flex-shrink-0"
+          deudas={allDeudas}
         />
 
         {/* Tabla de Cuentas por Cobrar */}
@@ -832,30 +833,19 @@ export const Collections = () => {
                         )}
                       </div>
                     </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <span>Deuda por vencer</span>
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <span>Deuda vencida</span>
+                    </th>
                     <th
                       className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
                       onClick={() => handleSort('total_deuda')}
                     >
                       <div className="flex items-center gap-2">
-                        <span>Total Facturado</span>
+                        <span>Total deuda</span>
                         {sortBy === 'total_deuda' ? (
-                          sortOrder === 'asc' ? (
-                            <ChevronUpIcon color="#6B7280" />
-                          ) : (
-                            <DropdownIcon color="#6B7280" />
-                          )
-                        ) : (
-                          <DropdownIcon color="#9CA3AF" />
-                        )}
-                      </div>
-                    </th>
-                    <th
-                      className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
-                      onClick={() => handleSort('deuda')}
-                    >
-                      <div className="flex items-center gap-2">
-                        <span>Deuda</span>
-                        {sortBy === 'deuda' ? (
                           sortOrder === 'asc' ? (
                             <ChevronUpIcon color="#6B7280" />
                           ) : (
@@ -892,15 +882,24 @@ export const Collections = () => {
                       ? new Date(empresa.vencimientoMasReciente)
                       : null;
 
-                    // Determinar si la empresa tiene documentos "Por vencer" o "Vencido"
-                    // Si hay al menos un documento con dias_vencidos < 0, es "Por vencer"
-                    // Si todos los documentos tienen dias_vencidos >= 0, es "Vencido"
-                    const tieneDocumentosPorVencer = documentos.some((doc: CtasPorCobrar) =>
-                      doc.dias_vencidos !== null && doc.dias_vencidos !== undefined && doc.dias_vencidos < 0
-                    );
+                    // Calcular deudas separadas por estado
+                    const deudaPorVencer = documentos.reduce((sum, doc: CtasPorCobrar) => {
+                      const diasVencidos = doc.dias_vencidos ?? 0;
+                      if (diasVencidos < 0) {
+                        const deudaValue = typeof doc.deuda === 'string' ? parseFloat(doc.deuda) || 0 : (doc.deuda ?? 0);
+                        return sum + (isNaN(deudaValue) ? 0 : deudaValue);
+                      }
+                      return sum;
+                    }, 0);
 
-                    // Color de la deuda: verde si hay documentos por vencer, rojo si están vencidos
-                    const deudaColor = tieneDocumentosPorVencer ? 'text-green-600' : 'text-red-600';
+                    const deudaVencida = documentos.reduce((sum, doc: CtasPorCobrar) => {
+                      const diasVencidos = doc.dias_vencidos ?? 0;
+                      if (diasVencidos >= 0) {
+                        const deudaValue = typeof doc.deuda === 'string' ? parseFloat(doc.deuda) || 0 : (doc.deuda ?? 0);
+                        return sum + (isNaN(deudaValue) ? 0 : deudaValue);
+                      }
+                      return sum;
+                    }, 0);
 
                     // Determinar si la empresa tiene sucursales
                     const tieneSucursales = empresa.sucursal && empresa.sucursal.length > 0;
@@ -953,16 +952,18 @@ export const Collections = () => {
                             </p>
                           </td>
                           <td className="px-4 py-3 text-sm">
-                            <p className="font-semibold text-gray-900">
-                              {formatCurrency(empresa.total_deuda)}
+                            <p className="font-semibold text-green-600">
+                              {formatCurrency(deudaPorVencer)}
                             </p>
                           </td>
                           <td className="px-4 py-3 text-sm">
-                            <p className={`font - semibold ${deudaColor} `}>
-                              {formatCurrency(empresa.total_deuda)}
+                            <p className="font-semibold text-red-600">
+                              {formatCurrency(deudaVencida)}
                             </p>
-                            <p className="text-xs text-gray-500">
-                              {tieneDocumentosPorVencer ? 'Por vencer' : 'Vencido'}
+                          </td>
+                          <td className="px-4 py-3 text-sm">
+                            <p className="font-semibold text-gray-600">
+                              {formatCurrency(empresa.total_deuda)}
                             </p>
                           </td>
                           <td className="px-4 py-3 text-sm text-center">
@@ -1011,10 +1012,26 @@ export const Collections = () => {
                         {isEmpresaExpanded && tieneSucursales && empresa.sucursal && empresa.sucursal.map((sucursal) => {
                           const isSucursalExpanded = sucursalesExpanded.has(sucursal.rut);
                           const sucursalDocumentos = sucursal.documentos || [];
-                          const sucursalTieneDocumentosPorVencer = sucursalDocumentos.some((doc: CtasPorCobrar) =>
-                            doc.dias_vencidos !== null && doc.dias_vencidos !== undefined && doc.dias_vencidos < 0
-                          );
-                          const sucursalDeudaColor = sucursalTieneDocumentosPorVencer ? 'text-green-600' : 'text-red-600';
+                          
+                          // Calcular deudas separadas para la sucursal
+                          const sucursalDeudaPorVencer = sucursalDocumentos.reduce((sum, doc: CtasPorCobrar) => {
+                            const diasVencidos = doc.dias_vencidos ?? 0;
+                            if (diasVencidos < 0) {
+                              const deudaValue = typeof doc.deuda === 'string' ? parseFloat(doc.deuda) || 0 : (doc.deuda ?? 0);
+                              return sum + (isNaN(deudaValue) ? 0 : deudaValue);
+                            }
+                            return sum;
+                          }, 0);
+
+                          const sucursalDeudaVencida = sucursalDocumentos.reduce((sum, doc: CtasPorCobrar) => {
+                            const diasVencidos = doc.dias_vencidos ?? 0;
+                            if (diasVencidos >= 0) {
+                              const deudaValue = typeof doc.deuda === 'string' ? parseFloat(doc.deuda) || 0 : (doc.deuda ?? 0);
+                              return sum + (isNaN(deudaValue) ? 0 : deudaValue);
+                            }
+                            return sum;
+                          }, 0);
+
                           const sucursalFechaVencimiento = sucursal.vencimientoMasReciente
                             ? new Date(sucursal.vencimientoMasReciente)
                             : null;
@@ -1067,16 +1084,18 @@ export const Collections = () => {
                                   </p>
                                 </td>
                                 <td className="px-4 py-3 text-sm">
-                                  <p className="font-semibold text-gray-700">
-                                    {formatCurrency(sucursal.total_deuda)}
+                                  <p className="font-semibold text-green-600">
+                                    {formatCurrency(sucursalDeudaPorVencer)}
                                   </p>
                                 </td>
                                 <td className="px-4 py-3 text-sm">
-                                  <p className={`font - semibold ${sucursalDeudaColor} `}>
-                                    {formatCurrency(sucursal.total_deuda)}
+                                  <p className="font-semibold text-red-600">
+                                    {formatCurrency(sucursalDeudaVencida)}
                                   </p>
-                                  <p className="text-xs text-gray-500">
-                                    {sucursalTieneDocumentosPorVencer ? 'Por vencer' : 'Vencido'}
+                                </td>
+                                <td className="px-4 py-3 text-sm">
+                                  <p className="font-semibold text-gray-600">
+                                    {formatCurrency(sucursal.total_deuda)}
                                   </p>
                                 </td>
                                 <td className="px-4 py-3 text-sm text-center"></td>
@@ -1086,7 +1105,9 @@ export const Collections = () => {
                               {isSucursalExpanded && sucursalDocumentos.map((doc: CtasPorCobrar) => {
                                 const docFechaVencimiento = doc.vencimiento ? new Date(doc.vencimiento) : null;
                                 const docTieneDocumentosPorVencer = doc.dias_vencidos !== null && doc.dias_vencidos !== undefined && doc.dias_vencidos < 0;
-                                const docDeudaColor = docTieneDocumentosPorVencer ? 'text-green-600' : 'text-red-600';
+                                const docDeudaValue = typeof doc.deuda === 'string' ? parseFloat(doc.deuda) || 0 : (doc.deuda ?? 0);
+                                const docDeudaPorVencer = docTieneDocumentosPorVencer ? docDeudaValue : 0;
+                                const docDeudaVencida = !docTieneDocumentosPorVencer ? docDeudaValue : 0;
 
                                 const isDocSelected = selectedCompanies.has(doc.rut || '');
 
@@ -1124,16 +1145,18 @@ export const Collections = () => {
                                       </p>
                                     </td>
                                     <td className="px-4 py-3 text-sm">
-                                      <p className="font-medium text-gray-600">
-                                        {formatCurrency(doc.deuda)}
+                                      <p className="font-semibold text-green-600">
+                                        {formatCurrency(docDeudaPorVencer)}
                                       </p>
                                     </td>
                                     <td className="px-4 py-3 text-sm">
-                                      <p className={`font - semibold ${docDeudaColor} `}>
-                                        {formatCurrency(doc.deuda)}
+                                      <p className="font-semibold text-red-600">
+                                        {formatCurrency(docDeudaVencida)}
                                       </p>
-                                      <p className="text-xs text-gray-500">
-                                        {docTieneDocumentosPorVencer ? 'Por vencer' : 'Vencido'}
+                                    </td>
+                                    <td className="px-4 py-3 text-sm">
+                                      <p className="font-semibold text-gray-600">
+                                        {formatCurrency(docDeudaValue)}
                                       </p>
                                     </td>
                                     <td className="px-4 py-3 text-sm text-center"></td>
@@ -1148,7 +1171,9 @@ export const Collections = () => {
                         {isEmpresaExpanded && !tieneSucursales && empresa.documentos && empresa.documentos.map((doc: CtasPorCobrar) => {
                           const docFechaVencimiento = doc.vencimiento ? new Date(doc.vencimiento) : null;
                           const docTieneDocumentosPorVencer = doc.dias_vencidos !== null && doc.dias_vencidos !== undefined && doc.dias_vencidos < 0;
-                          const docDeudaColor = docTieneDocumentosPorVencer ? 'text-green-600' : 'text-red-600';
+                          const docDeudaValue = typeof doc.deuda === 'string' ? parseFloat(doc.deuda) || 0 : (doc.deuda ?? 0);
+                          const docDeudaPorVencer = docTieneDocumentosPorVencer ? docDeudaValue : 0;
+                          const docDeudaVencida = !docTieneDocumentosPorVencer ? docDeudaValue : 0;
                           const isDocSelected = selectedCompanies.has(doc.rut || '');
 
                           return (
@@ -1185,16 +1210,18 @@ export const Collections = () => {
                                 </p>
                               </td>
                               <td className="px-4 py-3 text-sm">
-                                <p className="font-medium text-gray-600">
-                                  {formatCurrency(doc.deuda)}
+                                <p className="font-semibold text-green-600">
+                                  {formatCurrency(docDeudaPorVencer)}
                                 </p>
                               </td>
                               <td className="px-4 py-3 text-sm">
-                                <p className={cn("font-semibold", docDeudaColor)}>
-                                  {formatCurrency(doc.deuda)}
+                                <p className="font-semibold text-red-600">
+                                  {formatCurrency(docDeudaVencida)}
                                 </p>
-                                <p className="text-xs text-gray-500">
-                                  {docTieneDocumentosPorVencer ? 'Por vencer' : 'Vencido'}
+                              </td>
+                              <td className="px-4 py-3 text-sm">
+                                <p className="font-semibold text-gray-600">
+                                  {formatCurrency(docDeudaValue)}
                                 </p>
                               </td>
                               <td className="px-4 py-3 text-sm text-center"></td>
