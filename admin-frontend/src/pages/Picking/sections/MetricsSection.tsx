@@ -18,6 +18,26 @@ interface NotaVentaChartData extends Record<string, string | number | undefined>
 }
 
 /**
+ * Interfaz para los datos del gráfico de picking ejecutados
+ */
+interface PickingEjecutadoChartData extends Record<string, string | number | undefined> {
+  periodo: string; // Día, Semana o Mes según la temporalidad seleccionada
+  cantidad: number; // Cantidad de pickings ejecutados
+  operador?: string; // Nombre del operador que ejecutó el picking
+  horaEjecucion?: string; // Hora de ejecución del picking
+}
+
+/**
+ * Interfaz para los datos del gráfico de órdenes despachadas
+ */
+interface OrdenDespachadaChartData extends Record<string, string | number | undefined> {
+  periodo: string; // Día, Semana o Mes según la temporalidad seleccionada
+  cantidad: number; // Cantidad de órdenes despachadas
+  conductor?: string; // Nombre del conductor que realizó el despacho
+  horaDespacho?: string; // Hora de despacho/salida a ruta
+}
+
+/**
  * Interfaz para las métricas de picking
  */
 interface PickingMetrics {
@@ -52,7 +72,7 @@ export const MetricsSection = (): React.ReactElement => {
   // Estado para la temporalidad seleccionada
   const [temporalidad, setTemporalidad] = useState<Temporalidad>('Día');
 
-  // Datos del gráfico con un punto de hoy
+  // Datos del gráfico de notas de ventas emitidas con un punto de hoy
   const chartData = useMemo<NotaVentaChartData[]>(() => {
     const hoy = new Date();
     const dia = String(hoy.getDate()).padStart(2, '0');
@@ -65,6 +85,40 @@ export const MetricsSection = (): React.ReactElement => {
         cantidad: 1,
         vendedor: 'Clemente Arriagada',
         horaEmision: '08:45'
+      }
+    ];
+  }, []);
+
+  // Datos del gráfico de picking ejecutados con un punto de hoy
+  const pickingChartData = useMemo<PickingEjecutadoChartData[]>(() => {
+    const hoy = new Date();
+    const dia = String(hoy.getDate()).padStart(2, '0');
+    const mes = String(hoy.getMonth() + 1).padStart(2, '0');
+    const anio = hoy.getFullYear();
+    const fechaFormateada = `${dia}/${mes}/${anio}`;
+    return [
+      {
+        periodo: fechaFormateada,
+        cantidad: 1,
+        operador: 'Juan Pérez',
+        horaEjecucion: '09:30'
+      }
+    ];
+  }, []);
+
+  // Datos del gráfico de órdenes despachadas con un punto de hoy
+  const ordenesDespachadasChartData = useMemo<OrdenDespachadaChartData[]>(() => {
+    const hoy = new Date();
+    const dia = String(hoy.getDate()).padStart(2, '0');
+    const mes = String(hoy.getMonth() + 1).padStart(2, '0');
+    const anio = hoy.getFullYear();
+    const fechaFormateada = `${dia}/${mes}/${anio}`;
+    return [
+      {
+        periodo: fechaFormateada,
+        cantidad: 1,
+        conductor: 'Carlos Rodríguez',
+        horaDespacho: '10:15'
       }
     ];
   }, []);
@@ -147,10 +201,83 @@ export const MetricsSection = (): React.ReactElement => {
           </div>
         </div>
 
-        {/* Gráfico de Notas de Ventas Emitidas */}
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6 w-[300px] flex flex-col items-center">
+        {/* Contenedor de gráficos lado a lado */}
+        <div className="flex gap-6 mb-6">
+          {/* Gráfico de Notas de Ventas Emitidas */}
+          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 w-[660px] flex flex-col items-center">
+            <div className="flex items-center justify-between w-full mb-4">
+              <p className="text-[12px] font-bold text-gray-800">Notas de ventas emitidas</p>
+              {/* Viñetas de temporalidad */}
+              <div className="flex gap-2">
+                {(['Día', 'Semana', 'Mes'] as Temporalidad[]).map((temp) => (
+                  <button
+                    key={temp}
+                    onClick={() => setTemporalidad(temp)}
+                    className={`px-2 py-1 rounded-lg text-xs font-medium transition-colors ${
+                      temporalidad === temp
+                        ? 'bg-[#0052C9] text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    {temp}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {/* Gráfico de Notas de Ventas Emitidas */}
+            <ReusableLineChart
+              data={chartData}
+              xAxisDataKey="periodo"
+              yAxisDataKey="cantidad"
+              xAxisLabel="Fecha"
+              yAxisLabel="Cantidad de notas de ventas"
+              width={600}
+              height={200}
+              yAxisMin={0}
+              yAxisMax={10}
+            />
+          </div>
+
+          {/* Gráfico de Picking Ejecutados */}
+          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 w-[660px] flex flex-col items-center">
+            <div className="flex items-center justify-between w-full mb-4">
+              <p className="text-[12px] font-bold text-gray-800">Picking ejecutados</p>
+              {/* Viñetas de temporalidad */}
+              <div className="flex gap-2">
+                {(['Día', 'Semana', 'Mes'] as Temporalidad[]).map((temp) => (
+                  <button
+                    key={temp}
+                    onClick={() => setTemporalidad(temp)}
+                    className={`px-2 py-1 rounded-lg text-xs font-medium transition-colors ${
+                      temporalidad === temp
+                        ? 'bg-[#0052C9] text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    {temp}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {/* Gráfico de Picking Ejecutados */}
+            <ReusableLineChart
+              data={pickingChartData}
+              xAxisDataKey="periodo"
+              yAxisDataKey="cantidad"
+              xAxisLabel="Fecha"
+              yAxisLabel="Cantidad de pickings ejecutados"
+              width={600}
+              height={200}
+              yAxisMin={0}
+              yAxisMax={10}
+            />
+          </div>
+        </div>
+
+        {/* Gráfico de Órdenes Despachadas */}
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6 w-[660px] flex flex-col items-center">
           <div className="flex items-center justify-between w-full mb-4">
-            <p className="text-[12px] font-bold text-gray-800">Notas de ventas emitidas</p>
+            <p className="text-[12px] font-bold text-gray-800">Órdenes Despachadas</p>
             {/* Viñetas de temporalidad */}
             <div className="flex gap-2">
               {(['Día', 'Semana', 'Mes'] as Temporalidad[]).map((temp) => (
@@ -168,14 +295,14 @@ export const MetricsSection = (): React.ReactElement => {
               ))}
             </div>
           </div>
-          {/* Gráfico de Notas de Ventas Emitidas */}
+          {/* Gráfico de Órdenes Despachadas */}
           <ReusableLineChart
-            data={chartData}
+            data={ordenesDespachadasChartData}
             xAxisDataKey="periodo"
             yAxisDataKey="cantidad"
             xAxisLabel="Fecha"
-            yAxisLabel="Cantidad de notas de ventas"
-            width={250}
+            yAxisLabel="Cantidad de órdenes despachadas"
+            width={600}
             height={200}
             yAxisMin={0}
             yAxisMax={10}

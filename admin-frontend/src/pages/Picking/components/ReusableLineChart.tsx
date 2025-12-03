@@ -143,11 +143,24 @@ export const ReusableLineChart = ({
               return [];
             }
             const lines: string[] = [];
+            // Detectar si es un gráfico de notas de ventas, picking ejecutados o órdenes despachadas
             if (dataPoint.vendedor) {
               lines.push(`Vendedor: ${String(dataPoint.vendedor)}`);
             }
             if (dataPoint.horaEmision) {
               lines.push(`Hora de emisión N.V: ${String(dataPoint.horaEmision)}`);
+            }
+            if (dataPoint.operador) {
+              lines.push(`Operador: ${String(dataPoint.operador)}`);
+            }
+            if (dataPoint.horaEjecucion) {
+              lines.push(`Hora de ejecución: ${String(dataPoint.horaEjecucion)}`);
+            }
+            if (dataPoint.conductor) {
+              lines.push(`Conductor: ${String(dataPoint.conductor)}`);
+            }
+            if (dataPoint.horaDespacho) {
+              lines.push(`Hora de despacho: ${String(dataPoint.horaDespacho)}`);
             }
             return lines;
           }
@@ -171,6 +184,7 @@ export const ReusableLineChart = ({
     scales: {
       x: {
         display: true,
+        offset: true,
         title: {
           display: !!xAxisLabel,
           text: xAxisLabel ?? '',
@@ -182,12 +196,14 @@ export const ReusableLineChart = ({
           font: {
             size: 12
           },
-          color: '#6b7280'
+          color: '#6b7280',
+          padding: 5
         },
         grid: {
           display: true,
           color: 'rgba(229, 231, 235, 1)',
-          lineWidth: 1
+          lineWidth: 1,
+          offset: true
         }
       },
       y: {
@@ -221,7 +237,7 @@ export const ReusableLineChart = ({
   };
 
   return (
-    <div className="w-[250px] h-[200px] flex items-center justify-center">
+    <div className="h-[200px] flex items-center justify-center" style={{ width }}>
       <div style={{ width, height }}>
         <Line data={chartData} options={options} />
       </div>
