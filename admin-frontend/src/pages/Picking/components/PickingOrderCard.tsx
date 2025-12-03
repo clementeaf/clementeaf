@@ -86,8 +86,8 @@ export const PickingOrderCard = ({ order, onStatusChange }: PickingOrderCardProp
 
   return (
     <>
-      <div className="bg-white rounded-lg border border-gray-200 p-5 hover:shadow-md transition-shadow duration-200 w-full">
-        <div className="flex flex-col gap-3 min-w-0">
+      <div className="bg-white rounded-lg border border-gray-200 p-5 hover:shadow-md transition-shadow duration-200 w-full h-[200px] flex flex-col">
+        <div className="flex flex-col gap-3 min-w-0 flex-1">
           {/* Header con código de orden y estado */}
           <div className="flex items-start justify-between gap-2">
             <div className="flex-1 min-w-0">
@@ -112,7 +112,7 @@ export const PickingOrderCard = ({ order, onStatusChange }: PickingOrderCardProp
           </div>
 
           {/* Selector de estado y botón detalle */}
-          <div className="flex items-center justify-between gap-3 pt-3 border-t border-gray-200">
+          <div className="flex items-center justify-between gap-3 pt-3 border-t border-gray-200 mt-auto">
             <div className="flex-1 min-w-0">
               <Select
                 value={order.estado}
