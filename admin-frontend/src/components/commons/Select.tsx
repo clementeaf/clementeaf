@@ -84,7 +84,7 @@ export const Select = ({
 }: SelectProps): React.ReactElement => {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedLabel, setSelectedLabel] = useState<string>('');
-  const [dropdownPosition, setDropdownPosition] = useState<{ top: number; left: number; width: number } | null>(null);
+  const [dropdownPosition, setDropdownPosition] = useState<{ top: number; left: number; width: number; openUpward: boolean } | null>(null);
   const selectRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
 
@@ -106,15 +106,26 @@ export const Select = ({
   useEffect(() => {
     if (isOpen && buttonRef.current) {
       const rect = buttonRef.current.getBoundingClientRect();
+      const windowHeight = window.innerHeight;
+      const spaceBelow = windowHeight - rect.bottom;
+      const spaceAbove = rect.top;
+      
+      // Estimar altura del dropdown (aproximadamente 40px por opción + padding)
+      const estimatedHeight = Math.min(options.length * 40 + 16, 240); // max-h-60 = 240px
+      
+      // Si no hay espacio suficiente abajo pero sí arriba, abrir hacia arriba
+      const openUpward = spaceBelow < estimatedHeight && spaceAbove > spaceBelow;
+      
       setDropdownPosition({
-        top: rect.bottom + 4,
+        top: openUpward ? rect.top - estimatedHeight - 4 : rect.bottom + 4,
         left: rect.left,
-        width: rect.width
+        width: rect.width,
+        openUpward
       });
     } else {
       setDropdownPosition(null);
     }
-  }, [isOpen]);
+  }, [isOpen, options.length]);
 
   /**
    * Cierra el dropdown cuando se hace click fuera
