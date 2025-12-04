@@ -5,7 +5,8 @@ import { PickingSidebar, type PickingFilters } from './Picking/PickingSidebar';
 import { routes } from '../routes';
 import {
   OrderSection,
-  MetricsSection
+  MetricsSection,
+  WarehouseMapSection
 } from './Picking/sections';
 
 /**
@@ -26,6 +27,9 @@ export const Picking = (): React.ReactElement => {
     }
     if (location.pathname === routes.pickingMetrics || location.pathname.startsWith(routes.pickingMetrics)) {
       return 'metrics';
+    }
+    if (location.pathname === routes.pickingWarehouse || location.pathname.startsWith(routes.pickingWarehouse)) {
+      return 'warehouse';
     }
     // Por defecto, redirigir a orden de picking
     return 'order';
@@ -53,6 +57,9 @@ export const Picking = (): React.ReactElement => {
       case 'metrics':
         navigate(routes.pickingMetrics);
         break;
+      case 'warehouse':
+        navigate(routes.pickingWarehouse);
+        break;
       default:
         navigate(routes.pickingOrder);
     }
@@ -67,6 +74,8 @@ export const Picking = (): React.ReactElement => {
         return <OrderSection filters={filters} />;
       case 'metrics':
         return <MetricsSection />;
+      case 'warehouse':
+        return <WarehouseMapSection />;
       default:
         return <OrderSection filters={filters} />;
     }

@@ -65,6 +65,7 @@ function App(): React.ReactNode {
             <Route path={routes.picking} element={<Picking />} />
             <Route path={routes.pickingOrder} element={<Picking />} />
             <Route path={routes.pickingMetrics} element={<Picking />} />
+            <Route path={routes.pickingWarehouse} element={<Picking />} />
             <Route path={routes.analytics} element={<Analytics />} />
             <Route path={routes.chat} element={<Chat />} />
             <Route path={routes.support} element={<Support />} />
