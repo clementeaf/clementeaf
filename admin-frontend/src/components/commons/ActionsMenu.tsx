@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { MoreOptionsIcon, EyeIcon } from './icons';
+import { MoreOptionsIcon } from './icons';
 
 /**
  * Opción del menú de acciones

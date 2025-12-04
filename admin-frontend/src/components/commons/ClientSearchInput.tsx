@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { clientsService } from '../../services/clientsService';
 import { SearchIcon, DropdownIcon } from './icons';

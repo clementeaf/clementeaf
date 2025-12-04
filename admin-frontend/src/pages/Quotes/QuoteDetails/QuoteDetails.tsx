@@ -22,8 +22,6 @@ export const QuoteDetails = (): React.ReactElement => {
 
   const { data: quote, isLoading, error } = useQuoteById(quoteId);
 
-  // Estado para tabs principales
-  const [mainTab, setMainTab] = useState<string>('info');
 
   // Estado para sub-tabs de información
   const [infoTab, setInfoTab] = useState<string>('all');
@@ -114,7 +112,9 @@ export const QuoteDetails = (): React.ReactElement => {
             onClick={handleBack}
             className="p-2 hover:bg-gray-100 rounded-lg transition-colors duration-200"
           >
-            <ChevronRightIcon color="#6B7280" className="rotate-180" />
+            <div className="rotate-180">
+              <ChevronRightIcon color="#6B7280" />
+            </div>
           </button>
           <div>
             <h1 className="text-2xl font-bold text-gray-800">Orden de compra #{quote.numeroCotizacion || quote.id}</h1>

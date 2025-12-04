@@ -58,12 +58,17 @@ export class UsersService {
   /**
    * Obtiene un usuario por su ID
    * @param id - ID del usuario
+   * @param includePermissions - Si debe incluir los permisos del rol
    * @returns Usuario encontrado sin contraseña
    */
-  async getUserById(id: number): Promise<Omit<User, 'password'>> {
+  async getUserById(id: number, includePermissions: boolean = false): Promise<Omit<User, 'password'>> {
+    const relations = includePermissions 
+      ? ['role', 'role.rolePermissions', 'role.rolePermissions.permission']
+      : ['role'];
+    
     const user = await this.userRepository.findOne({
       where: { id },
-      relations: ['role']
+      relations
     });
 
     if (!user) {

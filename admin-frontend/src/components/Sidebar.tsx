@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import { SidebarHeader } from './Sidebar/SidebarHeader';
 import { NavItem } from './Sidebar/NavItem';
@@ -6,6 +6,26 @@ import { SellsSubMenu } from './Sidebar/SellsSubMenu';
 import { navItems, sellsSubItems, pickingSubItems, rolesSubItems } from './Sidebar/navItems.config';
 import { isActive, isSellsSectionActive, isPickingSectionActive, isRolesSectionActive } from './Sidebar/utils';
 import { useLogout } from '../hooks/useAuth';
+import { usePermissions } from '../hooks/usePermissions';
+import type { NavItem as NavItemType } from './Sidebar/types';
+
+/**
+ * Componente Sidebar de la aplicación admin
+ * @returns Componente Sidebar
+ */
+/**
+ * Genera el código de permiso para un módulo
+ */
+const getModulePermissionCode = (path: string): string => {
+  return `module:${path.replace(/^\//, '').replace(/\//g, ':')}`;
+};
+
+/**
+ * Genera el código de permiso para un submódulo
+ */
+const getSubModulePermissionCode = (path: string): string => {
+  return `view:${path.replace(/^\//, '').replace(/\//g, ':').replace(/:{id}/g, ':id')}`;
+};
 
 /**
  * Componente Sidebar de la aplicación admin
@@ -14,6 +34,7 @@ import { useLogout } from '../hooks/useAuth';
 export const Sidebar = () => {
   const location = useLocation();
   const { logout } = useLogout();
+  const { hasPermission, hasModuleAccess, isSuperAdmin } = usePermissions();
   const [isSellsExpanded, setIsSellsExpanded] = useState(false);
   const [isPickingExpanded, setIsPickingExpanded] = useState(false);
   const [isRolesExpanded, setIsRolesExpanded] = useState(false);
@@ -23,6 +44,67 @@ export const Sidebar = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  /**
+   * Filtra los módulos según los permisos del usuario
+   */
+  const filteredNavItems = useMemo(() => {
+    const filtered = navItems.filter(item => {
+      // Inicio y Chat siempre visibles (sin restricción de permisos)
+      if (item.name === 'Inicio' || item.name === 'Chat' || item.name === 'Soporte') {
+        return true;
+      }
+
+      // Para módulos con submódulos, verificar acceso al módulo
+      if (item.hasSubItems) {
+        let subModuleCodes: string[] = [];
+        
+        if (item.name === 'Ventas') {
+          subModuleCodes = sellsSubItems.map(sub => getSubModulePermissionCode(sub.path));
+        } else if (item.name === 'Picking') {
+          subModuleCodes = pickingSubItems.map(sub => getSubModulePermissionCode(sub.path));
+        } else if (item.name === 'Roles') {
+          subModuleCodes = rolesSubItems.map(sub => getSubModulePermissionCode(sub.path));
+        }
+
+        const moduleCode = getModulePermissionCode(item.path);
+        return hasModuleAccess(moduleCode, subModuleCodes);
+      }
+
+      // Para módulos sin submódulos, verificar permiso directo
+      const moduleCode = getModulePermissionCode(item.path);
+      return hasPermission(moduleCode);
+    });
+
+    // Log de módulos filtrados
+    if (isSuperAdmin) {
+      console.log('👑 [SIDEBAR] Super Admin - Todos los módulos visibles:', {
+        totalModules: navItems.length,
+        visibleModules: filtered.length,
+        moduleNames: filtered.map(m => m.name)
+      });
+    } else if (filtered.length !== navItems.length) {
+      console.log('🔒 [SIDEBAR] Módulos filtrados según permisos:', {
+        totalModules: navItems.length,
+        visibleModules: filtered.length,
+        hiddenModules: navItems.length - filtered.length,
+        visibleModuleNames: filtered.map(m => m.name),
+        hiddenModuleNames: navItems.filter(m => !filtered.includes(m)).map(m => m.name)
+      });
+    }
+
+    return filtered;
+  }, [hasPermission, hasModuleAccess]);
+
+  /**
+   * Filtra los submódulos según los permisos del usuario
+   */
+  const getFilteredSubItems = (subItems: NavItemType[]): NavItemType[] => {
+    return subItems.filter(subItem => {
+      const subModuleCode = getSubModulePermissionCode(subItem.path);
+      return hasPermission(subModuleCode);
+    });
+  };
 
   useEffect(() => {
     if (!manualToggle) {
@@ -119,15 +201,28 @@ export const Sidebar = () => {
       <SidebarHeader isCollapsed={isCollapsed} onToggleCollapse={handleToggleCollapse} isExpanded={isExpanded} />
 
       <nav className={`w-full flex flex-col transition-all duration-300 flex-1 ${isExpanded ? 'px-2' : 'px-1'}`}>
-        {navItems.map((item) => {
+        {filteredNavItems.map((item) => {
           const active = isActive(item.path, location.pathname);
           const isSellsItem = item.name === 'Ventas';
           const isPickingItem = item.name === 'Picking';
           const isRolesItem = item.name === 'Roles';
           const expanded = isSellsItem ? isSellsExpanded : isPickingItem ? isPickingExpanded : isRolesItem ? isRolesExpanded : false;
-          const sellsSectionActive = isSellsItem && isSellsSectionActive(location.pathname, sellsSubItems);
-          const pickingSectionActive = isPickingItem && isPickingSectionActive(location.pathname, pickingSubItems);
-          const rolesSectionActive = isRolesItem && isRolesSectionActive(location.pathname, rolesSubItems);
+          
+          // Obtener submódulos filtrados según permisos
+          const filteredSellsSubItems = isSellsItem ? getFilteredSubItems(sellsSubItems) : [];
+          const filteredPickingSubItems = isPickingItem ? getFilteredSubItems(pickingSubItems) : [];
+          const filteredRolesSubItems = isRolesItem ? getFilteredSubItems(rolesSubItems) : [];
+          
+          const sellsSectionActive = isSellsItem && isSellsSectionActive(location.pathname, filteredSellsSubItems);
+          const pickingSectionActive = isPickingItem && isPickingSectionActive(location.pathname, filteredPickingSubItems);
+          const rolesSectionActive = isRolesItem && isRolesSectionActive(location.pathname, filteredRolesSubItems);
+
+          // No mostrar el módulo si no tiene submódulos visibles (y tiene submódulos)
+          if (item.hasSubItems) {
+            if (isSellsItem && filteredSellsSubItems.length === 0) return null;
+            if (isPickingItem && filteredPickingSubItems.length === 0) return null;
+            if (isRolesItem && filteredRolesSubItems.length === 0) return null;
+          }
 
           return (
             <div key={item.path} className="w-full">
@@ -140,25 +235,25 @@ export const Sidebar = () => {
                 isCollapsed={!isExpanded}
               />
 
-              {isSellsItem && isExpanded && (
+              {isSellsItem && isExpanded && filteredSellsSubItems.length > 0 && (
                 <SellsSubMenu
-                  subItems={sellsSubItems}
+                  subItems={filteredSellsSubItems}
                   isExpanded={expanded}
                   onNavigate={handleSellsNavigation}
                 />
               )}
 
-              {isPickingItem && isExpanded && (
+              {isPickingItem && isExpanded && filteredPickingSubItems.length > 0 && (
                 <SellsSubMenu
-                  subItems={pickingSubItems}
+                  subItems={filteredPickingSubItems}
                   isExpanded={expanded}
                   onNavigate={handlePickingNavigation}
                 />
               )}
 
-              {isRolesItem && isExpanded && (
+              {isRolesItem && isExpanded && filteredRolesSubItems.length > 0 && (
                 <SellsSubMenu
-                  subItems={rolesSubItems}
+                  subItems={filteredRolesSubItems}
                   isExpanded={expanded}
                   onNavigate={handleRolesNavigation}
                 />

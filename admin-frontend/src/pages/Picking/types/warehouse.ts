@@ -58,6 +58,8 @@ export interface WarehouseMapConfig {
   height: number;
   gridSize: number;
   scale: number;
+  offsetX?: number; // Para compatibilidad con WarehouseMap2D
+  offsetY?: number; // Para compatibilidad con WarehouseMap2D
   cameraPosition: { x: number; y: number; z: number };
   cameraRotation: { x: number; y: number; z: number };
 }

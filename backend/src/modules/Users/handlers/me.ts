@@ -1,13 +1,14 @@
 import { type APIGatewayProxyEvent } from 'aws-lambda';
 import { AuthService } from '../services/AuthService';
+import { UsersService } from '../services/UsersService';
 import { handlerWrapper } from '../utils/handlerWrapper';
 import { extractToken, validateToken } from '../utils/auth';
 import { successResponse, errorResponse } from '../utils/response';
 
 /**
- * Handler para obtener información del usuario autenticado
+ * Handler para obtener información del usuario autenticado con rol y permisos
  * @param event - Evento de API Gateway
- * @returns Respuesta con datos del usuario
+ * @returns Respuesta con datos del usuario, rol y permisos
  */
 const meHandler = async (event: APIGatewayProxyEvent) => {
   const tokenError = validateToken(event);
@@ -17,7 +18,19 @@ const meHandler = async (event: APIGatewayProxyEvent) => {
   
   try {
     const authService = new AuthService();
-    const user = await authService.verifyToken(token);
+    const verifiedUser = await authService.verifyToken(token);
+
+    // Obtener usuario completo con rol y permisos desde la base de datos
+    const usersService = new UsersService();
+    const user = await usersService.getUserById(verifiedUser.id, true);
+
+    // Obtener permisos del rol si existe
+    let permissions: string[] = [];
+    if (user.role && user.role.rolePermissions) {
+      permissions = user.role.rolePermissions
+        .map(rp => rp.permission?.code)
+        .filter((code): code is string => code !== undefined);
+    }
 
     return successResponse(
       200,
@@ -25,6 +38,13 @@ const meHandler = async (event: APIGatewayProxyEvent) => {
         id: user.id,
         email: user.email,
         name: user.name,
+        role: user.role ? {
+          id: user.role.id,
+          name: user.role.name,
+          description: user.role.description,
+          isActive: user.role.isActive
+        } : null,
+        permissions,
         createdAt: user.createdAt?.toISOString(),
         updatedAt: user.updatedAt?.toISOString()
       }

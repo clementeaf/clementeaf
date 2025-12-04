@@ -24,7 +24,16 @@ export const InvoiceDataTable: React.FC<InvoiceDataTableProps> = ({
     };
 
     const sortedItems = sortField
-        ? sort(items, item => item[sortField] ?? 0, sortDirection === 'desc')
+        ? sort(items, item => {
+            const value = item[sortField];
+            if (typeof value === 'number') {
+                return value;
+            }
+            if (typeof value === 'string') {
+                return 0; // Para strings, no ordenar numéricamente
+            }
+            return 0;
+          }, sortDirection === 'desc')
         : items;
 
     const totals = {

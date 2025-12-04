@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { DocumentIcon, EyeIcon } from '../../../components/commons';
 
 /**
  * Props del componente QuoteReviewForm
@@ -24,7 +23,7 @@ interface QuoteReviewFormProps {
  * @param props - Props del componente QuoteReviewForm
  * @returns Componente QuoteReviewForm
  */
-export const QuoteReviewForm = ({ onDataChange, initialData, onBack }: QuoteReviewFormProps) => {
+export const QuoteReviewForm = ({ initialData }: QuoteReviewFormProps) => {
   const [formData, setFormData] = useState<Record<string, string>>(
     initialData || {}
   );
@@ -79,15 +78,6 @@ export const QuoteReviewForm = ({ onDataChange, initialData, onBack }: QuoteRevi
 
   const reviewData = getReviewData();
 
-  const handleDownloadFile = (): void => {
-    // TODO: Implementar descarga de archivo
-    console.log('Descargar archivo');
-  };
-
-  const handleViewFile = (): void => {
-    // TODO: Implementar visualización de archivo
-    console.log('Ver archivo');
-  };
 
   // Parsear productos
   let productos: Array<{ nombre: string; cantidad: string; descuento: string; precio: string; totalLinea: string }> = [];

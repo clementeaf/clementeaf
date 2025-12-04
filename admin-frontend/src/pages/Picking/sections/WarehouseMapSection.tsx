@@ -10,7 +10,7 @@ import type { WarehouseProduct, WarehouseZone, WarehouseShelf, WarehouseMapConfi
 export const WarehouseMapSection = (): React.ReactElement => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedProduct, setSelectedProduct] = useState<WarehouseProduct | null>(null);
-  const [zoom, setZoom] = useState(1);
+  const [zoom] = useState(1);
   const [isEditMode, setIsEditMode] = useState(false);
   const [clickedPosition, setClickedPosition] = useState<WarehouseCoordinates3D | null>(null);
   const [isCreatingProduct, setIsCreatingProduct] = useState(false);
@@ -208,12 +208,6 @@ export const WarehouseMapSection = (): React.ReactElement => {
     );
   }, [products, searchTerm]);
 
-  /**
-   * Maneja el cambio de zoom
-   */
-  const handleZoomChange = (newZoom: number): void => {
-    setZoom(Math.max(0.5, Math.min(2, newZoom)));
-  };
 
   /**
    * Maneja la selección de un producto

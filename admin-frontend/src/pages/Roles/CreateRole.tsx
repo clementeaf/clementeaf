@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { PageHeader, Input } from '../../components/commons';
+import { Input } from '../../components/commons';
 import { rolesService, permissionsService, type Permission, type CreateRoleDto } from '../../services/rolesService';
 import { routes } from '../../routes';
 import { toast } from 'react-toastify';
@@ -627,7 +627,7 @@ export const CreateRole = (): React.ReactElement => {
               value={formData.name}
               onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
               placeholder="Ej: Administrador, Vendedor, etc."
-              className="w-full"
+              inputClassName="w-full"
             />
           </div>
 

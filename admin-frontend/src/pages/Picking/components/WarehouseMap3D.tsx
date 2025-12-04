@@ -40,7 +40,6 @@ const Zone3D = ({ zone }: { zone: WarehouseZone }): React.ReactElement => {
           anchorY="middle"
           outlineWidth={2}
           outlineColor="#FFFFFF"
-          depthTest={false}
           renderOrder={1000}
         >
           {zone.name}
@@ -92,7 +91,6 @@ const Shelf3D = ({ shelf }: { shelf: WarehouseShelf }): React.ReactElement => {
           anchorY="middle"
           outlineWidth={3}
           outlineColor="#FFFFFF"
-          depthTest={false}
           renderOrder={1000}
         >
           {shelf.name || `Repisa ${shelf.id}`}
@@ -142,7 +140,6 @@ const Product3D = ({
             anchorX="center"
             anchorY="middle"
             maxWidth={100}
-            depthTest={false}
             renderOrder={1000}
           >
             {product.name}
@@ -226,7 +223,6 @@ const ClickedPositionIndicator = ({
           color="#3B82F6"
           anchorX="center"
           anchorY="middle"
-          depthTest={false}
           renderOrder={1000}
         >
           ({position.x}, {position.y}, {position.z})

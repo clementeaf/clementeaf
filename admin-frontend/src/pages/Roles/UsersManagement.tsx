@@ -102,7 +102,6 @@ export const UsersManagement = (): React.ReactElement => {
     <div className="w-full h-full p-8">
       <PageHeader
         title="Usuarios"
-        subtitle="Gestión de usuarios y asignación de roles"
       />
       <div className="mb-6 flex gap-4">
         <Input

@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import { Sidebar } from './components/Sidebar';
+import { ProtectedRoute } from './components/ProtectedRoute';
 import { routes } from './routes';
 
 const Home = lazy(() => import('./pages/Home').then(module => ({ default: module.Home })));
@@ -49,32 +50,153 @@ function App(): React.ReactNode {
       <div className="w-full h-full rounded-lg shadow-sm overflow-auto">
         <Suspense fallback={<LoadingFallback />}>
           <Routes>
+            {/* Rutas públicas (sin restricción de permisos) */}
             <Route path={routes.home} element={<Home />} />
+            <Route path={routes.chat} element={<Chat />} />
+            <Route path={routes.support} element={<Support />} />
+            
+            {/* Rutas de Ventas */}
+            <Route 
+              path={routes.sells} 
+              element={
+                <ProtectedRoute requiredPermissions={['module:sells', 'view:sells:clients', 'view:sells:quotes', 'view:sells:collections']} requireAny>
+                  <Sells />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path={routes.clients} 
+              element={
+                <ProtectedRoute requiredPermission="view:sells:clients">
+                  <Clients />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path={routes.createClient} 
+              element={
+                <ProtectedRoute requiredPermission="view:sells:clients">
+                  <CreateClient />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path={`${routes.clientDetails}/:id`} 
+              element={
+                <ProtectedRoute requiredPermission="view:sells:clients">
+                  <ClientDetails />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path={routes.quotes} 
+              element={
+                <ProtectedRoute requiredPermission="view:sells:quotes">
+                  <Quotes />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path={routes.createQuote} 
+              element={
+                <ProtectedRoute requiredPermission="view:sells:quotes">
+                  <CreateQuote />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path={`${routes.quoteDetails}/:id`} 
+              element={
+                <ProtectedRoute requiredPermission="view:sells:quotes">
+                  <QuoteDetails />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path={routes.collections} 
+              element={
+                <ProtectedRoute requiredPermission="view:sells:collections">
+                  <Collections />
+                </ProtectedRoute>
+              } 
+            />
+            
+            {/* Rutas de Picking */}
+            <Route 
+              path={routes.picking} 
+              element={
+                <ProtectedRoute requiredPermissions={['module:picking', 'view:picking:order', 'view:picking:metrics', 'view:picking:warehouse']} requireAny>
+                  <Picking />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path={routes.pickingOrder} 
+              element={
+                <ProtectedRoute requiredPermission="view:picking:order">
+                  <Picking />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path={routes.pickingMetrics} 
+              element={
+                <ProtectedRoute requiredPermission="view:picking:metrics">
+                  <Picking />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path={routes.pickingWarehouse} 
+              element={
+                <ProtectedRoute requiredPermission="view:picking:warehouse">
+                  <Picking />
+                </ProtectedRoute>
+              } 
+            />
+            
+            {/* Rutas de Roles */}
+            <Route 
+              path={routes.rolesManagement} 
+              element={
+                <ProtectedRoute requiredPermission="view:roles:roles">
+                  <RolesManagement />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path={routes.createRole} 
+              element={
+                <ProtectedRoute requiredPermission="view:roles:roles">
+                  <CreateRole />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path={routes.users} 
+              element={
+                <ProtectedRoute requiredPermission="view:roles:users">
+                  <UsersManagement />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path={routes.createUser} 
+              element={
+                <ProtectedRoute requiredPermission="view:roles:users">
+                  <CreateUser />
+                </ProtectedRoute>
+              } 
+            />
+            
+            {/* Rutas legacy (sin protección por ahora) */}
             <Route path={routes.articles} element={<Articles />} />
             <Route path={routes.opportunities} element={<Opportunities />} />
             <Route path={routes.components} element={<Components />} />
-            <Route path={routes.sells} element={<Sells />} />
-            <Route path={routes.clients} element={<Clients />} />
-            <Route path={routes.createClient} element={<CreateClient />} />
-            <Route path={`${routes.clientDetails}/:id`} element={<ClientDetails />} />
-            <Route path={routes.quotes} element={<Quotes />} />
-            <Route path={routes.createQuote} element={<CreateQuote />} />
-            <Route path={`${routes.quoteDetails}/:id`} element={<QuoteDetails />} />
             <Route path={routes.salesOrder} element={<SalesOrder />} />
-            <Route path={routes.collections} element={<Collections />} />
-            <Route path={routes.picking} element={<Picking />} />
-            <Route path={routes.pickingOrder} element={<Picking />} />
-            <Route path={routes.pickingMetrics} element={<Picking />} />
-            <Route path={routes.pickingWarehouse} element={<Picking />} />
             <Route path={routes.analytics} element={<Analytics />} />
-            <Route path={routes.chat} element={<Chat />} />
-            <Route path={routes.support} element={<Support />} />
             <Route path={routes.invoices} element={<Invoices />} />
-            <Route path={routes.rolesManagement} element={<RolesManagement />} />
-            <Route path={routes.createRole} element={<CreateRole />} />
             <Route path={routes.permissions} element={<PermissionsManagement />} />
-            <Route path={routes.users} element={<UsersManagement />} />
-            <Route path={routes.createUser} element={<CreateUser />} />
           </Routes>
         </Suspense>
       </div>

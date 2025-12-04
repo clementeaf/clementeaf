@@ -24,6 +24,8 @@ const handleTokenFromUrl = (): void => {
       localStorage.setItem('refreshToken', refreshToken);
     }
     
+    console.log('🔐 [AUTH] Token recibido desde URL y guardado en localStorage');
+    
     // Limpiar la URL removiendo los parámetros de token
     urlParams.delete('token');
     urlParams.delete('refreshToken');
@@ -53,6 +55,10 @@ const queryClient = new QueryClient({
 
 // Manejar token de la URL antes de renderizar la app
 handleTokenFromUrl();
+
+// Log de inicio de aplicación
+console.log('🚀 [APP] Admin Frontend iniciado');
+console.log('📋 [APP] Verificando sesión de usuario...');
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

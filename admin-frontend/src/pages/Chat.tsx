@@ -68,9 +68,10 @@ export const Chat = () => {
   } = useMessagesByConversationId(selectedConversation?.id || null);
   
   const allMessages = useMemo(() => {
-    if (!messagesData?.pages) return [];
-    const pages = messagesData.pages as PaginatedMessagesResponse[];
-    return pages.flatMap(page => [...page.data].reverse());
+    if (!messagesData) return [];
+    const infiniteData = messagesData as unknown as InfiniteData<PaginatedMessagesResponse>;
+    if (!infiniteData.pages) return [];
+    return infiniteData.pages.flatMap((page: PaginatedMessagesResponse) => [...page.data].reverse());
   }, [messagesData]);
   
   const { data: usersData, isLoading: isLoadingUsers } = useAllUsers(1, 50, {

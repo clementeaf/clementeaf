@@ -169,7 +169,6 @@ export const RolesManagement = (): React.ReactElement => {
     <div className="w-full h-full p-8">
       <PageHeader
         title="Roles"
-        subtitle="Mantenedor de roles y asignación de permisos"
       />
 
       <div className="mt-6 flex gap-4 mb-6">

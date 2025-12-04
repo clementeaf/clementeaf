@@ -1,6 +1,6 @@
 import { memo, useMemo } from 'react';
 import type { Conversation } from '../../services/chatService';
-import { Button, PlusIcon } from '../../components/commons';
+import { Button } from '../../components/commons';
 import { ContactsListSkeleton } from './ContactsListSkeleton';
 import { formatConversationDate } from '../../utils/dateUtils';
 

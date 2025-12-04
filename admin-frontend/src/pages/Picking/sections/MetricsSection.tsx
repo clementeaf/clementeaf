@@ -67,7 +67,7 @@ interface PickingMetricsHistory {
 
 export const MetricsSection = (): React.ReactElement => {
   // Datos de ejemplo - En producción esto vendría de un hook/API y eventualmente WebSocket
-  const [metrics, setMetrics] = useState<PickingMetrics>({
+  const [metrics] = useState<PickingMetrics>({
     totalOrdenes: 127,
     ordenesNotaVentaEmitida: 15,
     ordenesPicking: 8,

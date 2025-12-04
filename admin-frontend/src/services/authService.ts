@@ -2,12 +2,24 @@ import { apiClient } from './api';
 import { endpoints } from '../api/endpoints';
 
 /**
+ * Rol del usuario
+ */
+export interface UserRole {
+  id: number;
+  name: string;
+  description: string | null;
+  isActive: boolean;
+}
+
+/**
  * Usuario autenticado
  */
 export interface AuthUser {
   id: number;
   email: string;
   name: string | null;
+  role: UserRole | null;
+  permissions: string[];
   createdAt?: string;
   updatedAt?: string;
 }

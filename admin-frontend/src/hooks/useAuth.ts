@@ -57,14 +57,38 @@ export const useCurrentUser = () => {
     queryKey: ['currentUser'],
     queryFn: async () => {
       try {
-        return await authService.getCurrentUser();
+        const user = await authService.getCurrentUser();
+        
+        // Log del usuario actual
+        console.log('🔐 [AUTH] Usuario autenticado:', {
+          id: user.id,
+          email: user.email,
+          name: user.name || 'Sin nombre',
+          role: user.role ? {
+            id: user.role.id,
+            name: user.role.name,
+            isActive: user.role.isActive
+          } : 'Sin rol asignado',
+          permissions: user.permissions || [],
+          permissionsCount: user.permissions?.length || 0
+        });
+        
+        return user;
       } catch (error) {
         if (userIdFromToken) {
-          return {
+          const fallbackUser = {
             id: userIdFromToken,
             email: '',
             name: null
           } as AuthUser;
+          
+          console.warn('⚠️ [AUTH] Usuario obtenido desde token (sin datos completos):', {
+            id: fallbackUser.id,
+            email: fallbackUser.email || 'No disponible',
+            name: fallbackUser.name || 'No disponible'
+          });
+          
+          return fallbackUser;
         }
         throw error;
       }

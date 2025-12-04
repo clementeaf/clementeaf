@@ -47,25 +47,6 @@ export const Picking = (): React.ReactElement => {
   }, [location.pathname, navigate]);
 
   /**
-   * Maneja el cambio de tab navegando a la ruta correspondiente
-   */
-  const handleTabChange = (tabId: string): void => {
-    switch (tabId) {
-      case 'order':
-        navigate(routes.pickingOrder);
-        break;
-      case 'metrics':
-        navigate(routes.pickingMetrics);
-        break;
-      case 'warehouse':
-        navigate(routes.pickingWarehouse);
-        break;
-      default:
-        navigate(routes.pickingOrder);
-    }
-  };
-
-  /**
    * Renderiza el contenido según el tab activo
    */
   const renderContent = (): React.ReactElement => {

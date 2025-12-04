@@ -3,7 +3,6 @@ import { PageHeader } from '../../components/commons';
 import { permissionsService, type Permission, type Capability } from '../../services/rolesService';
 import { toast } from 'react-toastify';
 import { navItems, sellsSubItems, pickingSubItems, rolesSubItems } from '../../components/Sidebar/navItems.config';
-import { routes } from '../../routes';
 import toOpenIcon from '../../assets/toOpen.png';
 import toCloseIcon from '../../assets/toClose.png';
 
@@ -240,7 +239,6 @@ export const PermissionsManagement = (): React.ReactElement => {
     <div className="w-full h-full p-8">
       <PageHeader
         title="Permisos"
-        subtitle="Visualización y sincronización de permisos del sistema"
       />
       <div className="flex gap-4 mb-6">
         <button

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { Input, Button, DropdownIcon, PlusIcon, ProductSearchInput } from '../../../components/commons';
+import { Input, Button, PlusIcon, ProductSearchInput } from '../../../components/commons';
 import type { Product } from '../../../services/productsService';
 
 /**
@@ -37,7 +37,7 @@ interface QuoteProductsFormProps {
  * @param props - Props del componente QuoteProductsForm
  * @returns Componente QuoteProductsForm
  */
-export const QuoteProductsForm = ({ onDataChange, initialData, onBack }: QuoteProductsFormProps) => {
+export const QuoteProductsForm = ({ onDataChange, initialData }: QuoteProductsFormProps) => {
   const [products, setProducts] = useState<ProductItem[]>([
     {
       id: '1',

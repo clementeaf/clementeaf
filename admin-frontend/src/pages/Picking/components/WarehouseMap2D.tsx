@@ -24,7 +24,7 @@ export const WarehouseMap2D = ({
   const svgRef = useRef<SVGSVGElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
-  const [offset, setOffset] = useState({ x: config.offsetX, y: config.offsetY });
+  const [offset, setOffset] = useState({ x: config.offsetX ?? 0, y: config.offsetY ?? 0 });
 
   /**
    * Convierte coordenadas del mundo real a coordenadas SVG
@@ -36,15 +36,6 @@ export const WarehouseMap2D = ({
     };
   }, [config, offset]);
 
-  /**
-   * Convierte coordenadas SVG a coordenadas del mundo real
-   */
-  const svgToWorld = useCallback((x: number, y: number): { x: number; y: number } => {
-    return {
-      x: (x - offset.x - (config.width / 2)) / config.scale,
-      y: (y - offset.y - (config.height / 2)) / config.scale
-    };
-  }, [config, offset]);
 
   /**
    * Maneja el inicio del arrastre
@@ -87,7 +78,9 @@ export const WarehouseMap2D = ({
    * Actualiza el offset cuando cambia la configuración
    */
   useEffect(() => {
-    setOffset({ x: config.offsetX, y: config.offsetY });
+    if (config.offsetX !== undefined && config.offsetY !== undefined) {
+      setOffset({ x: config.offsetX, y: config.offsetY });
+    }
   }, [config.offsetX, config.offsetY]);
 
   return (

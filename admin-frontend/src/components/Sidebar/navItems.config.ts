@@ -1,6 +1,5 @@
 import { routes } from '../../routes';
 import homeIcon from '../../assets/home.png';
-import opportunitiesIcon from '../../assets/oportunities.png';
 import articlesIcon from '../../assets/articles.png';
 import sellsIcon from '../../assets/sells.png';
 import checkIcon from '../../assets/check.png';

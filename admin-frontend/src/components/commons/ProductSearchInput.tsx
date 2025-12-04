@@ -159,7 +159,7 @@ export const ProductSearchInput = ({
             Math.abs(prev.top - topPosition) < 1 && 
             Math.abs(prev.left - rect.left) < 1 && 
             Math.abs(prev.width - rect.width) < 1 &&
-            prev.openUpwards === openUpwards) {
+            prev.openUpward === openUpwards) {
           isCalculating = false;
           return prev;
         }
@@ -168,7 +168,7 @@ export const ProductSearchInput = ({
           top: topPosition,
           left: rect.left,
           width: rect.width,
-          openUpwards
+          openUpward: openUpwards
         };
       });
     };
@@ -179,8 +179,8 @@ export const ProductSearchInput = ({
     });
 
     // Recalcular en scroll y resize con debounce
-    let scrollTimeout: NodeJS.Timeout;
-    let resizeTimeout: NodeJS.Timeout;
+    let scrollTimeout: ReturnType<typeof setTimeout>;
+    let resizeTimeout: ReturnType<typeof setTimeout>;
 
     const handleScroll = (): void => {
       if (isOpen && inputRef.current) {

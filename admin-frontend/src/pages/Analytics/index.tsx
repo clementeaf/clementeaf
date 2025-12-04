@@ -144,43 +144,51 @@ export const Analytics = () => {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {deudasActivas?.data.map((deuda) => (
-                    <tr key={`${deuda.td}-${deuda.numdocto}`} className="hover:bg-gray-50">
-                      <td className="px-4 py-3 whitespace-nowrap text-sm">
-                        <div>
-                          <p className="font-medium">{deuda.td} {deuda.numdocto}</p>
-                          <p className="text-xs text-gray-500">{deuda.numordenc}</p>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-sm">
-                        <div>
-                          <p className="font-medium">{deuda.razsoc}</p>
-                          <p className="text-xs text-gray-500">{deuda.rut}</p>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-sm">
-                        <div>
-                          <p>{deuda.nombre_vendedor}</p>
-                          <p className="text-xs text-gray-500">{deuda.team}</p>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm text-right font-medium">
-                        {formatCurrency(deuda.deuda || 0)}
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm text-right">
-                        {deuda.vencimiento ? formatDate(deuda.vencimiento) : '-'}
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm text-right">
-                        <span className={`px-2 py-1 rounded ${
-                          (deuda.dias_vencidos || 0) > 0 
-                            ? 'bg-red-100 text-red-800' 
-                            : 'bg-green-100 text-green-800'
-                        }`}>
-                          {deuda.dias_vencidos} días
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
+                  {deudasActivas?.data.map((deuda) => {
+                    // Acceder a los documentos de la empresa
+                    const documentos = deuda.documentos || (deuda.sucursal?.flatMap(s => s.documentos) || []);
+                    // Usar el primer documento para mostrar información
+                    const primerDoc = documentos[0];
+                    if (!primerDoc) return null;
+                    
+                    return (
+                      <tr key={`${deuda.rut}-${primerDoc.numdocto}`} className="hover:bg-gray-50">
+                        <td className="px-4 py-3 whitespace-nowrap text-sm">
+                          <div>
+                            <p className="font-medium">{primerDoc.td} {primerDoc.numdocto}</p>
+                            <p className="text-xs text-gray-500">{primerDoc.numordenc || '-'}</p>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-sm">
+                          <div>
+                            <p className="font-medium">{deuda.razsoc}</p>
+                            <p className="text-xs text-gray-500">{deuda.rut}</p>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-sm">
+                          <div>
+                            <p>{primerDoc.nombre_vendedor || '-'}</p>
+                            <p className="text-xs text-gray-500">{primerDoc.team || '-'}</p>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap text-sm text-right font-medium">
+                          {formatCurrency(deuda.total_deuda || 0)}
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap text-sm text-right">
+                          {deuda.vencimientoMasReciente ? formatDate(deuda.vencimientoMasReciente) : '-'}
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap text-sm text-right">
+                          <span className={`px-2 py-1 rounded ${
+                            (primerDoc.dias_vencidos || 0) > 0 
+                              ? 'bg-red-100 text-red-800' 
+                              : 'bg-green-100 text-green-800'
+                          }`}>
+                            {primerDoc.dias_vencidos || 0} días
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
