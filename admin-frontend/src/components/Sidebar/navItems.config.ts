@@ -18,7 +18,8 @@ export const navItems: NavItem[] = [
   // { name: 'Analisis', path: routes.analytics, icon: articlesIcon }, // Hidden
   { name: 'Chat', path: routes.chat, icon: articlesIcon },
   { name: 'Picking', path: routes.picking, icon: checkIcon, hasSubItems: true },
-  { name: 'Soporte', path: routes.support, icon: articlesIcon }
+  { name: 'Soporte', path: routes.support, icon: articlesIcon },
+  { name: 'Roles', path: routes.rolesManagement, icon: checkIcon, hasSubItems: true }
 ];
 
 /**
@@ -37,5 +38,14 @@ export const sellsSubItems: NavItem[] = [
 export const pickingSubItems: NavItem[] = [
   { name: 'Orden de picking', path: routes.pickingOrder, icon: checkIcon },
   { name: 'Métricas', path: routes.pickingMetrics, icon: checkIcon }
+];
+
+/**
+ * Configuración de subitems de Roles
+ */
+export const rolesSubItems: NavItem[] = [
+  { name: 'Roles', path: routes.rolesManagement, icon: checkIcon },
+  { name: 'Permisos', path: routes.permissions, icon: checkIcon },
+  { name: 'Usuarios', path: routes.users, icon: checkIcon }
 ];
 

@@ -20,6 +20,9 @@ import { Analytics } from './pages/Analytics';
 import { Chat } from './pages/Chat';
 import { Support } from './pages/Support';
 import { Invoices } from './pages/Invoices';
+import { RolesManagement } from './pages/Roles/RolesManagement';
+import { PermissionsManagement } from './pages/Roles/PermissionsManagement';
+import { UsersManagement } from './pages/Roles/UsersManagement';
 
 /**
  * Componente principal de la aplicación admin
@@ -51,6 +54,9 @@ function App(): React.ReactNode {
           <Route path={routes.chat} element={<Chat />} />
           <Route path={routes.support} element={<Support />} />
           <Route path={routes.invoices} element={<Invoices />} />
+          <Route path={routes.rolesManagement} element={<RolesManagement />} />
+          <Route path={routes.permissions} element={<PermissionsManagement />} />
+          <Route path={routes.users} element={<UsersManagement />} />
         </Routes>
       </div>
       <ToastContainer

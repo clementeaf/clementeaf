@@ -19,6 +19,8 @@ const createMinimalUser = (email: string, name: string | null = null): UserWitho
     id: 0,
     email,
     name,
+    roleId: null,
+    role: null,
     createdAt: new Date(),
     updatedAt: new Date()
   };

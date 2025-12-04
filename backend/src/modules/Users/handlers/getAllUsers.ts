@@ -30,6 +30,13 @@ const getAllUsersHandler = async (event: APIGatewayProxyEvent) => {
       id: user.id,
       email: user.email,
       name: user.name,
+      roleId: user.roleId,
+      role: user.role ? {
+        id: user.role.id,
+        name: user.role.name,
+        description: user.role.description,
+        isActive: user.role.isActive
+      } : null,
       createdAt: user.createdAt?.toISOString(),
       updatedAt: user.updatedAt?.toISOString()
     })),

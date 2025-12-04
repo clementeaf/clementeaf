@@ -3,8 +3,8 @@ import { useLocation } from 'react-router-dom';
 import { SidebarHeader } from './Sidebar/SidebarHeader';
 import { NavItem } from './Sidebar/NavItem';
 import { SellsSubMenu } from './Sidebar/SellsSubMenu';
-import { navItems, sellsSubItems, pickingSubItems } from './Sidebar/navItems.config';
-import { isActive, isSellsSectionActive, isPickingSectionActive } from './Sidebar/utils';
+import { navItems, sellsSubItems, pickingSubItems, rolesSubItems } from './Sidebar/navItems.config';
+import { isActive, isSellsSectionActive, isPickingSectionActive, isRolesSectionActive } from './Sidebar/utils';
 import { useLogout } from '../hooks/useAuth';
 
 /**
@@ -16,8 +16,10 @@ export const Sidebar = () => {
   const { logout } = useLogout();
   const [isSellsExpanded, setIsSellsExpanded] = useState(false);
   const [isPickingExpanded, setIsPickingExpanded] = useState(false);
+  const [isRolesExpanded, setIsRolesExpanded] = useState(false);
   const [manualToggle, setManualToggle] = useState(false);
   const [manualPickingToggle, setManualPickingToggle] = useState(false);
+  const [manualRolesToggle, setManualRolesToggle] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -36,6 +38,13 @@ export const Sidebar = () => {
     }
   }, [location.pathname, manualPickingToggle]);
 
+  useEffect(() => {
+    if (!manualRolesToggle) {
+      const active = isRolesSectionActive(location.pathname, rolesSubItems);
+      setIsRolesExpanded(active);
+    }
+  }, [location.pathname, manualRolesToggle]);
+
   const handleToggleSells = (): void => {
     setManualToggle(true);
     setIsSellsExpanded((prev) => !prev);
@@ -52,6 +61,15 @@ export const Sidebar = () => {
 
   const handlePickingNavigation = (): void => {
     setManualPickingToggle(false);
+  };
+
+  const handleToggleRoles = (): void => {
+    setManualRolesToggle(true);
+    setIsRolesExpanded((prev) => !prev);
+  };
+
+  const handleRolesNavigation = (): void => {
+    setManualRolesToggle(false);
   };
 
   const handleToggleCollapse = (): void => {
@@ -105,17 +123,19 @@ export const Sidebar = () => {
           const active = isActive(item.path, location.pathname);
           const isSellsItem = item.name === 'Ventas';
           const isPickingItem = item.name === 'Picking';
-          const expanded = isSellsItem ? isSellsExpanded : isPickingItem ? isPickingExpanded : false;
+          const isRolesItem = item.name === 'Roles';
+          const expanded = isSellsItem ? isSellsExpanded : isPickingItem ? isPickingExpanded : isRolesItem ? isRolesExpanded : false;
           const sellsSectionActive = isSellsItem && isSellsSectionActive(location.pathname, sellsSubItems);
           const pickingSectionActive = isPickingItem && isPickingSectionActive(location.pathname, pickingSubItems);
+          const rolesSectionActive = isRolesItem && isRolesSectionActive(location.pathname, rolesSubItems);
 
           return (
             <div key={item.path} className="w-full">
               <NavItem
                 item={item}
-                isActive={isSellsItem ? sellsSectionActive : isPickingItem ? pickingSectionActive : active}
+                isActive={isSellsItem ? sellsSectionActive : isPickingItem ? pickingSectionActive : isRolesItem ? rolesSectionActive : active}
                 isExpanded={expanded}
-                onToggle={isSellsItem ? handleToggleSells : isPickingItem ? handleTogglePicking : undefined}
+                onToggle={isSellsItem ? handleToggleSells : isPickingItem ? handleTogglePicking : isRolesItem ? handleToggleRoles : undefined}
                 showExpandIcon={item.hasSubItems === true}
                 isCollapsed={!isExpanded}
               />
@@ -133,6 +153,14 @@ export const Sidebar = () => {
                   subItems={pickingSubItems}
                   isExpanded={expanded}
                   onNavigate={handlePickingNavigation}
+                />
+              )}
+
+              {isRolesItem && isExpanded && (
+                <SellsSubMenu
+                  subItems={rolesSubItems}
+                  isExpanded={expanded}
+                  onNavigate={handleRolesNavigation}
                 />
               )}
             </div>

@@ -23,6 +23,9 @@ export const routes = {
   chat: '/chat',
   support: '/support',
   invoices: '/invoices',
+  rolesManagement: '/roles/roles',
+  permissions: '/roles/permissions',
+  users: '/roles/users',
   notFound: '/*'
 } as const;
 

@@ -57,7 +57,8 @@ export const endpoints = {
   }),
   users: buildEndpoints('users', {
     getAll: '',
-    getById: '{id}'
+    getById: '{id}',
+    updateRole: '{id}/role'
   }),
   tickets: buildEndpoints('tickets', {
     create: '',
@@ -82,6 +83,18 @@ export const endpoints = {
   }),
   products: buildEndpoints('products', {
     search: 'search/query'
+  }),
+  roles: buildEndpoints('roles', {
+    create: '',
+    getById: '{id}',
+    getAll: '',
+    update: '{id}',
+    delete: '{id}'
+  }),
+  permissions: buildEndpoints('permissions', {
+    getAll: '',
+    getCapabilities: 'capabilities',
+    sync: 'sync'
   })
 } as const;
 

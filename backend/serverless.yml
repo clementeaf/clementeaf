@@ -250,6 +250,16 @@ functions:
           method: get
           cors: true
 
+  updateUserRole:
+    handler: dist/modules/Users/handlers/updateUserRole.handler
+    timeout: 30
+    memorySize: 512
+    events:
+      - http:
+          path: users/{id}/role
+          method: put
+          cors: true
+
   # Analytics endpoints
   getCtasPorCobrar:
     handler: dist/modules/Analytics/handlers/getCtasPorCobrar.handler
@@ -640,6 +650,88 @@ functions:
     events:
       - http:
           path: email/send
+          method: post
+          cors: true
+
+  # Roles endpoints
+  getAllRoles:
+    handler: dist/modules/Roles/handlers/getAllRoles.handler
+    timeout: 30
+    memorySize: 512
+    events:
+      - http:
+          path: roles
+          method: get
+          cors: true
+
+  getRoleById:
+    handler: dist/modules/Roles/handlers/getRoleById.handler
+    timeout: 30
+    memorySize: 512
+    events:
+      - http:
+          path: roles/{id}
+          method: get
+          cors: true
+
+  createRole:
+    handler: dist/modules/Roles/handlers/createRole.handler
+    timeout: 30
+    memorySize: 512
+    events:
+      - http:
+          path: roles
+          method: post
+          cors: true
+
+  updateRole:
+    handler: dist/modules/Roles/handlers/updateRole.handler
+    timeout: 30
+    memorySize: 512
+    events:
+      - http:
+          path: roles/{id}
+          method: put
+          cors: true
+
+  deleteRole:
+    handler: dist/modules/Roles/handlers/deleteRole.handler
+    timeout: 30
+    memorySize: 512
+    events:
+      - http:
+          path: roles/{id}
+          method: delete
+          cors: true
+
+  # Permissions endpoints
+  getAllPermissions:
+    handler: dist/modules/Roles/handlers/getAllPermissions.handler
+    timeout: 30
+    memorySize: 512
+    events:
+      - http:
+          path: permissions
+          method: get
+          cors: true
+
+  getAvailableCapabilities:
+    handler: dist/modules/Roles/handlers/getAvailableCapabilities.handler
+    timeout: 30
+    memorySize: 512
+    events:
+      - http:
+          path: permissions/capabilities
+          method: get
+          cors: true
+
+  syncPermissions:
+    handler: dist/modules/Roles/handlers/syncPermissions.handler
+    timeout: 60
+    memorySize: 512
+    events:
+      - http:
+          path: permissions/sync
           method: post
           cors: true
 

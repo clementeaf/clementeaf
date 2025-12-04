@@ -2,12 +2,24 @@ import { apiClient } from './api';
 import { endpoints } from '../api/endpoints';
 
 /**
+ * Rol del usuario
+ */
+export interface UserRole {
+  id: number;
+  name: string;
+  description: string | null;
+  isActive: boolean;
+}
+
+/**
  * Usuario
  */
 export interface User {
   id: number;
   email: string;
   name: string | null;
+  roleId: number | null;
+  role: UserRole | null;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -59,6 +71,18 @@ export const usersService = {
     const url = endpoints.users.getById.replace('{id}', id.toString());
     const { data } = await apiClient.get<{ data: User }>(url);
     return data.data;
+  },
+
+  /**
+   * Actualiza el rol de un usuario
+   * @param id - ID del usuario
+   * @param roleId - ID del rol a asignar (null para quitar el rol)
+   * @returns Usuario actualizado
+   */
+  async updateUserRole(id: number, roleId: number | null): Promise<User> {
+    const url = endpoints.users.updateRole.replace('{id}', id.toString());
+    const { data } = await apiClient.put<{ data: { user: User } }>(url, { roleId });
+    return data.data.user;
   }
 };
 

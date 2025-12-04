@@ -38,3 +38,17 @@ export const isPickingSectionActive = (currentPath: string, pickingSubItems: Nav
          currentPath.startsWith(routes.picking);
 };
 
+/**
+ * Verifica si la sección de Roles está activa
+ * @param currentPath - Ruta actual
+ * @param rolesSubItems - Subitems de Roles
+ * @returns true si alguna subruta de Roles está activa
+ */
+export const isRolesSectionActive = (currentPath: string, rolesSubItems: NavItem[]): boolean => {
+  return rolesSubItems.some(item => currentPath.startsWith(item.path)) || 
+         currentPath === routes.rolesManagement ||
+         currentPath.startsWith(routes.rolesManagement) ||
+         currentPath.startsWith(routes.permissions) ||
+         currentPath.startsWith(routes.users);
+};
+
