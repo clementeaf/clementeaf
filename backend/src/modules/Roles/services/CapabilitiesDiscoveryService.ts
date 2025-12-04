@@ -110,7 +110,7 @@ export class CapabilitiesDiscoveryService {
   }
 
   /**
-   * Descubre capacidades del frontend desde routes
+   * Descubre capacidades del frontend desde navItems (módulos) y routes (vistas)
    * @returns Lista de capacidades del frontend
    */
   private async discoverFrontendCapabilities(): Promise<Capability[]> {
@@ -118,52 +118,195 @@ export class CapabilitiesDiscoveryService {
     
     try {
       const routesPath = path.join(process.cwd(), '..', 'admin-frontend', 'src', 'routes', 'index.ts');
+      const navItemsPath = path.join(process.cwd(), '..', 'admin-frontend', 'src', 'components', 'Sidebar', 'navItems.config.ts');
       
       if (!fs.existsSync(routesPath)) {
         return capabilities;
       }
 
       const routesContent = fs.readFileSync(routesPath, 'utf8');
+      let navItemsContent = '';
+      if (fs.existsSync(navItemsPath)) {
+        navItemsContent = fs.readFileSync(navItemsPath, 'utf8');
+      }
+
+      // PASO 1: Descubrir módulos principales del sidebar (navItems)
+      // Leer línea por línea para detectar módulos activos (no comentados)
+      const modules: Array<{ name: string; routeKey: string; path: string; hasSubItems: boolean }> = [];
+      const lines = navItemsContent.split('\n');
       
-      // Extraer rutas usando regex
+      // Buscar el inicio del array navItems
+      let inNavItemsArray = false;
+      let braceCount = 0;
+      let currentModuleLines: string[] = [];
+      
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        const trimmedLine = line.trim();
+        
+        // Detectar inicio del array navItems
+        if (trimmedLine.includes('export const navItems') || trimmedLine.includes('navItems:')) {
+          inNavItemsArray = true;
+          continue;
+        }
+        
+        // Si estamos dentro del array navItems
+        if (inNavItemsArray) {
+          // Detectar comentarios de línea completa
+          if (trimmedLine.startsWith('//')) {
+            continue;
+          }
+          
+          // Detectar inicio de objeto módulo
+          if (trimmedLine.startsWith('{')) {
+            braceCount = 1;
+            currentModuleLines = [line];
+            continue;
+          }
+          
+          // Si estamos dentro de un objeto módulo
+          if (braceCount > 0) {
+            currentModuleLines.push(line);
+            
+            // Contar llaves para detectar fin de objeto
+            braceCount += (line.match(/\{/g) || []).length;
+            braceCount -= (line.match(/\}/g) || []).length;
+            
+            // Si el objeto está completo
+            if (braceCount === 0) {
+              const moduleBlock = currentModuleLines.join('\n');
+              
+              // Verificar que no esté comentado
+              const isCommented = currentModuleLines.some(l => l.trim().startsWith('//'));
+              
+              if (!isCommented) {
+                // Extraer name, path y hasSubItems
+                const nameMatch = moduleBlock.match(/name:\s*['"]([^'"]+)['"]/);
+                const pathMatch = moduleBlock.match(/path:\s*routes\.(\w+)/);
+                const hasSubItems = moduleBlock.includes('hasSubItems: true');
+                
+                if (nameMatch && pathMatch) {
+                  const name = nameMatch[1];
+                  const routeKey = pathMatch[1];
+                  
+                  // Extraer la ruta correspondiente
+                  const routeMatch = routesContent.match(new RegExp(`^\\s*${routeKey}:\\s*['"]([^'"]+)['"]`, 'm'));
+                  if (routeMatch) {
+                    // Evitar duplicados
+                    if (!modules.some(m => m.routeKey === routeKey)) {
+                      modules.push({
+                        name,
+                        routeKey,
+                        path: routeMatch[1],
+                        hasSubItems
+                      });
+                    }
+                  }
+                }
+              }
+              
+              currentModuleLines = [];
+            }
+          }
+          
+          // Detectar fin del array
+          if (trimmedLine === '];' && braceCount === 0) {
+            break;
+          }
+        }
+      }
+
+      // PASO 2: Descubrir submódulos (subitems)
+      const subItemsPatterns = [
+        { module: 'Ventas', pattern: /sellsSubItems.*?name:\s*['"]([^'"]+)['"].*?path:\s*routes\.(\w+)/gs },
+        { module: 'Picking', pattern: /pickingSubItems.*?name:\s*['"]([^'"]+)['"].*?path:\s*routes\.(\w+)/gs },
+        { module: 'Roles', pattern: /rolesSubItems.*?name:\s*['"]([^'"]+)['"].*?path:\s*routes\.(\w+)/gs }
+      ];
+
+      const subModules: Array<{ name: string; routeKey: string; path: string; module: string }> = [];
+      
+      for (const { module, pattern } of subItemsPatterns) {
+        const matches = navItemsContent.matchAll(pattern);
+        for (const match of matches) {
+          const name = match[1];
+          const routeKey = match[2];
+          const routeMatch = routesContent.match(new RegExp(`^\\s*${routeKey}:\\s*['"]([^'"]+)['"]`, 'm'));
+          if (routeMatch) {
+            subModules.push({
+              name,
+              routeKey,
+              path: routeMatch[1],
+              module
+            });
+          }
+        }
+      }
+
+      // PASO 3: Generar permisos para módulos principales primero
+      for (const module of modules) {
+        const normalizedRoute = module.path.replace(/^\//, '').replace(/\//g, ':').replace(/:{id}/g, ':id');
+        const permissionCode = `module:${normalizedRoute}`;
+        
+        capabilities.push({
+          code: permissionCode,
+          name: module.name,
+          description: `Acceso al módulo ${module.name}`,
+          category: 'Módulos',
+          resource: module.path,
+          action: 'access'
+        });
+      }
+
+      // PASO 4: Generar permisos para submódulos/vistas
+      for (const subModule of subModules) {
+        const normalizedRoute = subModule.path.replace(/^\//, '').replace(/\//g, ':').replace(/:{id}/g, ':id');
+        const permissionCode = `view:${normalizedRoute}`;
+        
+        capabilities.push({
+          code: permissionCode,
+          name: subModule.name,
+          description: `Acceso a ${subModule.name} (${subModule.module})`,
+          category: subModule.module,
+          resource: subModule.path,
+          action: 'view'
+        });
+      }
+
+      // PASO 5: Generar permisos para vistas adicionales que no están en submódulos
       const routeMatches = routesContent.matchAll(/^\s*(\w+):\s*['"]([^'"]+)['"]/gm);
-      
       const routeMap: Record<string, string> = {};
       for (const match of routeMatches) {
         const key = match[1];
         const value = match[2];
-        if (key && value && !value.includes('*')) {
+        if (key && value && !value.includes('*') && key !== 'root' && key !== 'notFound') {
           routeMap[key] = value;
         }
       }
 
-      // Mapeo de rutas a categorías y nombres
-      const routeCategories: Record<string, { category: string; name: string }> = {
-        home: { category: 'Vistas', name: 'Inicio' },
-        clients: { category: 'Vistas', name: 'Clientes' },
-        createClient: { category: 'Vistas', name: 'Crear Cliente' },
-        clientDetails: { category: 'Vistas', name: 'Detalles de Cliente' },
-        quotes: { category: 'Vistas', name: 'Notas de Venta' },
-        createQuote: { category: 'Vistas', name: 'Crear Nota de Venta' },
-        quoteDetails: { category: 'Vistas', name: 'Detalles de Nota de Venta' },
-        salesOrder: { category: 'Vistas', name: 'Orden de Ventas' },
-        collections: { category: 'Vistas', name: 'Cuentas por Cobrar' },
-        picking: { category: 'Vistas', name: 'Picking' },
-        pickingOrder: { category: 'Vistas', name: 'Orden de Picking' },
-        pickingMetrics: { category: 'Vistas', name: 'Métricas de Picking' },
-        analytics: { category: 'Vistas', name: 'Analíticas' },
-        chat: { category: 'Vistas', name: 'Chat' },
-        support: { category: 'Vistas', name: 'Soporte' },
-        invoices: { category: 'Vistas', name: 'Facturas' }
+      // Mapeo de rutas adicionales
+      const additionalRoutes: Record<string, { category: string; name: string }> = {
+        home: { category: 'Módulos', name: 'Inicio' },
+        createClient: { category: 'Ventas', name: 'Crear Cliente' },
+        clientDetails: { category: 'Ventas', name: 'Detalles de Cliente' },
+        createQuote: { category: 'Ventas', name: 'Crear Nota de Venta' },
+        createRole: { category: 'Roles', name: 'Crear Rol' },
+        quoteDetails: { category: 'Ventas', name: 'Detalles de Nota de Venta' }
       };
 
       for (const [key, route] of Object.entries(routeMap)) {
-        const routeInfo = routeCategories[key];
-        if (routeInfo) {
+        // Solo agregar si no está ya en módulos o submódulos
+        const alreadyAdded = modules.some(m => m.routeKey === key) || 
+                            subModules.some(s => s.routeKey === key);
+        
+        if (!alreadyAdded && additionalRoutes[key]) {
+          const routeInfo = additionalRoutes[key];
+          const normalizedRoute = route.replace(/^\//, '').replace(/\//g, ':').replace(/:{id}/g, ':id');
+          const permissionCode = `view:${normalizedRoute}`;
+          
           capabilities.push({
-            code: `view:${route}`,
+            code: permissionCode,
             name: routeInfo.name,
-            description: `Acceso a la vista ${routeInfo.name}`,
+            description: `Acceso a ${routeInfo.name}`,
             category: routeInfo.category,
             resource: route,
             action: 'view'

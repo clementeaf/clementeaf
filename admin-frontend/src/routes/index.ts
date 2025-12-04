@@ -24,6 +24,7 @@ export const routes = {
   support: '/support',
   invoices: '/invoices',
   rolesManagement: '/roles/roles',
+  createRole: '/roles/roles/create',
   permissions: '/roles/permissions',
   users: '/roles/users',
   notFound: '/*'

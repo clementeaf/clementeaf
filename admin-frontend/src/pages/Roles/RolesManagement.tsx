@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { PageHeader } from '../../components/commons';
-import { rolesService, permissionsService, type Role, type Permission, type Capability, type CreateRoleDto, type UpdateRoleDto } from '../../services/rolesService';
+import { rolesService, permissionsService, type Role, type Permission, type UpdateRoleDto } from '../../services/rolesService';
+import { routes } from '../../routes';
 import { toast } from 'react-toastify';
 
 /**
@@ -9,13 +11,11 @@ import { toast } from 'react-toastify';
  * @returns Componente RolesManagement
  */
 export const RolesManagement = (): React.ReactElement => {
+  const navigate = useNavigate();
   const [roles, setRoles] = useState<Role[]>([]);
   const [permissions, setPermissions] = useState<Permission[]>([]);
-  const [capabilities, setCapabilities] = useState<Capability[]>([]);
   const [selectedRole, setSelectedRole] = useState<Role | null>(null);
-  const [isCreating, setIsCreating] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [isSyncing, setIsSyncing] = useState(false);
   
   const [formData, setFormData] = useState<{
     name: string;
@@ -40,14 +40,12 @@ export const RolesManagement = (): React.ReactElement => {
   const loadData = async (): Promise<void> => {
     try {
       setIsLoading(true);
-      const [rolesData, permissionsData, capabilitiesData] = await Promise.all([
+      const [rolesData, permissionsData] = await Promise.all([
         rolesService.getAllRoles(),
-        permissionsService.getAllPermissions(),
-        permissionsService.getAvailableCapabilities()
+        permissionsService.getAllPermissions()
       ]);
       setRoles(rolesData);
       setPermissions(permissionsData);
-      setCapabilities(capabilitiesData);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Error al cargar datos';
       toast.error(errorMessage);
@@ -58,34 +56,10 @@ export const RolesManagement = (): React.ReactElement => {
   };
 
   /**
-   * Sincroniza permisos desde las capacidades descubiertas
-   */
-  const handleSyncPermissions = async (): Promise<void> => {
-    try {
-      setIsSyncing(true);
-      const syncedPermissions = await permissionsService.syncPermissions();
-      setPermissions(syncedPermissions);
-      toast.success('Permisos sincronizados exitosamente');
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Error al sincronizar permisos';
-      toast.error(errorMessage);
-      console.error('Error syncing permissions:', error);
-    } finally {
-      setIsSyncing(false);
-    }
-  };
-
-  /**
-   * Inicia la creación de un nuevo rol
+   * Navega a la página de creación de rol
    */
   const handleCreateNew = (): void => {
-    setSelectedRole(null);
-    setIsCreating(true);
-    setFormData({
-      name: '',
-      description: '',
-      permissionIds: []
-    });
+    navigate(routes.createRole);
   };
 
   /**
@@ -93,7 +67,6 @@ export const RolesManagement = (): React.ReactElement => {
    */
   const handleEdit = (role: Role): void => {
     setSelectedRole(role);
-    setIsCreating(false);
     setFormData({
       name: role.name,
       description: role.description || '',
@@ -102,11 +75,10 @@ export const RolesManagement = (): React.ReactElement => {
   };
 
   /**
-   * Cancela la edición/creación
+   * Cancela la edición
    */
   const handleCancel = (): void => {
     setSelectedRole(null);
-    setIsCreating(false);
     setFormData({
       name: '',
       description: '',
@@ -115,33 +87,26 @@ export const RolesManagement = (): React.ReactElement => {
   };
 
   /**
-   * Guarda el rol (crear o actualizar)
+   * Guarda el rol (solo actualizar, crear se hace en CreateRole)
    */
   const handleSave = async (): Promise<void> => {
+    if (!selectedRole) {
+      return;
+    }
+
     try {
       if (!formData.name.trim()) {
         toast.error('El nombre del rol es requerido');
         return;
       }
 
-      if (isCreating) {
-        const createDto: CreateRoleDto = {
-          name: formData.name,
-          description: formData.description || undefined,
-          permissionIds: formData.permissionIds
-        };
-        await rolesService.createRole(createDto);
-        toast.success('Rol creado exitosamente');
-      } else if (selectedRole) {
-        const updateDto: UpdateRoleDto = {
-          name: formData.name,
-          description: formData.description || undefined,
-          permissionIds: formData.permissionIds
-        };
-        await rolesService.updateRole(selectedRole.id, updateDto);
-        toast.success('Rol actualizado exitosamente');
-      }
-
+      const updateDto: UpdateRoleDto = {
+        name: formData.name,
+        description: formData.description || undefined,
+        permissionIds: formData.permissionIds
+      };
+      await rolesService.updateRole(selectedRole.id, updateDto);
+      toast.success('Rol actualizado exitosamente');
       await loadData();
       handleCancel();
     } catch (error) {
@@ -225,13 +190,6 @@ export const RolesManagement = (): React.ReactElement => {
         >
           Crear Nuevo Rol
         </button>
-        <button
-          onClick={handleSyncPermissions}
-          disabled={isSyncing}
-          className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {isSyncing ? 'Sincronizando...' : 'Sincronizar Permisos'}
-        </button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -289,11 +247,11 @@ export const RolesManagement = (): React.ReactElement => {
           </div>
         </div>
 
-        {/* Formulario de Rol */}
-        {(isCreating || selectedRole) && (
+        {/* Formulario de Edición de Rol */}
+        {selectedRole && (
           <div className="bg-white rounded-lg shadow p-6">
             <h2 className="text-xl font-semibold mb-4">
-              {isCreating ? 'Crear Nuevo Rol' : 'Editar Rol'}
+              Editar Rol
             </h2>
             
             <div className="space-y-4">
@@ -330,7 +288,7 @@ export const RolesManagement = (): React.ReactElement => {
                 <div className="max-h-[400px] overflow-y-auto border border-gray-200 rounded-lg p-4">
                   {Object.keys(permissionsByCategory).length === 0 ? (
                     <p className="text-gray-500 text-center py-4">
-                      No hay permisos disponibles. Haz clic en "Sincronizar Permisos" para descubrir capacidades.
+                      No hay permisos disponibles. Ve a "Permisos" para sincronizar.
                     </p>
                   ) : (
                     Object.entries(permissionsByCategory).map(([category, categoryPermissions]) => (
