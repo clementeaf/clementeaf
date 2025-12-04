@@ -28,14 +28,14 @@ export const WarehouseMapSection = (): React.ReactElement => {
   });
 
   /**
-   * Configuración inicial del mapa 3D
+   * Configuración inicial del mapa 3D - vista tipo mapa aérea
    */
   const mapConfig: WarehouseMapConfig = useMemo(() => ({
     width: 1000,
     height: 800,
     gridSize: 50,
     scale: zoom,
-    cameraPosition: { x: 200, y: 150, z: 200 },
+    cameraPosition: { x: 300, y: 400, z: 300 },
     cameraRotation: { x: 0, y: 0, z: 0 }
   }), [zoom]);
 
@@ -88,8 +88,8 @@ export const WarehouseMapSection = (): React.ReactElement => {
     {
       id: 'shelf-1',
       name: 'Repisa A1',
-      coordinates: { x: 50, y: 0, z: 50 },
-      width: 80,
+      coordinates: { x: 30, y: 0, z: 30 },
+      width: 70,
       height: 60,
       depth: 40,
       levels: 3,
@@ -99,8 +99,8 @@ export const WarehouseMapSection = (): React.ReactElement => {
     {
       id: 'shelf-2',
       name: 'Repisa A2',
-      coordinates: { x: 150, y: 0, z: 50 },
-      width: 80,
+      coordinates: { x: 110, y: 0, z: 30 },
+      width: 70,
       height: 60,
       depth: 40,
       levels: 3,
@@ -110,8 +110,8 @@ export const WarehouseMapSection = (): React.ReactElement => {
     {
       id: 'shelf-3',
       name: 'Repisa B1',
-      coordinates: { x: 300, y: 0, z: 50 },
-      width: 80,
+      coordinates: { x: 280, y: 0, z: 30 },
+      width: 70,
       height: 60,
       depth: 40,
       levels: 4,
@@ -121,8 +121,8 @@ export const WarehouseMapSection = (): React.ReactElement => {
     {
       id: 'shelf-4',
       name: 'Repisa C1',
-      coordinates: { x: 550, y: 0, z: 50 },
-      width: 80,
+      coordinates: { x: 530, y: 0, z: 30 },
+      width: 70,
       height: 60,
       depth: 40,
       levels: 3,

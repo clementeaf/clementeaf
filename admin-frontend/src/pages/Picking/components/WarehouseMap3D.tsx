@@ -1,6 +1,6 @@
 import { Suspense, useRef, useEffect } from 'react';
-import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { OrbitControls, Grid, Text } from '@react-three/drei';
+import { Canvas, useThree } from '@react-three/fiber';
+import { OrbitControls, Text } from '@react-three/drei';
 import * as THREE from 'three';
 import type { WarehouseProduct, WarehouseZone, WarehouseShelf, WarehouseMapConfig, WarehouseCoordinates3D } from '../types/warehouse';
 
@@ -31,16 +31,21 @@ const Zone3D = ({ zone }: { zone: WarehouseZone }): React.ReactElement => {
           wireframe={false}
         />
       </mesh>
-      <mesh position={[zone.width / 2, zone.height + 5, zone.depth / 2]}>
+      <Suspense fallback={null}>
         <Text
+          position={[zone.width / 2, zone.height + 15, zone.depth / 2]}
           fontSize={20}
           color="#374151"
           anchorX="center"
           anchorY="middle"
+          outlineWidth={2}
+          outlineColor="#FFFFFF"
+          depthTest={false}
+          renderOrder={1000}
         >
           {zone.name}
         </Text>
-      </mesh>
+      </Suspense>
     </group>
   );
 };
@@ -77,17 +82,22 @@ const Shelf3D = ({ shelf }: { shelf: WarehouseShelf }): React.ReactElement => {
         );
       })}
       
-      {/* Etiqueta de la repisa */}
-      <mesh position={[shelf.width / 2, shelf.height + 3, shelf.depth / 2]}>
+      {/* Etiqueta de la repisa - usando Text igual que las zonas */}
+      <Suspense fallback={null}>
         <Text
-          fontSize={12}
-          color="#6B7280"
+          position={[shelf.width / 2, shelf.height + 20, shelf.depth / 2]}
+          fontSize={16}
+          color="#1F2937"
           anchorX="center"
           anchorY="middle"
+          outlineWidth={3}
+          outlineColor="#FFFFFF"
+          depthTest={false}
+          renderOrder={1000}
         >
-          {shelf.name}
+          {shelf.name || `Repisa ${shelf.id}`}
         </Text>
-      </mesh>
+      </Suspense>
     </group>
   );
 };
@@ -106,13 +116,6 @@ const Product3D = ({
 }): React.ReactElement => {
   const meshRef = useRef<THREE.Mesh>(null);
   const stockColor = product.stock > 100 ? '#10B981' : product.stock > 50 ? '#F59E0B' : '#EF4444';
-  
-  // Animación de rotación suave
-  useFrame(() => {
-    if (meshRef.current && isSelected) {
-      meshRef.current.rotation.y += 0.01;
-    }
-  });
 
   return (
     <group
@@ -132,13 +135,15 @@ const Product3D = ({
       
       {/* Etiqueta del producto cuando está seleccionado */}
       {isSelected && (
-        <mesh position={[0, 8, 0]}>
+        <mesh position={[0, 8, 0]} renderOrder={1000}>
           <Text
             fontSize={10}
             color="#1F2937"
             anchorX="center"
             anchorY="middle"
             maxWidth={100}
+            depthTest={false}
+            renderOrder={1000}
           >
             {product.name}
           </Text>
@@ -215,12 +220,14 @@ const ClickedPositionIndicator = ({
         <sphereGeometry args={[3, 16, 16]} />
         <meshStandardMaterial color="#3B82F6" emissive="#3B82F6" emissiveIntensity={0.5} />
       </mesh>
-      <mesh position={[0, 8, 0]}>
+      <mesh position={[0, 8, 0]} renderOrder={1000}>
         <Text
           fontSize={12}
           color="#3B82F6"
           anchorX="center"
           anchorY="middle"
+          depthTest={false}
+          renderOrder={1000}
         >
           ({position.x}, {position.y}, {position.z})
         </Text>
@@ -244,24 +251,13 @@ const WarehouseScene = ({
 }: Omit<WarehouseMap3DProps, 'config'>): React.ReactElement => {
   return (
     <>
-      {/* Iluminación */}
-      <ambientLight intensity={0.6} />
-      <directionalLight position={[10, 10, 5]} intensity={0.8} />
-      <directionalLight position={[-10, 10, -5]} intensity={0.4} />
+      {/* Iluminación más clara */}
+      <ambientLight intensity={1} />
+      <directionalLight position={[0, 500, 0]} intensity={1} />
+      <directionalLight position={[10, 10, 5]} intensity={0.5} />
       
-      {/* Grid del suelo */}
-      <Grid
-        args={[1000, 1000]}
-        cellColor="#E5E7EB"
-        sectionColor="#D1D5DB"
-        cellThickness={1}
-        sectionThickness={2}
-        fadeDistance={500}
-        fadeStrength={1}
-      />
-      
-      {/* Ejes de referencia */}
-      <axesHelper args={[100]} />
+      {/* Ejes de referencia más discretos */}
+      <axesHelper args={[50]} />
       
       {/* Handler para clicks en modo edición */}
       {isEditMode && <MapClickHandler isEditMode={isEditMode} onMapClick={onMapClick} />}
@@ -279,6 +275,7 @@ const WarehouseScene = ({
         <Shelf3D key={shelf.id} shelf={shelf} />
       ))}
       
+      
       {/* Renderizar productos */}
       {products.map((product) => (
         <Product3D
@@ -289,15 +286,20 @@ const WarehouseScene = ({
         />
       ))}
       
-      {/* Controles de cámara */}
+      {/* Controles de cámara - balance entre libertad y estabilidad */}
       <OrbitControls
         enablePan={true}
         enableZoom={true}
         enableRotate={true}
-        minDistance={50}
-        maxDistance={1000}
-        minPolarAngle={0}
-        maxPolarAngle={Math.PI / 2}
+        minDistance={150}
+        maxDistance={800}
+        minPolarAngle={Math.PI / 6}
+        maxPolarAngle={Math.PI / 2.1}
+        enableDamping={true}
+        dampingFactor={0.08}
+        rotateSpeed={0.5}
+        panSpeed={0.8}
+        zoomSpeed={0.8}
       />
     </>
   );
@@ -320,11 +322,12 @@ export const WarehouseMap3D = ({
   onMapClick
 }: WarehouseMap3DProps): React.ReactElement => {
   return (
-    <div className="flex-1 bg-gray-900 rounded-lg border border-gray-200 overflow-hidden relative">
+    <div className="flex-1 bg-white rounded-lg border border-gray-200 overflow-hidden relative">
       <Canvas
         camera={{
           position: [config.cameraPosition.x, config.cameraPosition.y, config.cameraPosition.z],
-          fov: 75
+          fov: 50,
+          up: [0, 1, 0]
         }}
         gl={{ antialias: true }}
       >
@@ -364,9 +367,9 @@ export const WarehouseMap3D = ({
       {/* Controles de ayuda */}
       <div className="absolute top-4 right-4 bg-white rounded-lg shadow-lg border border-gray-200 px-3 py-2 text-xs text-gray-600">
         <div className="font-semibold mb-1">Controles:</div>
-        <div>🖱️ Click + Arrastra: Rotar</div>
+        <div>🖱️ Click + Arrastra: Rotar vista</div>
+        <div>🖱️ Click derecho + Arrastra: Mover mapa</div>
         <div>🖱️ Rueda: Zoom</div>
-        <div>🖱️ Click derecho + Arrastra: Mover</div>
         {isEditMode && (
           <div className="mt-2 pt-2 border-t border-gray-200 text-blue-600 font-medium">
             ✏️ Modo Edición: Click en el mapa para colocar producto
