@@ -64,11 +64,11 @@ export const ContactsList = memo(({
   }, [conversations, selectedConversationId, getOtherParticipant, currentUserId]);
 
   return (
-    <div className="w-[20%] border-r border-gray-200 flex flex-col">
-      <div className="p-4 border-b border-gray-200">
+    <div className="w-[20%] border-r border-gray-200 flex flex-col h-full min-h-0">
+      <div className="p-4 border-b border-gray-200 flex-shrink-0 min-h-[73px] flex items-center">
         <h2 className="text-lg font-semibold text-gray-800">Contactos</h2>
       </div>
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto min-h-0">
         {isLoading ? (
           <ContactsListSkeleton />
         ) : conversations.length > 0 ? (
@@ -126,11 +126,10 @@ export const ContactsList = memo(({
           <div className="p-4 text-center text-gray-500">No hay conversaciones</div>
         )}
       </div>
-      <div className="p-4 border-t border-gray-200">
+      <div className="p-5 border-t border-gray-200">
         <Button
           onClick={onStartConversation}
-          className="w-full bg-blue-500 text-white hover:bg-blue-600 px-3 py-1.5 text-sm flex items-center justify-center gap-1"
-          leftIcon={<PlusIcon />}
+          className="w-full text-black text-sm flex items-center justify-center gap-1"
         >
           Iniciar conversación
         </Button>

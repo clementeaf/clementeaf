@@ -274,7 +274,7 @@ export const Chat = () => {
 
   return (
     <div className="w-full h-full p-4">
-      <div className="w-full h-full bg-white rounded-lg shadow-sm border border-gray-200 flex">
+      <div className="w-full h-full bg-white rounded-lg shadow-sm border border-gray-200 flex items-stretch overflow-hidden">
         <ContactsList
           conversations={conversations}
           isLoading={isLoadingConversations}
@@ -285,7 +285,7 @@ export const Chat = () => {
           currentUserId={currentUserId}
         />
 
-        <div className="flex-1 flex flex-col w-full">
+        <div className="flex-1 flex flex-col h-full min-w-0">
           {selectedConversation ? (
             <>
               <ChatHeader
