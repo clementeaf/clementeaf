@@ -1,27 +1,8 @@
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip as ChartTooltip,
-  Legend,
-  Filler,
-  type TooltipItem
-} from 'chart.js';
 import { Line } from 'react-chartjs-2';
+import type { TooltipItem } from 'chart.js';
+import { registerChartJS } from './chartConfig';
 
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  ChartTooltip,
-  Legend,
-  Filler
-);
+registerChartJS();
 
 /**
  * Props del componente ReusableLineChart

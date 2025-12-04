@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { PageHeader, Button } from '../../components/commons';
-import { usersService, type User, type CreateUserDto } from '../../services/usersService';
+import { usersService, type User } from '../../services/usersService';
 import { rolesService, type Role } from '../../services/rolesService';
 import { toast } from 'react-toastify';
 import { Input, Select } from '../../components/commons';
+import { routes } from '../../routes';
 
 /**
  * Mantenedor de Usuarios
@@ -11,19 +13,13 @@ import { Input, Select } from '../../components/commons';
  * @returns Componente UsersManagement
  */
 export const UsersManagement = (): React.ReactElement => {
+  const navigate = useNavigate();
   const [users, setUsers] = useState<User[]>([]);
   const [roles, setRoles] = useState<Role[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [selectedRoleId, setSelectedRoleId] = useState<number | null>(null);
-  const [isCreatingUser, setIsCreatingUser] = useState(false);
-  const [newUser, setNewUser] = useState<CreateUserDto>({
-    email: '',
-    password: '',
-    name: '',
-    roleId: null
-  });
 
   /**
    * Carga los datos iniciales
@@ -59,7 +55,13 @@ export const UsersManagement = (): React.ReactElement => {
   const handleSelectUser = (user: User): void => {
     setSelectedUser(user);
     setSelectedRoleId(user.roleId || null);
-    setIsCreatingUser(false);
+  };
+
+  /**
+   * Navega a la página de creación de usuario
+   */
+  const handleCreateUser = (): void => {
+    navigate(routes.createUser);
   };
 
   /**
@@ -83,50 +85,6 @@ export const UsersManagement = (): React.ReactElement => {
     }
   };
 
-  /**
-   * Crea un nuevo usuario
-   */
-  const handleCreateUser = async (): Promise<void> => {
-    if (!newUser.email.trim() || !newUser.password.trim()) {
-      toast.error('Email y contraseña son requeridos');
-      return;
-    }
-
-    // Validar formato de email
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(newUser.email.trim())) {
-      toast.error('Email inválido');
-      return;
-    }
-
-    // Validar contraseña (mínimo 6 caracteres)
-    if (newUser.password.length < 6) {
-      toast.error('La contraseña debe tener al menos 6 caracteres');
-      return;
-    }
-
-    try {
-      await usersService.createUser({
-        email: newUser.email.trim(),
-        password: newUser.password,
-        name: newUser.name?.trim() || undefined,
-        roleId: newUser.roleId || null
-      });
-      toast.success('Usuario creado exitosamente');
-      await loadData();
-      setIsCreatingUser(false);
-      setNewUser({
-        email: '',
-        password: '',
-        name: '',
-        roleId: null
-      });
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Error al crear usuario';
-      toast.error(errorMessage);
-      console.error('Error creating user:', error);
-    }
-  };
 
   /**
    * Filtra usuarios por término de búsqueda
@@ -167,11 +125,7 @@ export const UsersManagement = (): React.ReactElement => {
           className="flex-1"
         />
         <Button
-          onClick={() => {
-            setIsCreatingUser(true);
-            setSelectedUser(null);
-            setSelectedRoleId(null);
-          }}
+          onClick={handleCreateUser}
           className="bg-blue-600 text-white hover:bg-blue-700"
         >
           Crear Usuario
@@ -221,105 +175,8 @@ export const UsersManagement = (): React.ReactElement => {
           </div>
         </div>
 
-        {/* Formulario de Creación de Usuario */}
-        {isCreatingUser && (
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-xl font-semibold mb-4">Crear Usuario</h2>
-            
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Email *
-                </label>
-                <Input
-                  id="new-user-email"
-                  type="email"
-                  value={newUser.email}
-                  onChange={(e) => setNewUser(prev => ({ ...prev, email: e.target.value }))}
-                  placeholder="usuario@ejemplo.com"
-                  className="w-full"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Contraseña *
-                </label>
-                <Input
-                  id="new-user-password"
-                  type="password"
-                  value={newUser.password}
-                  onChange={(e) => setNewUser(prev => ({ ...prev, password: e.target.value }))}
-                  placeholder="Mínimo 6 caracteres"
-                  className="w-full"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Nombre
-                </label>
-                <Input
-                  id="new-user-name"
-                  type="text"
-                  value={newUser.name || ''}
-                  onChange={(e) => setNewUser(prev => ({ ...prev, name: e.target.value }))}
-                  placeholder="Nombre completo (opcional)"
-                  className="w-full"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Rol
-                </label>
-                <Select
-                  id="new-user-role"
-                  value={newUser.roleId?.toString() || ''}
-                  onChange={(e) => setNewUser(prev => ({ ...prev, roleId: e.target.value ? parseInt(e.target.value, 10) : null }))}
-                  options={[
-                    { value: '', label: 'Sin rol' },
-                    ...roles.map(role => ({
-                      value: role.id.toString(),
-                      label: role.name
-                    }))
-                  ]}
-                />
-                {newUser.roleId && (
-                  <p className="text-xs text-gray-500 mt-1">
-                    {roles.find(r => r.id === newUser.roleId)?.description || ''}
-                  </p>
-                )}
-              </div>
-
-              <div className="flex gap-2 pt-4">
-                <button
-                  onClick={handleCreateUser}
-                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                  Crear Usuario
-                </button>
-                <button
-                  onClick={() => {
-                    setIsCreatingUser(false);
-                    setNewUser({
-                      email: '',
-                      password: '',
-                      name: '',
-                      roleId: null
-                    });
-                  }}
-                  className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
-                >
-                  Cancelar
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
         {/* Formulario de Asignación de Rol */}
-        {selectedUser && !isCreatingUser && (
+        {selectedUser && (
           <div className="bg-white rounded-lg shadow p-6">
             <h2 className="text-xl font-semibold mb-4">Asignar Rol</h2>
             

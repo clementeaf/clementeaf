@@ -27,6 +27,7 @@ export const routes = {
   createRole: '/roles/roles/create',
   permissions: '/roles/permissions',
   users: '/roles/users',
+  createUser: '/roles/users/create',
   notFound: '/*'
 } as const;
 
