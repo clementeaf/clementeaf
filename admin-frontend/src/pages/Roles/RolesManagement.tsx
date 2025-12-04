@@ -165,17 +165,6 @@ export const RolesManagement = (): React.ReactElement => {
     return acc;
   }, {} as Record<string, Permission[]>);
 
-  if (isLoading) {
-    return (
-      <div className="w-full h-full">
-        <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-gray-200 rounded w-1/4"></div>
-          <div className="h-64 bg-gray-200 rounded"></div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="w-full h-full p-8">
       <PageHeader
@@ -197,7 +186,16 @@ export const RolesManagement = (): React.ReactElement => {
         <div className="bg-white rounded-lg shadow p-6">
           <h2 className="text-xl font-semibold mb-4">Roles Existentes</h2>
           <div className="space-y-2 max-h-[600px] overflow-y-auto">
-            {roles.length === 0 ? (
+            {isLoading ? (
+              <div className="space-y-3">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="animate-pulse p-4 border border-gray-200 rounded-lg">
+                    <div className="h-5 bg-gray-200 rounded w-3/4 mb-2"></div>
+                    <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                  </div>
+                ))}
+              </div>
+            ) : roles.length === 0 ? (
               <p className="text-gray-500 text-center py-8">No hay roles creados</p>
             ) : (
               roles.map(role => (

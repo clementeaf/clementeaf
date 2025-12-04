@@ -98,17 +98,6 @@ export const UsersManagement = (): React.ReactElement => {
     );
   });
 
-  if (isLoading) {
-    return (
-      <div className="w-full h-full">
-        <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-gray-200 rounded w-1/4"></div>
-          <div className="h-64 bg-gray-200 rounded"></div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="w-full h-full p-8">
       <PageHeader
@@ -122,7 +111,7 @@ export const UsersManagement = (): React.ReactElement => {
           placeholder="Buscar usuarios por email o nombre..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="flex-1"
+          inputClassName="flex-1"
         />
         <Button
           onClick={handleCreateUser}
@@ -135,9 +124,21 @@ export const UsersManagement = (): React.ReactElement => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Lista de Usuarios */}
         <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold mb-4">Usuarios ({filteredUsers.length})</h2>
+          <h2 className="text-xl font-semibold mb-4">
+            Usuarios {!isLoading && `(${filteredUsers.length})`}
+          </h2>
           <div className="space-y-2 max-h-[600px] overflow-y-auto">
-            {filteredUsers.length === 0 ? (
+            {isLoading ? (
+              <div className="space-y-3">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="animate-pulse p-4 border border-gray-200 rounded-lg">
+                    <div className="h-5 bg-gray-200 rounded w-3/4 mb-2"></div>
+                    <div className="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
+                    <div className="h-4 bg-gray-200 rounded w-1/4"></div>
+                  </div>
+                ))}
+              </div>
+            ) : filteredUsers.length === 0 ? (
               <p className="text-gray-500 text-center py-8">
                 {searchTerm ? 'No se encontraron usuarios' : 'No hay usuarios registrados'}
               </p>
