@@ -303,6 +303,12 @@ export const CreateRole = (): React.ReactElement => {
     if (subModuleName === 'Usuarios' || subModulePath === '/roles/users' || subModulePath.includes('roles/users')) {
       return [
         {
+          id: 'service-create-user',
+          name: 'Crear Usuario',
+          code: 'post:auth:register',
+          description: 'Permite crear nuevos usuarios en el sistema'
+        },
+        {
           id: 'service-get-user',
           name: 'Obtener Usuario',
           code: 'get:users:{id}',

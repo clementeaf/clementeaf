@@ -36,6 +36,16 @@ export interface PaginatedUsersResponse {
 }
 
 /**
+ * DTO para crear un usuario
+ */
+export interface CreateUserDto {
+  email: string;
+  password: string;
+  name?: string;
+  roleId?: number | null;
+}
+
+/**
  * Servicio para gestionar usuarios
  */
 export const usersService = {
@@ -71,6 +81,43 @@ export const usersService = {
     const url = endpoints.users.getById.replace('{id}', id.toString());
     const { data } = await apiClient.get<{ data: User }>(url);
     return data.data;
+  },
+
+  /**
+   * Crea un nuevo usuario
+   * @param userData - Datos del usuario a crear
+   * @returns Usuario creado
+   */
+  async createUser(userData: CreateUserDto): Promise<User> {
+    // Primero crear el usuario usando el endpoint de registro
+    const { data: registerData } = await apiClient.post<{ data: { id: number; email: string; name: string | null; createdAt: string; updatedAt: string }; message: string }>(
+      'auth/register',
+      {
+        email: userData.email,
+        password: userData.password,
+        name: userData.name
+      }
+    );
+
+    const createdUser = registerData.data;
+
+    // Si se especificó un rol, asignarlo
+    if (userData.roleId !== undefined && userData.roleId !== null) {
+      const url = endpoints.users.updateRole.replace('{id}', createdUser.id.toString());
+      const { data } = await apiClient.put<{ data: { user: User } }>(url, { roleId: userData.roleId });
+      return data.data.user;
+    }
+
+    // Si no hay rol, retornar el usuario sin rol
+    return {
+      id: createdUser.id,
+      email: createdUser.email,
+      name: createdUser.name,
+      roleId: null,
+      role: null,
+      createdAt: createdUser.createdAt,
+      updatedAt: createdUser.updatedAt
+    };
   },
 
   /**
