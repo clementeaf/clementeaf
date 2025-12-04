@@ -23,6 +23,7 @@ export const CreateQuote = () => {
   const navigate = useNavigate();
   const createQuoteMutation = useCreateQuote();
   const [currentStep, setCurrentStep] = useState(1);
+  const [maxStepReached, setMaxStepReached] = useState(1); // Rastrea el paso máximo alcanzado
   const [formData, setFormData] = useState<Record<string, unknown>>({});
 
   /**
@@ -58,7 +59,12 @@ export const CreateQuote = () => {
       const updatedData = { ...formData, [`step${currentStep}`]: stepData };
       setFormData(updatedData);
       sessionStorage.setItem(STORAGE_KEY, JSON.stringify(updatedData));
-      setCurrentStep(currentStep + 1);
+      const nextStep = currentStep + 1;
+      setCurrentStep(nextStep);
+      // Actualizar el paso máximo alcanzado
+      if (nextStep > maxStepReached) {
+        setMaxStepReached(nextStep);
+      }
     }
   };
 
@@ -72,6 +78,22 @@ export const CreateQuote = () => {
       setFormData(updatedData);
       sessionStorage.setItem(STORAGE_KEY, JSON.stringify(updatedData));
       setCurrentStep(currentStep - 1);
+    }
+  };
+
+  /**
+   * Maneja el clic en un paso completado para navegar a ese paso
+   * @param stepNumber - Número del paso al que navegar
+   */
+  const handleStepClick = (stepNumber: number): void => {
+    // Permitir navegar a cualquier paso que haya sido visitado (menor o igual al máximo alcanzado)
+    if (stepNumber <= maxStepReached && stepNumber !== currentStep) {
+      // Guardar los datos del paso actual antes de cambiar
+      const stepData = getStepData(currentStep);
+      const updatedData = { ...formData, [`step${currentStep}`]: stepData };
+      setFormData(updatedData);
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(updatedData));
+      setCurrentStep(stepNumber);
     }
   };
 
@@ -259,7 +281,7 @@ export const CreateQuote = () => {
       <CreateQuoteHeader />
 
       <div className="flex gap-6 bg-white rounded-lg shadow-sm border border-gray-200 w-full h-full overflow-hidden">
-        <QuoteStepper currentStep={currentStep} />
+        <QuoteStepper currentStep={currentStep} maxStepReached={maxStepReached} onStepClick={handleStepClick} />
         <div className="w-full px-[100px] py-6 h-full flex flex-col overflow-hidden">
           <div className="flex-1 overflow-y-auto">
             {renderStepContent()}

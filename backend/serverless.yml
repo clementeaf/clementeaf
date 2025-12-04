@@ -398,6 +398,16 @@ functions:
           method: post
           cors: true
 
+  getNextQuoteNumber:
+    handler: dist/modules/Quotes/handlers/getNextQuoteNumber.handler
+    timeout: 30
+    memorySize: 512
+    events:
+      - http:
+          path: quotes/next-number/query
+          method: get
+          cors: true
+
   getQuoteById:
     handler: dist/modules/Quotes/handlers/getQuoteById.handler
     timeout: 30
@@ -436,6 +446,17 @@ functions:
       - http:
           path: quotes/{id}
           method: delete
+          cors: true
+
+  # Products endpoints
+  searchProducts:
+    handler: dist/modules/Products/handlers/searchProducts.handler
+    timeout: 30
+    memorySize: 512
+    events:
+      - http:
+          path: products/search/query
+          method: get
           cors: true
 
   # Chat endpoints

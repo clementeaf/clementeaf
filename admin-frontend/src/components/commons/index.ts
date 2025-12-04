@@ -19,6 +19,7 @@ export type { InputProps } from './Input';
 export { InputNumber } from './InputNumber';
 export type { InputNumberProps } from './InputNumber';
 export { ClientSearchInput } from './ClientSearchInput';
+export { ProductSearchInput } from './ProductSearchInput';
 export { Select } from './Select';
 export type { SelectProps, SelectOption } from './Select';
 export { CountrySelector } from './CountrySelector';

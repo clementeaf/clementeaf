@@ -47,30 +47,42 @@ export const QuoteClientForm = ({ onDataChange, initialData }: QuoteClientFormPr
 
   /**
    * Sincroniza el estado local con initialData cuando cambia
+   * Usa useMemo para evitar loops infinitos
    */
+  const initialDataString = useMemo(() => JSON.stringify(initialData || {}), [initialData]);
+  
   useEffect(() => {
-    if (initialData && Object.keys(initialData).length > 0) {
-      setFormData(prev => {
-        const hasChanges = Object.keys(initialData).some(
-          key => prev[key] !== initialData[key]
-        );
-        return hasChanges ? { ...prev, ...initialData } : prev;
-      });
+    if (!initialData || Object.keys(initialData).length === 0) {
+      return;
+    }
+
+    setFormData(prev => {
+      // Comparar valores específicos en lugar de toda la referencia
+      const hasChanges = Object.keys(initialData).some(
+        key => prev[key] !== initialData[key]
+      );
       
-      if (initialData.countryCode) {
-        const country = getCountryByCode(initialData.countryCode);
-        if (country) {
-          setSelectedCountry(country);
-        }
+      if (!hasChanges) {
+        return prev;
       }
-      if (initialData.contactoCountryCode) {
-        const country = getCountryByCode(initialData.contactoCountryCode);
-        if (country) {
-          setContactCountry(country);
-        }
+      
+      return { ...prev, ...initialData };
+    });
+    
+    if (initialData.countryCode) {
+      const country = getCountryByCode(initialData.countryCode);
+      if (country && country.code !== selectedCountry?.code) {
+        setSelectedCountry(country);
       }
     }
-  }, [initialData]);
+    if (initialData.contactoCountryCode) {
+      const country = getCountryByCode(initialData.contactoCountryCode);
+      if (country && country.code !== contactCountry?.code) {
+        setContactCountry(country);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialDataString]);
 
   /**
    * Maneja el cambio de un campo
@@ -182,7 +194,10 @@ export const QuoteClientForm = ({ onDataChange, initialData }: QuoteClientFormPr
       countryCode: client.contactoCountryCode || 'CL',
       countryDialCode: client.contactoCountryDialCode || '+56',
       contactoCountryCode: client.contactoCountryCode || 'CL',
-      contactoCountryDialCode: client.contactoCountryDialCode || '+56'
+      contactoCountryDialCode: client.contactoCountryDialCode || '+56',
+      // Guardar formaPago del cliente para usarlo en términos de pago
+      clienteFormaPago: client.formaPago || '',
+      clienteListaPrecios: client.listaPrecios || ''
     };
 
     // Actualizar país seleccionado para teléfono de contacto si hay código de país

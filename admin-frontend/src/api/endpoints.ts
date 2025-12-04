@@ -76,8 +76,12 @@ export const endpoints = {
     create: '',
     getById: '{id}',
     getAll: '',
+    getNextNumber: 'next-number/query',
     update: '{id}',
     delete: '{id}'
+  }),
+  products: buildEndpoints('products', {
+    search: 'search/query'
   })
 } as const;
 

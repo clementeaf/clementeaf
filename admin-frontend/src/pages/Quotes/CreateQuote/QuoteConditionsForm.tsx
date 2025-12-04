@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Input, Checkbox } from '../../../components/commons';
+import { quotesService } from '../../../services/quotesService';
 
 /**
  * Props del componente QuoteConditionsForm
@@ -33,17 +34,19 @@ export const QuoteConditionsForm = ({ onDataChange, initialData }: QuoteConditio
     }
   );
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isLoadingNumber, setIsLoadingNumber] = useState(false);
+  const [hasLoadedInitialData, setHasLoadedInitialData] = useState(false);
 
-  useEffect(() => {
-    if (initialData && Object.keys(initialData).length > 0) {
-      setFormData(prev => {
-        const hasChanges = Object.keys(initialData).some(
-          key => prev[key] !== initialData[key]
-        );
-        return hasChanges ? { ...prev, ...initialData } : prev;
-      });
-    }
-  }, [initialData]);
+  /**
+   * Obtiene la fecha actual en formato DD/MM/YYYY
+   */
+  const getCurrentDate = (): string => {
+    const today = new Date();
+    const day = today.getDate().toString().padStart(2, '0');
+    const month = (today.getMonth() + 1).toString().padStart(2, '0');
+    const year = today.getFullYear();
+    return `${day}/${month}/${year}`;
+  };
 
   const handleFieldChange = (fieldName: string, value: string): void => {
     const newData = { ...formData, [fieldName]: value };
@@ -62,6 +65,106 @@ export const QuoteConditionsForm = ({ onDataChange, initialData }: QuoteConditio
     }
   };
 
+  /**
+   * Sincroniza el estado local con initialData cuando cambia
+   * Usa JSON.stringify para evitar loops infinitos
+   */
+  const initialDataString = useMemo(() => JSON.stringify(initialData || {}), [initialData]);
+  
+  useEffect(() => {
+    if (!initialData || Object.keys(initialData).length === 0) {
+      return;
+    }
+
+    setFormData(prev => {
+      // Comparar valores específicos en lugar de toda la referencia
+      const hasChanges = Object.keys(initialData).some(
+        key => prev[key] !== initialData[key]
+      );
+      
+      if (!hasChanges) {
+        return prev;
+      }
+      
+      return { ...prev, ...initialData };
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialDataString]);
+
+  /**
+   * Carga datos iniciales automáticamente cuando se monta el componente
+   */
+  useEffect(() => {
+    if (hasLoadedInitialData) return;
+
+    let isMounted = true;
+
+    const loadInitialData = async (): Promise<void> => {
+      const updates: Record<string, string> = {};
+
+      // Cargar número de orden si no existe
+      if (!formData.numeroCotizacion || formData.numeroCotizacion === '') {
+        setIsLoadingNumber(true);
+        try {
+          const nextNumber = await quotesService.getNextQuoteNumber();
+          if (isMounted) {
+            updates.numeroCotizacion = nextNumber;
+          }
+        } catch (error) {
+          console.error('Error al obtener número de orden:', error);
+        } finally {
+          if (isMounted) {
+            setIsLoadingNumber(false);
+          }
+        }
+      }
+
+      // Establecer fecha actual si no hay fecha
+      if (!formData.fecha || formData.fecha === '') {
+        updates.fecha = getCurrentDate();
+      }
+
+      // Establecer términos de pago del cliente si está disponible
+      if (initialData?.clienteFormaPago && (!formData.terminosPago || formData.terminosPago === '')) {
+        updates.terminosPago = initialData.clienteFormaPago;
+      }
+
+      // Establecer lista de precios del cliente si está disponible
+      if (initialData?.clienteListaPrecios && (!formData.listaPrecios || formData.listaPrecios === '')) {
+        updates.listaPrecios = initialData.clienteListaPrecios;
+      }
+
+      // Aplicar todas las actualizaciones de una vez
+      if (isMounted && Object.keys(updates).length > 0) {
+        setFormData(prev => {
+          const newData = { ...prev, ...updates };
+          // Usar setTimeout para evitar el warning de React sobre actualizar durante renderizado
+          setTimeout(() => {
+            if (onDataChange) {
+              onDataChange(newData);
+            }
+          }, 0);
+          return newData;
+        });
+      }
+
+      if (isMounted) {
+        setHasLoadedInitialData(true);
+      }
+    };
+
+    // Ejecutar después del primer render
+    const timeoutId = setTimeout(() => {
+      loadInitialData();
+    }, 0);
+
+    return () => {
+      isMounted = false;
+      clearTimeout(timeoutId);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Solo ejecutar una vez al montar
+
   const handleCheckboxChange = (checked: boolean): void => {
     handleFieldChange('sinCostoEnvio', checked ? 'true' : 'false');
   };
@@ -77,8 +180,9 @@ export const QuoteConditionsForm = ({ onDataChange, initialData }: QuoteConditio
             type="text"
             value={formData.numeroCotizacion || ''}
             onChange={(e): void => handleFieldChange('numeroCotizacion', e.target.value)}
-            placeholder="030000029484892104"
+            placeholder={isLoadingNumber ? "Cargando..." : "030000029484892104"}
             inputClassName="bg-white"
+            disabled={isLoadingNumber}
             error={errors.numeroCotizacion || undefined}
           />
         </div>
@@ -90,7 +194,7 @@ export const QuoteConditionsForm = ({ onDataChange, initialData }: QuoteConditio
             type="text"
             value={formData.fecha || ''}
             onChange={(e): void => handleFieldChange('fecha', e.target.value)}
-            placeholder="19/11/2025"
+            placeholder={getCurrentDate()}
             inputClassName="bg-white"
             error={errors.fecha || undefined}
           />

@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { Input, Button, DropdownIcon, PlusIcon } from '../../../components/commons';
+import { Input, Button, DropdownIcon, PlusIcon, ProductSearchInput } from '../../../components/commons';
+import type { Product } from '../../../services/productsService';
 
 /**
  * Interfaz para un producto en la orden de compra
@@ -114,17 +115,42 @@ export const QuoteProductsForm = ({ onDataChange, initialData, onBack }: QuotePr
         // Calcular total línea si cambian cantidad, descuento o precio
         if (field === 'cantidad' || field === 'descuento' || field === 'precio') {
           const cantidad = parseFloat(updated.cantidad) || 0;
-          const precio = parseFloat(updated.precio.replace('$', '').replace(',', '')) || 0;
+          const precio = parseFloat(updated.precio.replace('$', '').replace(',', '').replace(/\./g, '')) || 0;
           const descuento = parseFloat(updated.descuento.replace('%', '').trim()) || 0;
           const subtotal = cantidad * precio;
           const descuentoAmount = subtotal * (descuento / 100);
           const total = subtotal - descuentoAmount;
-          updated.totalLinea = `$${total.toFixed(2)}`;
+          updated.totalLinea = `$${total.toLocaleString('es-CL')}`;
         }
         
         return updated;
       }
       return product;
+    }));
+  };
+
+  /**
+   * Maneja la selección de un producto desde el buscador
+   */
+  const handleProductSelect = (productId: string, product: Product): void => {
+    isUserUpdateRef.current = true; // Marcar como actualización del usuario
+    setProducts(prev => prev.map(p => {
+      if (p.id === productId) {
+        const precio = product.precio || 0;
+        const cantidad = parseFloat(p.cantidad) || 1;
+        const descuento = parseFloat(p.descuento.replace('%', '').trim()) || 0;
+        const subtotal = cantidad * precio;
+        const descuentoAmount = subtotal * (descuento / 100);
+        const total = subtotal - descuentoAmount;
+
+        return {
+          ...p,
+          nombre: product.nombre,
+          precio: `$${precio.toLocaleString('es-CL')}`,
+          totalLinea: `$${total.toLocaleString('es-CL')}`
+        };
+      }
+      return p;
     }));
   };
 
@@ -227,13 +253,14 @@ export const QuoteProductsForm = ({ onDataChange, initialData, onBack }: QuotePr
               <div key={product.id} className="grid grid-cols-12 gap-4 px-4 py-3 items-center">
                 <div className="col-span-1 text-sm text-gray-600">{index + 1}</div>
                 <div className="col-span-3">
-                  <Input
+                  <ProductSearchInput
                     id={`product-${product.id}-nombre`}
                     value={product.nombre}
-                    onChange={(e): void => handleProductChange(product.id, 'nombre', e.target.value)}
-                    placeholder="Busca o selecciona un producto"
+                    onChange={(value): void => handleProductChange(product.id, 'nombre', value)}
+                    onProductSelect={(selectedProduct): void => handleProductSelect(product.id, selectedProduct)}
+                    placeholder="Busca un producto por código, nombre o SKU"
                     inputClassName="bg-white"
-                    rightIcon={<DropdownIcon color="#6b7280" />}
+                    limit={10}
                   />
                 </div>
                 <div className="col-span-2">

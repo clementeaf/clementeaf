@@ -159,6 +159,17 @@ export const quotesService = {
     const url = endpoints.quotes.delete.replace('{id}', id.toString());
     await apiClient.delete<{ message: string }>(url);
     return true;
+  },
+
+  /**
+   * Obtiene el siguiente número correlativo de orden de compra
+   * @returns Siguiente número de orden de compra
+   */
+  async getNextQuoteNumber(): Promise<string> {
+    const { data } = await apiClient.get<{ data: { nextQuoteNumber: string } }>(
+      endpoints.quotes.getNextNumber
+    );
+    return data.data.nextQuoteNumber;
   }
 };
 

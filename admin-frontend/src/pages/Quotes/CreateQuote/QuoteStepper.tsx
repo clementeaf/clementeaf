@@ -15,6 +15,14 @@ interface QuoteStepperProps {
    * Paso actual activo (1-4)
    */
   currentStep: number;
+  /**
+   * Paso máximo alcanzado (1-4)
+   */
+  maxStepReached: number;
+  /**
+   * Función que se ejecuta cuando se hace clic en un paso visitado
+   */
+  onStepClick?: (stepNumber: number) => void;
 }
 
 /**
@@ -22,7 +30,7 @@ interface QuoteStepperProps {
  * @param props - Props del componente QuoteStepper
  * @returns Componente QuoteStepper
  */
-export const QuoteStepper = ({ currentStep }: QuoteStepperProps) => {
+export const QuoteStepper = ({ currentStep, maxStepReached, onStepClick }: QuoteStepperProps) => {
   const steps = [
     {
       number: 1,
@@ -60,10 +68,10 @@ export const QuoteStepper = ({ currentStep }: QuoteStepperProps) => {
    * @returns Estado del paso: 'completed', 'active', o 'pending'
    */
   const getStepStatus = (stepNumber: number): 'completed' | 'active' | 'pending' => {
-    if (stepNumber < currentStep) {
-      return 'completed';
-    } else if (stepNumber === currentStep) {
+    if (stepNumber === currentStep) {
       return 'active';
+    } else if (stepNumber <= maxStepReached) {
+      return 'completed';
     } else {
       return 'pending';
     }
@@ -96,16 +104,37 @@ export const QuoteStepper = ({ currentStep }: QuoteStepperProps) => {
           const isLast = index === steps.length - 1;
           const stepIcon = getStepIcon(step, status);
 
+          /**
+           * Maneja el clic en un paso visitado
+           */
+          const handleStepClick = (): void => {
+            // Permitir clic en pasos que han sido visitados (completados o activos, pero no pendientes)
+            if ((isCompleted || isActive) && onStepClick && step.number <= maxStepReached) {
+              onStepClick(step.number);
+            }
+          };
+
           return (
             <div key={step.number}>
-              <div className="flex items-start">
+              <div 
+                className={`flex items-start ${(isCompleted || isActive) && step.number <= maxStepReached ? 'cursor-pointer' : ''}`}
+                onClick={handleStepClick}
+                onKeyDown={(e): void => {
+                  if ((isCompleted || isActive) && onStepClick && step.number <= maxStepReached && (e.key === 'Enter' || e.key === ' ')) {
+                    e.preventDefault();
+                    onStepClick(step.number);
+                  }
+                }}
+                role={(isCompleted || isActive) && step.number <= maxStepReached ? 'button' : undefined}
+                tabIndex={(isCompleted || isActive) && step.number <= maxStepReached ? 0 : undefined}
+              >
                 <div className="flex flex-col items-center">
                   {stepIcon ? (
                     <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 ease-in-out ${
                       isActive 
                         ? 'bg-[#0052C9]' 
                         : isCompleted
-                        ? 'bg-[#12B980]'
+                        ? 'bg-[#12B980] hover:bg-[#0FA870]'
                         : 'bg-white'
                     }`}>
                       <div className="w-[34px] h-[34px] flex items-center justify-center overflow-hidden">
