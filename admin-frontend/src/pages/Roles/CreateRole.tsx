@@ -190,6 +190,138 @@ export const CreateRole = (): React.ReactElement => {
         }
       ];
     }
+
+    // Servicios para Orden de picking
+    if (subModuleName === 'Orden de picking' || subModulePath === '/picking/order' || subModulePath.includes('picking/order')) {
+      return [
+        {
+          id: 'service-create-picking-order',
+          name: 'Crear Orden de Picking',
+          code: 'post:picking:orders',
+          description: 'Permite crear nuevas órdenes de picking'
+        },
+        {
+          id: 'service-get-picking-order',
+          name: 'Obtener Orden de Picking',
+          code: 'get:picking:orders:{id}',
+          description: 'Permite ver detalles de una orden de picking específica'
+        },
+        {
+          id: 'service-list-picking-orders',
+          name: 'Listar Órdenes de Picking',
+          code: 'get:picking:orders',
+          description: 'Permite ver la lista de todas las órdenes de picking'
+        },
+        {
+          id: 'service-update-picking-order',
+          name: 'Actualizar Orden de Picking',
+          code: 'put:picking:orders:{id}',
+          description: 'Permite modificar datos y estado de órdenes de picking'
+        },
+        {
+          id: 'service-delete-picking-order',
+          name: 'Eliminar Orden de Picking',
+          code: 'delete:picking:orders:{id}',
+          description: 'Permite eliminar órdenes de picking del sistema'
+        },
+        {
+          id: 'service-update-picking-status',
+          name: 'Cambiar Estado de Orden',
+          code: 'put:picking:orders:{id}:status',
+          description: 'Permite cambiar el estado de una orden de picking'
+        }
+      ];
+    }
+
+    // Servicios para Métricas
+    if (subModuleName === 'Métricas' || subModulePath === '/picking/metrics' || subModulePath.includes('picking/metrics')) {
+      return [
+        {
+          id: 'service-get-picking-metrics',
+          name: 'Obtener Métricas de Picking',
+          code: 'get:picking:metrics',
+          description: 'Permite ver métricas generales de picking'
+        },
+        {
+          id: 'service-get-picking-statistics',
+          name: 'Obtener Estadísticas',
+          code: 'get:picking:metrics:statistics',
+          description: 'Permite ver estadísticas detalladas de picking'
+        },
+        {
+          id: 'service-get-picking-history',
+          name: 'Obtener Historial de Métricas',
+          code: 'get:picking:metrics:history',
+          description: 'Permite ver historial y tendencias de métricas'
+        },
+        {
+          id: 'service-get-picking-efficiency',
+          name: 'Obtener Eficiencia',
+          code: 'get:picking:metrics:efficiency',
+          description: 'Permite ver métricas de eficiencia de picking'
+        }
+      ];
+    }
+
+    // Servicios para Roles (submódulo)
+    if (subModuleName === 'Roles' || subModulePath === '/roles/roles' || subModulePath.includes('roles/roles')) {
+      return [
+        {
+          id: 'service-create-role',
+          name: 'Crear Rol',
+          code: 'post:roles',
+          description: 'Permite crear nuevos roles en el sistema'
+        },
+        {
+          id: 'service-get-role',
+          name: 'Obtener Rol',
+          code: 'get:roles:{id}',
+          description: 'Permite ver detalles de un rol específico'
+        },
+        {
+          id: 'service-list-roles',
+          name: 'Listar Roles',
+          code: 'get:roles',
+          description: 'Permite ver la lista de todos los roles'
+        },
+        {
+          id: 'service-update-role',
+          name: 'Actualizar Rol',
+          code: 'put:roles:{id}',
+          description: 'Permite modificar datos y permisos de roles existentes'
+        },
+        {
+          id: 'service-delete-role',
+          name: 'Eliminar Rol',
+          code: 'delete:roles:{id}',
+          description: 'Permite eliminar roles del sistema'
+        }
+      ];
+    }
+
+    // Servicios para Usuarios
+    if (subModuleName === 'Usuarios' || subModulePath === '/roles/users' || subModulePath.includes('roles/users')) {
+      return [
+        {
+          id: 'service-get-user',
+          name: 'Obtener Usuario',
+          code: 'get:users:{id}',
+          description: 'Permite ver detalles de un usuario específico'
+        },
+        {
+          id: 'service-list-users',
+          name: 'Listar Usuarios',
+          code: 'get:users',
+          description: 'Permite ver la lista de todos los usuarios'
+        },
+        {
+          id: 'service-update-user-role',
+          name: 'Actualizar Rol de Usuario',
+          code: 'put:users:{id}:role',
+          description: 'Permite asignar o cambiar el rol de un usuario'
+        }
+      ];
+    }
     
     return [];
   };

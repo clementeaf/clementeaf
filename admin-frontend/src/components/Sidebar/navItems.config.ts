@@ -45,7 +45,6 @@ export const pickingSubItems: NavItem[] = [
  */
 export const rolesSubItems: NavItem[] = [
   { name: 'Roles', path: routes.rolesManagement, icon: checkIcon },
-  { name: 'Permisos', path: routes.permissions, icon: checkIcon },
   { name: 'Usuarios', path: routes.users, icon: checkIcon }
 ];
 
