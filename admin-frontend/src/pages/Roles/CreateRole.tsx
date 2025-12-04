@@ -29,6 +29,18 @@ interface SubModuleItem {
   name: string;
   path: string;
   code: string;
+  hasServices?: boolean;
+  services?: ServiceItem[];
+}
+
+/**
+ * Interfaz para servicios
+ */
+interface ServiceItem {
+  id: string;
+  name: string;
+  code: string;
+  description: string;
 }
 
 /**
@@ -41,7 +53,9 @@ export const CreateRole = (): React.ReactElement => {
   const [isSaving, setIsSaving] = useState(false);
   const [selectedModuleCodes, setSelectedModuleCodes] = useState<string[]>([]);
   const [selectedSubModuleCodes, setSelectedSubModuleCodes] = useState<string[]>([]);
+  const [selectedServiceCodes, setSelectedServiceCodes] = useState<string[]>([]);
   const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set());
+  const [expandedSubModules, setExpandedSubModules] = useState<Set<string>>(new Set());
   
   const [formData, setFormData] = useState<{
     name: string;
@@ -52,6 +66,133 @@ export const CreateRole = (): React.ReactElement => {
     description: '',
     permissionIds: []
   });
+
+  /**
+   * Obtiene los servicios disponibles para un submódulo
+   */
+  const getServicesForSubModule = (subModuleName: string, subModulePath: string): ServiceItem[] => {
+    // Servicios para Clientes
+    if (subModuleName === 'Clientes' || subModulePath === '/clients') {
+      return [
+        {
+          id: 'service-create-client',
+          name: 'Crear Cliente',
+          code: 'post:clients',
+          description: 'Permite crear nuevos clientes'
+        },
+        {
+          id: 'service-get-client',
+          name: 'Obtener Cliente',
+          code: 'get:clients:{id}',
+          description: 'Permite ver detalles de un cliente específico'
+        },
+        {
+          id: 'service-list-clients',
+          name: 'Listar Clientes',
+          code: 'get:clients',
+          description: 'Permite ver la lista de todos los clientes'
+        },
+        {
+          id: 'service-search-clients',
+          name: 'Buscar Clientes',
+          code: 'get:clients:search:query',
+          description: 'Permite buscar clientes por nombre o RUT'
+        },
+        {
+          id: 'service-update-client',
+          name: 'Actualizar Cliente',
+          code: 'put:clients:{id}',
+          description: 'Permite modificar datos de clientes existentes'
+        },
+        {
+          id: 'service-delete-client',
+          name: 'Eliminar Cliente',
+          code: 'delete:clients:{id}',
+          description: 'Permite eliminar clientes del sistema'
+        }
+      ];
+    }
+
+    // Servicios para Nota de venta
+    if (subModuleName === 'Nota de venta' || subModulePath === '/quotes') {
+      return [
+        {
+          id: 'service-create-quote',
+          name: 'Crear Nota de Venta',
+          code: 'post:quotes',
+          description: 'Permite crear nuevas notas de venta'
+        },
+        {
+          id: 'service-get-quote',
+          name: 'Obtener Nota de Venta',
+          code: 'get:quotes:{id}',
+          description: 'Permite ver detalles de una nota de venta específica'
+        },
+        {
+          id: 'service-list-quotes',
+          name: 'Listar Notas de Venta',
+          code: 'get:quotes',
+          description: 'Permite ver la lista de todas las notas de venta'
+        },
+        {
+          id: 'service-update-quote',
+          name: 'Actualizar Nota de Venta',
+          code: 'put:quotes:{id}',
+          description: 'Permite modificar datos de notas de venta existentes'
+        },
+        {
+          id: 'service-delete-quote',
+          name: 'Eliminar Nota de Venta',
+          code: 'delete:quotes:{id}',
+          description: 'Permite eliminar notas de venta del sistema'
+        },
+        {
+          id: 'service-get-next-quote-number',
+          name: 'Obtener Siguiente Número',
+          code: 'get:quotes:next-number:query',
+          description: 'Permite obtener el siguiente número correlativo de cotización'
+        }
+      ];
+    }
+
+    // Servicios para Cuentas por cobrar
+    if (subModuleName === 'Cuentas por cobrar' || subModulePath === '/collections') {
+      return [
+        {
+          id: 'service-get-ctas-por-cobrar',
+          name: 'Obtener Cuentas por Cobrar',
+          code: 'get:analytics:ctas-por-cobrar',
+          description: 'Permite ver todas las cuentas por cobrar con filtros'
+        },
+        {
+          id: 'service-get-deudas-activas',
+          name: 'Obtener Deudas Activas',
+          code: 'get:analytics:deudas-activas',
+          description: 'Permite ver deudas activas agrupadas por empresa'
+        },
+        {
+          id: 'service-get-resumen-clientes',
+          name: 'Obtener Resumen por Cliente',
+          code: 'get:analytics:resumen:clientes',
+          description: 'Permite ver resumen de cuentas por cobrar por cliente'
+        },
+        {
+          id: 'service-get-resumen-vendedores',
+          name: 'Obtener Resumen por Vendedor',
+          code: 'get:analytics:resumen:vendedores',
+          description: 'Permite ver resumen de cuentas por cobrar por vendedor'
+        },
+        {
+          id: 'service-get-estadisticas',
+          name: 'Obtener Estadísticas',
+          code: 'get:analytics:estadisticas',
+          description: 'Permite ver estadísticas generales de cuentas por cobrar'
+        }
+      ];
+    }
+    
+    return [];
+  };
 
   /**
    * Mapea los submódulos a sus módulos padres
@@ -69,12 +210,17 @@ export const CreateRole = (): React.ReactElement => {
     
     return subItems
       .filter(item => !item.path.includes('*')) // Excluir rutas wildcard
-      .map(item => ({
-        id: `submodule-${item.path}`,
-        name: item.name,
-        path: item.path,
-        code: `view:${item.path.replace(/^\//, '').replace(/\//g, ':').replace(/:{id}/g, ':id')}`
-      }));
+      .map(item => {
+        const services = getServicesForSubModule(item.name, item.path);
+        return {
+          id: `submodule-${item.path}`,
+          name: item.name,
+          path: item.path,
+          code: `view:${item.path.replace(/^\//, '').replace(/\//g, ':').replace(/:{id}/g, ':id')}`,
+          hasServices: services.length > 0,
+          services: services.length > 0 ? services : undefined
+        };
+      });
   };
 
   /**
@@ -114,15 +260,18 @@ export const CreateRole = (): React.ReactElement => {
       const permissionsData = await permissionsService.getAllPermissions();
       setPermissions(permissionsData);
       
-      // Si hay permisos, mapear los módulos seleccionados
-      if (permissionsData.length > 0 && selectedModuleCodes.length > 0) {
-        const modulePermissionIds = permissionsData
-          .filter(p => selectedModuleCodes.includes(p.code))
-          .map(p => p.id);
-        setFormData(prev => ({
-          ...prev,
-          permissionIds: [...prev.permissionIds.filter(id => !modulePermissionIds.includes(id)), ...modulePermissionIds]
-        }));
+      // Si hay permisos, mapear los módulos, submódulos y servicios seleccionados
+      if (permissionsData.length > 0) {
+        const allSelectedCodes = [...selectedModuleCodes, ...selectedSubModuleCodes, ...selectedServiceCodes];
+        if (allSelectedCodes.length > 0) {
+          const permissionIds = permissionsData
+            .filter(p => allSelectedCodes.includes(p.code))
+            .map(p => p.id);
+          setFormData(prev => ({
+            ...prev,
+            permissionIds: [...new Set([...prev.permissionIds, ...permissionIds])]
+          }));
+        }
       }
     } catch (error) {
       // Silenciar errores, los módulos se muestran de todas formas
@@ -191,6 +340,51 @@ export const CreateRole = (): React.ReactElement => {
   };
 
   /**
+   * Maneja el cambio de checkbox de servicio
+   */
+  const handleServiceToggle = (serviceCode: string): void => {
+    setSelectedServiceCodes(prev => {
+      const isSelected = prev.includes(serviceCode);
+      const newCodes = isSelected
+        ? prev.filter(c => c !== serviceCode)
+        : [...prev, serviceCode];
+      
+      // Si hay permisos cargados, actualizar también los IDs
+      if (permissions.length > 0) {
+        const servicePermission = permissions.find(p => p.code === serviceCode);
+        if (servicePermission) {
+          setFormData(prevForm => {
+            const isIdSelected = prevForm.permissionIds.includes(servicePermission.id);
+            return {
+              ...prevForm,
+              permissionIds: isIdSelected
+                ? prevForm.permissionIds.filter(id => id !== servicePermission.id)
+                : [...prevForm.permissionIds, servicePermission.id]
+            };
+          });
+        }
+      }
+      
+      return newCodes;
+    });
+  };
+
+  /**
+   * Maneja el toggle de expansión de submódulo
+   */
+  const handleToggleSubModuleExpansion = (subModulePath: string): void => {
+    setExpandedSubModules(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(subModulePath)) {
+        newSet.delete(subModulePath);
+      } else {
+        newSet.add(subModulePath);
+      }
+      return newSet;
+    });
+  };
+
+  /**
    * Maneja el toggle de expansión de módulo
    */
   const handleToggleModuleExpansion = (modulePath: string): void => {
@@ -224,9 +418,9 @@ export const CreateRole = (): React.ReactElement => {
 
       setIsSaving(true);
       
-      // Si hay módulos o submódulos seleccionados pero no hay permisos sincronizados, sincronizar primero
+      // Si hay módulos, submódulos o servicios seleccionados pero no hay permisos sincronizados, sincronizar primero
       let finalPermissionIds = formData.permissionIds;
-      const allSelectedCodes = [...selectedModuleCodes, ...selectedSubModuleCodes];
+      const allSelectedCodes = [...selectedModuleCodes, ...selectedSubModuleCodes, ...selectedServiceCodes];
       
       if (allSelectedCodes.length > 0 && permissions.length === 0) {
         // Sincronizar permisos primero
@@ -371,24 +565,73 @@ export const CreateRole = (): React.ReactElement => {
                           <div className="ml-6 space-y-1 border-l-2 border-gray-200 pl-3">
                             {module.subItems!.map(subModule => {
                               const isSubModuleSelected = selectedSubModuleCodes.includes(subModule.code);
+                              const hasServices = subModule.hasServices && subModule.services && subModule.services.length > 0;
+                              const isSubModuleExpanded = expandedSubModules.has(subModule.path);
                               
                               return (
-                                <div key={subModule.id} className="flex items-center gap-2">
-                                  <input
-                                    type="checkbox"
-                                    checked={isSubModuleSelected}
-                                    onChange={() => handleSubModuleToggle(subModule.code)}
-                                    className="flex-shrink-0"
-                                  />
-                                  <label
-                                    className="flex-1 flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded -ml-2"
-                                    onClick={() => handleSubModuleToggle(subModule.code)}
-                                  >
-                                    <span className="text-sm font-medium text-gray-700">{subModule.name}</span>
-                                    <span className="text-xs text-gray-500">
-                                      (Acceso a {subModule.name})
-                                    </span>
-                                  </label>
+                                <div key={subModule.id} className="space-y-1">
+                                  <div className="flex items-center gap-2">
+                                    <input
+                                      type="checkbox"
+                                      checked={isSubModuleSelected}
+                                      onChange={() => handleSubModuleToggle(subModule.code)}
+                                      className="flex-shrink-0"
+                                    />
+                                    <label
+                                      className="flex-1 flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded -ml-2"
+                                      onClick={() => handleSubModuleToggle(subModule.code)}
+                                    >
+                                      <span className="text-sm font-medium text-gray-700">{subModule.name}</span>
+                                      <span className="text-xs text-gray-500">
+                                        (Acceso a {subModule.name})
+                                      </span>
+                                      {hasServices && (
+                                        <button
+                                          type="button"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleToggleSubModuleExpansion(subModule.path);
+                                          }}
+                                          className="flex-shrink-0 p-1 hover:bg-gray-100 rounded transition-colors ml-auto"
+                                        >
+                                          <img
+                                            src={isSubModuleExpanded ? toCloseIcon : toOpenIcon}
+                                            alt={isSubModuleExpanded ? 'Cerrar' : 'Abrir'}
+                                            className="w-4 h-4"
+                                          />
+                                        </button>
+                                      )}
+                                    </label>
+                                  </div>
+                                  
+                                  {/* Mostrar servicios si el submódulo los tiene y está expandido */}
+                                  {hasServices && isSubModuleExpanded && (
+                                    <div className="ml-6 space-y-1 border-l-2 border-gray-300 pl-3">
+                                      {subModule.services!.map(service => {
+                                        const isServiceSelected = selectedServiceCodes.includes(service.code);
+                                        
+                                        return (
+                                          <div key={service.id} className="flex items-center gap-2">
+                                            <input
+                                              type="checkbox"
+                                              checked={isServiceSelected}
+                                              onChange={() => handleServiceToggle(service.code)}
+                                              className="flex-shrink-0"
+                                            />
+                                            <label
+                                              className="flex-1 flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded -ml-2"
+                                              onClick={() => handleServiceToggle(service.code)}
+                                            >
+                                              <span className="text-sm font-medium text-gray-600">{service.name}</span>
+                                              <span className="text-xs text-gray-500">
+                                                ({service.description})
+                                              </span>
+                                            </label>
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
+                                  )}
                                 </div>
                               );
                             })}
