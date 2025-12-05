@@ -6,6 +6,7 @@ interface HomeKanbanColumnProps {
   status: HomeOrderStatus;
   orders: HomeOrder[];
   onStatusChange: (orderId: string, newStatus: HomeOrderStatus) => void;
+  onDelete?: (orderId: string) => void;
 }
 
 /**
@@ -16,7 +17,8 @@ interface HomeKanbanColumnProps {
 export const HomeKanbanColumn = ({ 
   title, 
   orders, 
-  onStatusChange 
+  onStatusChange,
+  onDelete
 }: HomeKanbanColumnProps): React.ReactElement => {
   return (
     <div className="flex-1 bg-gray-50 rounded-lg p-3 w-[280px] flex-shrink-0 flex flex-col h-full">
@@ -33,6 +35,7 @@ export const HomeKanbanColumn = ({
               <HomeOrderCard
                 order={order}
                 onStatusChange={onStatusChange}
+                onDelete={onDelete}
               />
             </div>
           ))

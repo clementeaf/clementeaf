@@ -4,6 +4,7 @@ import { HomeKanbanColumn } from './HomeKanbanColumn';
 interface HomeKanbanBoardProps {
   orders: HomeOrder[];
   onStatusChange: (orderId: string, newStatus: HomeOrderStatus) => void;
+  onDelete?: (orderId: string) => void;
 }
 
 /**
@@ -21,7 +22,7 @@ const columns: Array<{ title: string; status: HomeOrderStatus }> = [
  * @param props - Props del componente HomeKanbanBoard
  * @returns Componente HomeKanbanBoard
  */
-export const HomeKanbanBoard = ({ orders, onStatusChange }: HomeKanbanBoardProps): React.ReactElement => {
+export const HomeKanbanBoard = ({ orders, onStatusChange, onDelete }: HomeKanbanBoardProps): React.ReactElement => {
   /**
    * Obtiene las órdenes por estado
    */
@@ -38,6 +39,7 @@ export const HomeKanbanBoard = ({ orders, onStatusChange }: HomeKanbanBoardProps
           status={column.status}
           orders={getOrdersByStatus(column.status)}
           onStatusChange={onStatusChange}
+          onDelete={onDelete}
         />
       ))}
     </div>

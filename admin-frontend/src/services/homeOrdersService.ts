@@ -89,6 +89,24 @@ export const homeOrdersService = {
       limit: data.data.limit,
       totalPages: data.data.totalPages
     };
+  },
+
+  /**
+   * Elimina una nota de venta (quote)
+   * @param quoteId - ID de la nota de venta a eliminar
+   * @returns true si se eliminó correctamente
+   */
+  async deleteHomeOrder(quoteId: string): Promise<boolean> {
+    const quoteIdNumber = parseInt(quoteId, 10);
+    if (isNaN(quoteIdNumber)) {
+      throw new Error('ID de nota de venta inválido');
+    }
+
+    await apiClient.delete(
+      endpoints.quotes.delete.replace('{id}', quoteIdNumber.toString())
+    );
+
+    return true;
   }
 };
 

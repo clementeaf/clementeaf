@@ -3,6 +3,8 @@ import { HomeKanbanBoard } from './Home/components';
 import type { HomeOrder, HomeOrderStatus } from './Home/types';
 import { useHomeOrders } from '../hooks/useHomeOrders';
 import { useHomeOrdersWebSocket } from '../hooks/useHomeOrdersWebSocket';
+import { homeOrdersService } from '../services/homeOrdersService';
+import { toast } from 'react-toastify';
 
 /**
  * Página de inicio
@@ -59,6 +61,23 @@ export const Home = (): React.ReactElement => {
     );
   };
 
+  /**
+   * Maneja la eliminación de una nota de venta
+   */
+  const handleDelete = useCallback(async (orderId: string): Promise<void> => {
+    try {
+      await homeOrdersService.deleteHomeOrder(orderId);
+      
+      // Remover la orden del estado local
+      setOrders(prevOrders => prevOrders.filter(order => order.id !== orderId));
+      
+      toast.success('Nota de venta eliminada exitosamente');
+    } catch (error) {
+      console.error('Error eliminando nota de venta:', error);
+      toast.error('Error al eliminar la nota de venta');
+    }
+  }, []);
+
   return (
     <div className="w-full h-full flex flex-col p-8">
       <div className="flex-1 flex flex-col min-w-0">
@@ -66,6 +85,7 @@ export const Home = (): React.ReactElement => {
           <HomeKanbanBoard
             orders={orders}
             onStatusChange={handleStatusChange}
+            onDelete={handleDelete}
           />
         </div>
       </div>

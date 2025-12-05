@@ -114,20 +114,10 @@ export const OrderSection = ({ filters = {} }: OrderSectionProps): React.ReactEl
   return (
     <div className="flex-1 flex flex-col min-w-0 h-full">
       <div className="flex-1 overflow-hidden rounded-lg shadow-sm bg-white border border-gray-200 p-4 h-full">
-        {filteredOrders.length > 0 ? (
-          <PickingKanbanBoard
-            orders={filteredOrders}
-            onStatusChange={handleStatusChange}
-          />
-        ) : (
-          <div className="flex flex-col items-center justify-center h-64">
-            <p className="text-gray-500">
-              {orders.length === 0
-                ? 'No hay órdenes de picking disponibles'
-                : 'No se encontraron órdenes con los filtros aplicados'}
-            </p>
-          </div>
-        )}
+        <PickingKanbanBoard
+          orders={filteredOrders}
+          onStatusChange={handleStatusChange}
+        />
       </div>
     </div>
   );
