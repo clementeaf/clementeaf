@@ -4,6 +4,7 @@ import type { HomeOrder, HomeOrderStatus } from './Home/types';
 import { useHomeOrders } from '../hooks/useHomeOrders';
 import { useHomeOrdersWebSocket } from '../hooks/useHomeOrdersWebSocket';
 import { homeOrdersService } from '../services/homeOrdersService';
+import { useNotifications } from '../hooks/useNotifications';
 import { toast } from 'react-toastify';
 
 /**
@@ -14,6 +15,7 @@ export const Home = (): React.ReactElement => {
   // Obtener órdenes desde la API
   const { data: ordersData, isLoading } = useHomeOrders(1, 100);
   const [orders, setOrders] = useState<HomeOrder[]>([]);
+  const { createSalesNotification } = useNotifications();
 
   // Actualizar órdenes cuando se cargan desde la API
   useEffect(() => {
@@ -54,11 +56,26 @@ export const Home = (): React.ReactElement => {
    * Maneja el cambio de estado de una orden
    */
   const handleStatusChange = (orderId: string, newStatus: HomeOrderStatus): void => {
-    setOrders(prevOrders =>
-      prevOrders.map(order =>
-        order.id === orderId ? { ...order, estado: newStatus } : order
-      )
-    );
+    setOrders(prevOrders => {
+      const order = prevOrders.find(o => o.id === orderId);
+      if (!order) return prevOrders;
+
+      // Crear notificación de cambio de estado para Ventas
+      if (order.estado !== newStatus) {
+        const estadoAnterior = order.estado;
+        createSalesNotification(
+          orderId,
+          order.codigoOrden,
+          estadoAnterior,
+          newStatus,
+          order.cliente
+        );
+      }
+
+      return prevOrders.map(o =>
+        o.id === orderId ? { ...o, estado: newStatus } : o
+      );
+    });
   };
 
   /**

@@ -16,7 +16,7 @@ interface PickingOrdersWebSocketMessage {
 }
 
 interface UsePickingOrdersWebSocketOptions {
-  onNewOrder?: (order: PickingOrder) => void;
+  onNewOrder?: (order: PickingOrder, quoteInfo?: { clienteNombre?: string; monto?: number; numeroCotizacion?: string; estado?: string }) => void;
   onError?: (error: Error) => void;
 }
 
@@ -67,7 +67,7 @@ export const usePickingOrdersWebSocket = (options: UsePickingOrdersWebSocketOpti
           
           if (data.action === 'new_picking_order' && data.pickingOrder) {
             console.log('📦 [PICKING WS] Nueva orden de picking recibida:', data.pickingOrder);
-            onNewOrder?.(data.pickingOrder);
+            onNewOrder?.(data.pickingOrder, data.quoteInfo);
           }
         } catch (error) {
           console.error('❌ [PICKING WS] Error parseando mensaje:', error);

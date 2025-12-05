@@ -1,5 +1,10 @@
 import { Button } from './Button';
-import { BellIcon, ProfileIcon, PlusIcon } from './icons';
+import { ProfileIcon, PlusIcon } from './icons';
+import { NotificationsDropdown } from '../Notifications';
+import { useNotifications } from '../../hooks/useNotifications';
+import { useNavigate } from 'react-router-dom';
+import { routes } from '../../routes';
+import type { Notification } from '../../types/notifications';
 
 /**
  * Configuración de un botón de acción
@@ -47,6 +52,25 @@ export interface PageHeaderProps {
  * @returns Componente PageHeader
  */
 export const PageHeader = ({ title, actionButtons = [], className = '' }: PageHeaderProps) => {
+  const navigate = useNavigate();
+  const {
+    notifications,
+    unreadCount,
+    markAsRead,
+    markAllAsRead
+  } = useNotifications();
+
+  /**
+   * Maneja el click en una notificación
+   */
+  const handleNotificationClick = (notification: Notification): void => {
+    if (notification.type === 'picking') {
+      navigate(routes.pickingOrder);
+    } else if (notification.type === 'sales') {
+      navigate(routes.quotes);
+    }
+  };
+
   return (
     <div className={`flex items-center justify-between mb-6 ${className}`}>
       <h1 className="text-2xl font-bold text-gray-800">{title}</h1>
@@ -76,9 +100,13 @@ export const PageHeader = ({ title, actionButtons = [], className = '' }: PageHe
             </Button>
           );
         })}
-        <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors duration-200">
-          <BellIcon color="#6B7280" />
-        </button>
+        <NotificationsDropdown
+          notifications={notifications}
+          unreadCount={unreadCount}
+          onNotificationClick={handleNotificationClick}
+          onMarkAsRead={markAsRead}
+          onMarkAllAsRead={markAllAsRead}
+        />
         <button className="relative p-2 hover:bg-gray-100 rounded-full transition-colors duration-200">
           <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
             <ProfileIcon color="#9CA3AF" />

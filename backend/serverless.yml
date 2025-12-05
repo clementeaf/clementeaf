@@ -264,6 +264,37 @@ functions:
           method: put
           cors: true
 
+  # Notifications endpoints
+  getNotifications:
+    handler: dist/modules/Notifications/handlers/getNotifications.handler
+    timeout: 30
+    memorySize: 512
+    events:
+      - http:
+          path: notifications
+          method: get
+          cors: true
+
+  markNotificationAsRead:
+    handler: dist/modules/Notifications/handlers/markAsRead.handler
+    timeout: 30
+    memorySize: 512
+    events:
+      - http:
+          path: notifications/{id}/read
+          method: put
+          cors: true
+
+  markAllNotificationsAsRead:
+    handler: dist/modules/Notifications/handlers/markAllAsRead.handler
+    timeout: 30
+    memorySize: 512
+    events:
+      - http:
+          path: notifications/read-all
+          method: put
+          cors: true
+
   # Analytics endpoints
   getCtasPorCobrar:
     handler: dist/modules/Analytics/handlers/getCtasPorCobrar.handler

@@ -3,6 +3,7 @@ import { Routes, Route } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import { Sidebar } from './components/Sidebar';
 import { ProtectedRoute } from './components/ProtectedRoute';
+import { NotificationsProvider } from './components/Notifications';
 import { routes } from './routes';
 
 const Home = lazy(() => import('./pages/Home').then(module => ({ default: module.Home })));
@@ -45,10 +46,11 @@ const LoadingFallback = (): React.ReactElement => (
  */
 function App(): React.ReactNode {
   return (
-    <div className="w-screen h-screen bg-blue-50/50 flex">
-      <Sidebar />
-      <div className="w-full h-full rounded-lg shadow-sm overflow-auto">
-        <Suspense fallback={<LoadingFallback />}>
+    <NotificationsProvider>
+      <div className="w-screen h-screen bg-blue-50/50 flex">
+        <Sidebar />
+        <div className="w-full h-full rounded-lg shadow-sm overflow-auto">
+          <Suspense fallback={<LoadingFallback />}>
           <Routes>
             {/* Rutas públicas (sin restricción de permisos) */}
             <Route path={routes.home} element={<Home />} />
@@ -212,7 +214,8 @@ function App(): React.ReactNode {
         pauseOnHover
         theme="light"
       />
-    </div>
+      </div>
+    </NotificationsProvider>
   );
 }
 

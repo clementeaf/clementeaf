@@ -5,6 +5,8 @@ import { QuotesService } from '../../services/QuotesService';
 import { QuoteToPickingOrderService } from '../../services/QuoteToPickingOrderService';
 import { WebSocketConnectionService } from '../../../Chat/services/WebSocketConnectionService';
 import { AwsWebSocketClient } from '../../../Chat/services/aws/AwsWebSocketClient';
+import { NotificationsService } from '../../../Notifications/services/NotificationsService';
+import { UsersService } from '../../../Users/services/UsersService';
 
 /**
  * Handler para procesar el evento de nota de venta creada
@@ -86,6 +88,43 @@ export const quoteCreatedHandler = async (
     const sentCount = await connectionService.broadcast(message);
     
     console.log(`📡 Nueva orden de picking enviada vía WebSocket a ${sentCount} conexión(es)`);
+
+    // Crear notificaciones en la base de datos para usuarios con permisos de Picking
+    try {
+      const usersService = new UsersService();
+      const notificationsService = new NotificationsService();
+      
+      // Obtener usuarios con permisos de picking
+      const usersWithPickingPermission = await usersService.getUsersWithPermission('view:picking:order');
+      
+      // También incluir usuarios con permiso del módulo completo
+      const usersWithModulePermission = await usersService.getUsersWithPermission('module:picking');
+      
+      // Combinar y eliminar duplicados
+      const allUsers = [...usersWithPickingPermission, ...usersWithModulePermission];
+      const uniqueUsers = Array.from(
+        new Map(allUsers.map(user => [user.id, user])).values()
+      );
+
+      // Crear notificación para cada usuario
+      for (const user of uniqueUsers) {
+        await notificationsService.createPickingNotification(
+          user.id,
+          {
+            quoteId: pickingOrder.id,
+            codigoOrden: pickingOrder.codigoOrden,
+            clienteNombre: quote.clienteNombre,
+            vendedor: pickingOrder.vendedor
+          }
+        );
+      }
+
+      console.log(`🔔 Notificaciones creadas para ${uniqueUsers.length} usuario(s) con permisos de Picking`);
+    } catch (error) {
+      console.error('❌ Error creando notificaciones:', error);
+      // No lanzar error para no interrumpir el flujo principal
+    }
+    
     console.log(`✅ Evento quote.created procesado exitosamente para quote ID: ${quoteData.quoteId}`);
     console.log(`📦 Orden de picking convertida:`, {
       id: pickingOrder.id,

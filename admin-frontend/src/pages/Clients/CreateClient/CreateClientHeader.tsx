@@ -1,6 +1,9 @@
 import { useNavigate } from 'react-router-dom';
-import { BellIcon, ProfileIcon } from '../../../components/commons/icons';
+import { ProfileIcon } from '../../../components/commons/icons';
+import { NotificationsDropdown } from '../../../components/Notifications';
+import { useNotifications } from '../../../hooks/useNotifications';
 import { routes } from '../../../routes';
+import type { Notification } from '../../../types/notifications';
 import ArrowRightIcon from '../../../assets/right.png';
 
 /**
@@ -9,12 +12,29 @@ import ArrowRightIcon from '../../../assets/right.png';
  */
 export const CreateClientHeader = () => {
   const navigate = useNavigate();
+  const {
+    notifications,
+    unreadCount,
+    markAsRead,
+    markAllAsRead
+  } = useNotifications();
 
   /**
    * Maneja la navegación de vuelta a la tabla de clientes
    */
   const handleBackToClients = (): void => {
     navigate(routes.clients);
+  };
+
+  /**
+   * Maneja el click en una notificación
+   */
+  const handleNotificationClick = (notification: Notification): void => {
+    if (notification.type === 'picking') {
+      navigate(routes.pickingOrder);
+    } else if (notification.type === 'sales') {
+      navigate(routes.quotes);
+    }
   };
 
   return (
@@ -31,10 +51,13 @@ export const CreateClientHeader = () => {
       </div>
     
       <div className="flex items-center gap-4">
-        <button className="relative p-2 hover:bg-gray-100 rounded-lg transition-colors duration-200">
-          <BellIcon color="#6B7280" />
-          <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-        </button>
+        <NotificationsDropdown
+          notifications={notifications}
+          unreadCount={unreadCount}
+          onNotificationClick={handleNotificationClick}
+          onMarkAsRead={markAsRead}
+          onMarkAllAsRead={markAllAsRead}
+        />
         <button className="relative p-2 hover:bg-gray-100 rounded-full transition-colors duration-200">
           <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
             <ProfileIcon color="#9CA3AF" />

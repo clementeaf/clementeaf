@@ -4,6 +4,7 @@ import type { PickingOrder, PickingOrderStatus } from '../types';
 import type { PickingFilters } from '../PickingSidebar';
 import { usePickingOrders } from '../../../hooks/usePickingOrders';
 import { usePickingOrdersWebSocket } from '../../../hooks/usePickingOrdersWebSocket';
+import { useNotifications } from '../../../hooks/useNotifications';
 
 interface OrderSectionProps {
   filters?: PickingFilters;
@@ -29,7 +30,7 @@ export const OrderSection = ({ filters = {} }: OrderSectionProps): React.ReactEl
   /**
    * Maneja la recepción de nuevas órdenes de picking vía WebSocket
    */
-  const handleNewOrder = useCallback((newOrder: PickingOrder) => {
+  const handleNewOrder = useCallback((newOrder: PickingOrder, quoteInfo?: { clienteNombre?: string; monto?: number; numeroCotizacion?: string; estado?: string }) => {
     setOrders(prevOrders => {
       // Verificar si la orden ya existe (evitar duplicados)
       const orderExists = prevOrders.some(order => order.id === newOrder.id);
@@ -40,6 +41,10 @@ export const OrderSection = ({ filters = {} }: OrderSectionProps): React.ReactEl
 
       // Agregar la nueva orden al inicio (más reciente primero)
       console.log(`✅ [PICKING] Nueva orden agregada en tiempo real: ${newOrder.codigoOrden}`);
+      
+      // La notificación se crea automáticamente en useNotifications hook
+      // que escucha el mismo WebSocket
+      
       return [newOrder, ...prevOrders];
     });
   }, []);

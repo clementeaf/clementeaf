@@ -132,5 +132,29 @@ export class UsersService {
 
     return this.getUserById(id);
   }
+
+  /**
+   * Obtiene usuarios que tienen un permiso específico
+   * @param permissionCode - Código del permiso
+   * @returns Lista de usuarios con el permiso
+   */
+  async getUsersWithPermission(permissionCode: string): Promise<Omit<User, 'password'>[]> {
+    const users = await this.userRepository.find({
+      relations: ['role', 'role.rolePermissions', 'role.rolePermissions.permission']
+    });
+
+    const usersWithPermission = users.filter(user => {
+      if (!user.role || !user.role.rolePermissions) return false;
+      
+      return user.role.rolePermissions.some(rp => 
+        rp.permission?.code === permissionCode
+      );
+    });
+
+    return usersWithPermission.map(user => {
+      const { password, ...userWithoutPassword } = user;
+      return userWithoutPassword;
+    });
+  }
 }
 
