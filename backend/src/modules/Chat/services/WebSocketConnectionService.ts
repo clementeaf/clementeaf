@@ -1,5 +1,6 @@
 import { WebSocketConnectionRepository } from '../repositories/WebSocketConnectionRepository';
 import { IWebSocketClient } from '../interfaces/IWebSocketClient';
+import { AppDataSource } from '../../../config/database';
 
 /**
  * Servicio para gestionar conexiones WebSocket
@@ -21,6 +22,10 @@ export class WebSocketConnectionService {
    * @returns true si se guardó correctamente
    */
   async saveConnection(connectionId: string, userId: number): Promise<boolean> {
+    // Asegurar que la base de datos esté inicializada
+    if (!AppDataSource.isInitialized) {
+      await AppDataSource.initialize();
+    }
     return await this.connectionRepository.save(connectionId, userId);
   }
 
@@ -30,6 +35,10 @@ export class WebSocketConnectionService {
    * @returns true si se eliminó correctamente
    */
   async deleteConnection(connectionId: string): Promise<boolean> {
+    // Asegurar que la base de datos esté inicializada
+    if (!AppDataSource.isInitialized) {
+      await AppDataSource.initialize();
+    }
     return await this.connectionRepository.delete(connectionId);
   }
 
@@ -39,6 +48,10 @@ export class WebSocketConnectionService {
    * @returns Lista de connectionIds
    */
   async getUserConnections(userId: number): Promise<string[]> {
+    // Asegurar que la base de datos esté inicializada
+    if (!AppDataSource.isInitialized) {
+      await AppDataSource.initialize();
+    }
     return await this.connectionRepository.findByUserId(userId);
   }
 
@@ -89,6 +102,7 @@ export class WebSocketConnectionService {
 
   /**
    * Envía un mensaje a todas las conexiones activas (broadcast)
+   * Limpia automáticamente las conexiones que ya no existen
    * @param message - Mensaje a enviar
    * @returns Número total de conexiones a las que se envió el mensaje
    */
@@ -99,7 +113,41 @@ export class WebSocketConnectionService {
       return 0;
     }
 
-    return await this.webSocketClient.sendToConnections(allConnectionIds, message);
+    // Enviar mensajes y obtener resultados
+    const results = await Promise.allSettled(
+      allConnectionIds.map(connectionId =>
+        this.webSocketClient.sendToConnection(connectionId, message)
+      )
+    );
+
+    // Contar conexiones exitosas y limpiar las que fallaron
+    let sentCount = 0;
+    const failedConnectionIds: string[] = [];
+
+    results.forEach((result, index) => {
+      if (result.status === 'fulfilled' && result.value) {
+        sentCount++;
+      } else {
+        // Si falló, probablemente la conexión ya no existe
+        failedConnectionIds.push(allConnectionIds[index]);
+      }
+    });
+
+    // Limpiar conexiones que ya no existen (de forma asíncrona, no bloqueante)
+    if (failedConnectionIds.length > 0) {
+      console.log(`🧹 Limpiando ${failedConnectionIds.length} conexión(es) que ya no existen`);
+      Promise.all(
+        failedConnectionIds.map(connectionId =>
+          this.connectionRepository.delete(connectionId).catch(error =>
+            console.error(`Error limpiando conexión ${connectionId}:`, error)
+          )
+        )
+      ).catch(error => {
+        console.error('Error en limpieza de conexiones:', error);
+      });
+    }
+
+    return sentCount;
   }
 }
 

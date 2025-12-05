@@ -93,6 +93,10 @@ provider:
     COGNITO_CLIENT_ID: ${env:COGNITO_CLIENT_ID, '3ido9jo5thqnl5c05vlna3c0no'}
     COGNITO_REGION: ${env:COGNITO_REGION, 'us-east-1'}
     COGNITO_AUTO_CONFIRM: ${env:COGNITO_AUTO_CONFIRM, 'true'}
+    WEBSOCKET_API_ENDPOINT: ${env:WEBSOCKET_API_ENDPOINT, ''}
+    WSS_ENDPOINT: ${env:WSS_ENDPOINT, ''}
+    EVENT_BRIDGE_BUS_NAME: ${env:EVENT_BRIDGE_BUS_NAME, 'default'}
+    EVENT_BRIDGE_SOURCE: ${env:EVENT_BRIDGE_SOURCE, 'banados.quotes'}
 
 package:
   patterns:
@@ -269,6 +273,7 @@ functions:
     handler: dist/modules/Notifications/handlers/getNotifications.handler
     timeout: 30
     memorySize: 512
+    vpc: null
     events:
       - http:
           path: notifications
@@ -279,6 +284,7 @@ functions:
     handler: dist/modules/Notifications/handlers/markAsRead.handler
     timeout: 30
     memorySize: 512
+    vpc: null
     events:
       - http:
           path: notifications/{id}/read
@@ -289,6 +295,7 @@ functions:
     handler: dist/modules/Notifications/handlers/markAllAsRead.handler
     timeout: 30
     memorySize: 512
+    vpc: null
     events:
       - http:
           path: notifications/read-all
@@ -363,7 +370,7 @@ functions:
           method: get
           cors: true
 
-  getNotifications:
+  getCheckAuditorNotifications:
     handler: dist/modules/CheckAuditor/handlers/getNotifications.handler
     events:
       - http:
@@ -503,11 +510,27 @@ functions:
           method: get
           cors: true
 
+  # Picking Metrics endpoints
+  getPickingMetrics:
+    handler: dist/modules/Picking/handlers/getPickingMetrics.handler
+    timeout: 30
+    memorySize: 512
+    events:
+      - http:
+          path: picking/metrics
+          method: get
+          cors: true
+
   # Quotes Event Handlers
   quoteCreatedEventHandler:
     handler: dist/modules/Quotes/handlers/events/quoteCreatedHandler.handler
     timeout: 60
     memorySize: 512
+    deadLetter:
+      targetArn:
+        Fn::GetAtt:
+          - QuoteCreatedEventDLQ
+          - Arn
     events:
       - eventBridge:
           pattern:
@@ -515,6 +538,23 @@ functions:
               - banados.quotes
             detail-type:
               - quote.created
+
+  quoteStatusChangedEventHandler:
+    handler: dist/modules/Quotes/handlers/events/quoteStatusChangedHandler.handler
+    timeout: 60
+    memorySize: 512
+    deadLetter:
+      targetArn:
+        Fn::GetAtt:
+          - QuoteStatusChangedEventDLQ
+          - Arn
+    events:
+      - eventBridge:
+          pattern:
+            source:
+              - banados.quotes
+            detail-type:
+              - quote.status_changed
 
   # Products endpoints
   searchProducts:
@@ -798,6 +838,7 @@ functions:
     handler: dist/modules/Chat/handlers/websocket/connect.handler
     timeout: 30
     memorySize: 512
+    vpc: null
     events:
       - websocket:
           route: $connect
@@ -806,6 +847,7 @@ functions:
     handler: dist/modules/Chat/handlers/websocket/disconnect.handler
     timeout: 30
     memorySize: 512
+    vpc: null
     events:
       - websocket:
           route: $disconnect
@@ -814,11 +856,26 @@ functions:
     handler: dist/modules/Chat/handlers/websocket/sendMessage.handler
     timeout: 30
     memorySize: 512
+    vpc: null
     events:
       - websocket:
           route: $default
 
 resources:
+  Resources:
+    # Dead Letter Queues para eventos de EventBridge
+    QuoteCreatedEventDLQ:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: ${self:service}-${self:provider.stage}-quote-created-dlq
+        MessageRetentionPeriod: 1209600  # 14 días
+        
+    QuoteStatusChangedEventDLQ:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: ${self:service}-${self:provider.stage}-quote-status-changed-dlq
+        MessageRetentionPeriod: 1209600  # 14 días
+  
   # CORS configurado manualmente en el bucket S3 existente
   # Para actualizar: aws s3api put-bucket-cors --bucket banados-analytics-data --cors-configuration file://cors.json
   Outputs:

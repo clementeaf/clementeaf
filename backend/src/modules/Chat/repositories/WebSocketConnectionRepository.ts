@@ -1,5 +1,6 @@
 import { AppDataSource } from '../../../config/database';
 import { WebSocketConnection } from '../entities/WebSocketConnection.entity';
+import { ensureDatabaseInitialized } from '../utils/websocket/WebSocketDatabaseInitializer';
 
 /**
  * Repositorio para gestionar conexiones WebSocket
@@ -18,6 +19,8 @@ export class WebSocketConnectionRepository {
    */
   async save(connectionId: string, userId: number): Promise<boolean> {
     try {
+      await ensureDatabaseInitialized();
+      
       const connection = this.repository.create({
         connectionId,
         userId
@@ -38,6 +41,7 @@ export class WebSocketConnectionRepository {
    */
   async delete(connectionId: string): Promise<boolean> {
     try {
+      await ensureDatabaseInitialized();
       await this.repository.delete({ connectionId });
       return true;
     } catch (error) {
@@ -53,6 +57,7 @@ export class WebSocketConnectionRepository {
    */
   async findByUserId(userId: number): Promise<string[]> {
     try {
+      await ensureDatabaseInitialized();
       const connections = await this.repository.find({
         where: { userId }
       });
@@ -71,6 +76,7 @@ export class WebSocketConnectionRepository {
    */
   async findUserIdByConnectionId(connectionId: string): Promise<number | null> {
     try {
+      await ensureDatabaseInitialized();
       const connection = await this.repository.findOne({
         where: { connectionId }
       });
@@ -113,6 +119,7 @@ export class WebSocketConnectionRepository {
    */
   async findAllConnections(): Promise<string[]> {
     try {
+      await ensureDatabaseInitialized();
       const connections = await this.repository.find();
       return connections.map(conn => conn.connectionId);
     } catch (error) {

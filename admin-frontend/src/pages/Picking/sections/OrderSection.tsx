@@ -17,7 +17,7 @@ interface OrderSectionProps {
  */
 export const OrderSection = ({ filters = {} }: OrderSectionProps): React.ReactElement => {
   // Obtener órdenes desde la API
-  const { data: ordersData, isLoading } = usePickingOrders(1, 100);
+  const { data: ordersData, isLoading, refetch } = usePickingOrders(1, 100);
   const [orders, setOrders] = useState<PickingOrder[]>([]);
 
   // Actualizar órdenes cuando se cargan desde la API
@@ -53,7 +53,11 @@ export const OrderSection = ({ filters = {} }: OrderSectionProps): React.ReactEl
    * Hook para escuchar eventos de picking orders vía WebSocket
    */
   usePickingOrdersWebSocket({
-    onNewOrder: handleNewOrder,
+    onNewOrder: (order, quoteInfo) => {
+      handleNewOrder(order, quoteInfo);
+      // Refrescar datos desde la API para asegurar sincronización
+      refetch();
+    },
     onError: (error) => {
       console.error('❌ [PICKING] Error en WebSocket:', error);
     }

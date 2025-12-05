@@ -13,6 +13,11 @@ interface PickingOrdersWebSocketMessage {
     numeroCotizacion?: string;
     estado?: string;
   };
+  quoteId?: string;
+  codigoOrden?: string;
+  estadoAnterior?: string;
+  estadoNuevo?: string;
+  clienteNombre?: string;
 }
 
 interface UsePickingOrdersWebSocketOptions {
@@ -33,6 +38,7 @@ export const usePickingOrdersWebSocket = (options: UsePickingOrdersWebSocketOpti
   const reconnectAttempts = useRef(0);
   const maxReconnectAttempts = 5;
   const isManuallyDisconnected = useRef(false);
+  const lastUserIdRef = useRef<number | null>(null);
 
   /**
    * Conecta al WebSocket para escuchar eventos de picking orders
@@ -51,8 +57,12 @@ export const usePickingOrdersWebSocket = (options: UsePickingOrdersWebSocketOpti
     }
 
     try {
-      const wsUrl = `${WSS_ENDPOINT}?userId=${currentUser.id}`;
-      console.log(`🔌 [PICKING WS] Conectando a: ${wsUrl}`);
+      // Obtener token de autenticación
+      const token = localStorage.getItem('authToken');
+      const wsUrl = token 
+        ? `${WSS_ENDPOINT}?token=${encodeURIComponent(token)}&userId=${currentUser.id}`
+        : `${WSS_ENDPOINT}?userId=${currentUser.id}`;
+      console.log(`🔌 [PICKING WS] Conectando a: ${wsUrl.replace(/token=[^&]+/, 'token=***')}`);
       const ws = new WebSocket(wsUrl);
       wsRef.current = ws;
 
@@ -68,6 +78,14 @@ export const usePickingOrdersWebSocket = (options: UsePickingOrdersWebSocketOpti
           if (data.action === 'new_picking_order' && data.pickingOrder) {
             console.log('📦 [PICKING WS] Nueva orden de picking recibida:', data.pickingOrder);
             onNewOrder?.(data.pickingOrder, data.quoteInfo);
+          } else if (data.action === 'quote_status_changed') {
+            // Cuando cambia el estado, refrescar datos
+            console.log('🔄 [PICKING WS] Estado de quote cambiado:', {
+              quoteId: data.quoteId,
+              estadoAnterior: data.estadoAnterior,
+              estadoNuevo: data.estadoNuevo
+            });
+            // El hook usePickingOrders se encargará de refrescar automáticamente
           }
         } catch (error) {
           console.error('❌ [PICKING WS] Error parseando mensaje:', error);
@@ -108,20 +126,68 @@ export const usePickingOrdersWebSocket = (options: UsePickingOrdersWebSocketOpti
       reconnectTimeoutRef.current = null;
     }
     if (wsRef.current) {
-      wsRef.current.close();
+      // Solo cerrar si el WebSocket está en un estado válido para cerrar
+      if (wsRef.current.readyState === WebSocket.OPEN || wsRef.current.readyState === WebSocket.CONNECTING) {
+        wsRef.current.close();
+      }
       wsRef.current = null;
     }
   }, []);
 
   useEffect(() => {
-    if (currentUser?.id) {
+    const previousUserId = lastUserIdRef.current;
+    
+    // Solo conectar si hay userId y cambió desde la última vez
+    if (currentUser?.id && currentUser.id !== previousUserId && !isManuallyDisconnected.current) {
+      console.log(`🔄 [PICKING WS] userId cambió de ${previousUserId} a ${currentUser.id}, reconectando...`);
+      // Desconectar la conexión anterior si existe y está abierta
+      if (previousUserId !== null && wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+        console.log(`🔌 [PICKING WS] Desconectando conexión anterior para userId ${previousUserId}...`);
+        isManuallyDisconnected.current = true;
+        disconnect();
+      }
+      // Actualizar el userId y conectar
+      lastUserIdRef.current = currentUser.id;
+      isManuallyDisconnected.current = false;
+      connect();
+    } else if (!currentUser?.id && previousUserId !== null) {
+      // Si userId se vuelve null, desconectar
+      console.log(`🔌 [PICKING WS] userId se volvió null, desconectando...`);
+      lastUserIdRef.current = null;
+      isManuallyDisconnected.current = true;
+      disconnect();
+    } else if (currentUser?.id && currentUser.id === previousUserId && !isManuallyDisconnected.current && wsRef.current?.readyState !== WebSocket.OPEN) {
+      // Si userId es el mismo pero no hay conexión, conectar
+      console.log(`🔌 [PICKING WS] userId es el mismo (${currentUser.id}) pero no hay conexión, conectando...`);
       connect();
     }
 
     return () => {
-      disconnect();
+      // Solo desconectar en el cleanup si:
+      // 1. El userId realmente cambió (no de null a un valor, sino de un valor a otro diferente)
+      // 2. Y hay una conexión establecida (OPEN)
+      // Esto evita desconectar durante React Strict Mode cuando el WebSocket aún no se ha conectado
+      // o cuando es la primera conexión (null -> userId)
+      if (currentUser?.id !== previousUserId && previousUserId !== null && currentUser?.id !== null) {
+        // userId cambió de un valor a otro (no es la primera conexión)
+        console.log(`🔌 [PICKING WS] Cleanup: userId cambió de ${previousUserId} a ${currentUser.id}, desconectando...`);
+        if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+          isManuallyDisconnected.current = true;
+          disconnect();
+        }
+      } else if (!currentUser?.id && previousUserId !== null) {
+        // userId se volvió null
+        console.log(`🔌 [PICKING WS] Cleanup: userId se volvió null, desconectando...`);
+        if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+          isManuallyDisconnected.current = true;
+          disconnect();
+        }
+      }
+      // No desconectar si userId cambió de null a un valor (primera conexión)
+      // porque el WebSocket aún no se ha conectado y React Strict Mode ejecuta el cleanup inmediatamente
     };
-  }, [currentUser?.id, connect, disconnect]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentUser?.id]); // Solo dependemos de currentUser?.id, no de connect/disconnect
 
   return { disconnect };
 };

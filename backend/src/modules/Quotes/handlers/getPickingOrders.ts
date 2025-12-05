@@ -1,6 +1,6 @@
 import { type APIGatewayProxyEvent } from 'aws-lambda';
 import { QuotesService } from '../services/QuotesService';
-import { QuoteToPickingOrderService, type PickingOrderWithQuoteInfo } from '../services/QuoteToPickingOrderService';
+import { QuoteToPickingOrderService } from '../services/QuoteToPickingOrderService';
 import { handlerWrapper } from '../../Users/utils/handlerWrapper';
 import { successResponse, errorResponse } from '../../Users/utils/response';
 

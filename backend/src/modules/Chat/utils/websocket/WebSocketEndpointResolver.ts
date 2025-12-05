@@ -24,6 +24,16 @@ export const resolveWebSocketEndpoint = (requestContext?: {
 
   // Fallback hardcodeado (solo para desarrollo)
   // En producción, esto debería estar en variables de entorno
+  // Intentar obtener desde el contexto de API Gateway si está disponible
+  const apiId = process.env.API_GATEWAY_REST_API_ID;
+  const stage = process.env.STAGE || 'dev';
+  const region = process.env.AWS_REGION || 'us-east-1';
+  
+  if (apiId) {
+    return `https://${apiId}.execute-api.${region}.amazonaws.com/${stage}`;
+  }
+  
+  // Último fallback (solo para desarrollo)
   return 'https://us3x8rdme1.execute-api.us-east-1.amazonaws.com/dev';
 };
 

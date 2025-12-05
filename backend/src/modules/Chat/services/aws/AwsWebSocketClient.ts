@@ -32,14 +32,14 @@ export class AwsWebSocketClient implements IWebSocketClient {
       );
       return true;
     } catch (error) {
-      console.error(`Error enviando mensaje a conexión ${connectionId}:`, error);
-      
-      // Si la conexión ya no existe (GoneException), retornar false
-      // El servicio que llama debe manejar la eliminación de la conexión
+      // Si la conexión ya no existe (GoneException), no es un error crítico
       if (error instanceof Error && (error.name === 'GoneException' || error.name === '410')) {
-        console.log(`Conexión ${connectionId} ya no existe`);
+        console.log(`⚠️ Conexión ${connectionId} ya no existe, será limpiada automáticamente`);
+        // La conexión será limpiada en el siguiente $disconnect o por limpieza periódica
+        return false;
       }
       
+      console.error(`❌ Error enviando mensaje a conexión ${connectionId}:`, error);
       return false;
     }
   }

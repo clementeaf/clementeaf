@@ -55,8 +55,12 @@ export const useWebSocket = (options: UseWebSocketOptions) => {
     }
 
     try {
-      const wsUrl = `${WSS_ENDPOINT}?userId=${userId}`;
-      console.log(`🔌 useWebSocket - Connecting to: ${wsUrl}`);
+      // Obtener token de autenticación
+      const token = localStorage.getItem('authToken');
+      const wsUrl = token 
+        ? `${WSS_ENDPOINT}?token=${encodeURIComponent(token)}&userId=${userId}`
+        : `${WSS_ENDPOINT}?userId=${userId}`;
+      console.log(`🔌 useWebSocket - Connecting to: ${wsUrl.replace(/token=[^&]+/, 'token=***')}`);
       const ws = new WebSocket(wsUrl);
       wsRef.current = ws;
 

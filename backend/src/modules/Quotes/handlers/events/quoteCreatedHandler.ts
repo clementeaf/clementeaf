@@ -5,6 +5,7 @@ import { QuotesService } from '../../services/QuotesService';
 import { QuoteToPickingOrderService } from '../../services/QuoteToPickingOrderService';
 import { WebSocketConnectionService } from '../../../Chat/services/WebSocketConnectionService';
 import { AwsWebSocketClient } from '../../../Chat/services/aws/AwsWebSocketClient';
+import { IWebSocketClient } from '../../../Chat/interfaces/IWebSocketClient';
 import { NotificationsService } from '../../../Notifications/services/NotificationsService';
 import { UsersService } from '../../../Users/services/UsersService';
 
@@ -58,17 +59,28 @@ export const quoteCreatedHandler = async (
     }
 
     // Enviar vía WebSocket a todos los usuarios conectados (broadcast)
-    // En producción, podrías filtrar por usuarios con permisos de picking
-    // Usar el endpoint desde variables de entorno o fallback
-    // El endpoint de Management API es el mismo que el WebSocket pero con https://
-    const endpoint = process.env.WEBSOCKET_API_ENDPOINT || 
-                    (process.env.WSS_ENDPOINT ? process.env.WSS_ENDPOINT.replace('wss://', 'https://') : 
-                     'https://5msg0dgwyi.execute-api.us-east-1.amazonaws.com/dev');
+    // En desarrollo local, usar LocalWebSocketClient
+    // En AWS, usar AwsWebSocketClient
+    const isLocal = process.env.IS_OFFLINE === 'true' || process.env.NODE_ENV === 'development' || !process.env.AWS_LAMBDA_FUNCTION_NAME;
     
-    const webSocketClient = new AwsWebSocketClient(
-      endpoint,
-      process.env.AWS_REGION || 'us-east-1'
-    );
+    let webSocketClient: IWebSocketClient;
+    if (isLocal) {
+      const { LocalWebSocketClient } = await import('../../../Chat/services/LocalWebSocketClient');
+      webSocketClient = new LocalWebSocketClient();
+      console.log('🔧 [LOCAL] Usando LocalWebSocketClient para desarrollo local');
+    } else {
+      // Usar el endpoint desde variables de entorno o fallback
+      // El endpoint de Management API es el mismo que el WebSocket pero con https://
+      const endpoint = process.env.WEBSOCKET_API_ENDPOINT || 
+                      (process.env.WSS_ENDPOINT ? process.env.WSS_ENDPOINT.replace('wss://', 'https://') : 
+                       'https://us3x8rdme1.execute-api.us-east-1.amazonaws.com/dev');
+      
+      webSocketClient = new AwsWebSocketClient(
+        endpoint,
+        process.env.AWS_REGION || 'us-east-1'
+      );
+    }
+    
     const connectionService = new WebSocketConnectionService(webSocketClient);
 
     // Preparar mensaje para WebSocket con información adicional para Home

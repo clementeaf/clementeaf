@@ -1,4 +1,4 @@
-import { AppDataSource } from '../../../../config/database';
+import { AppDataSource } from '../../../config/database';
 import { Notification, NotificationStatus, NotificationType } from '../entities/Notification.entity';
 
 /**

@@ -23,8 +23,9 @@ export const useHomeOrders = (options?: UseHomeOrdersOptions) => {
       return response.data;
     },
     enabled: enabled,
-    staleTime: 1000 * 60 * 1, // 1 minuto
+    staleTime: 1000 * 30, // 30 segundos
     gcTime: 1000 * 60 * 5, // 5 minutos
+    refetchInterval: 1000 * 60, // Refrescar cada minuto
   });
 };
 

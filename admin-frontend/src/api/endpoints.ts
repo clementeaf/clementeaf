@@ -96,6 +96,9 @@ export const endpoints = {
     getAll: '',
     getCapabilities: 'capabilities',
     sync: 'sync'
+  }),
+  picking: buildEndpoints('picking', {
+    getMetrics: 'metrics'
   })
 } as const;
 

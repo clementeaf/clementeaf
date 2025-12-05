@@ -1,5 +1,6 @@
-import { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { ReusableLineChart } from '../components/ReusableLineChart';
+import { usePickingMetrics } from '../../../hooks/usePickingMetrics';
 
 
 /**
@@ -66,7 +67,18 @@ interface PickingMetricsHistory {
  */
 
 export const MetricsSection = (): React.ReactElement => {
-  const [metrics] = useState<PickingMetrics>({
+  const [temporalidad, setTemporalidad] = useState<Temporalidad>('Día');
+  
+  // Obtener métricas desde la API con actualización en tiempo real
+  const { data: metricsData, isLoading, refetch } = usePickingMetrics({ temporalidad });
+
+  // Refrescar métricas cuando cambia la temporalidad
+  React.useEffect(() => {
+    refetch();
+  }, [temporalidad, refetch]);
+
+  // Extraer métricas y datos históricos
+  const metrics = metricsData?.metrics || {
     totalOrdenes: 0,
     ordenesNotaVentaEmitida: 0,
     ordenesPicking: 0,
@@ -75,9 +87,9 @@ export const MetricsSection = (): React.ReactElement => {
     tiempoPromedioPicking: 0,
     eficiencia: 0,
     ordenesHoy: 0
-  });
+  };
 
-  const [metricsHistory] = useState<PickingMetricsHistory>({
+  const metricsHistory: PickingMetricsHistory = metricsData?.metricsHistory || {
     diaAnterior: {
       totalOrdenes: 0,
       ordenesNotaVentaEmitida: 0,
@@ -108,21 +120,35 @@ export const MetricsSection = (): React.ReactElement => {
       eficiencia: 0,
       ordenesHoy: 0
     }
-  });
+  };
 
-  const [temporalidad, setTemporalidad] = useState<Temporalidad>('Día');
-
+  // Datos de gráficos desde la API
   const chartData = useMemo<NotaVentaChartData[]>(() => {
-    return [];
-  }, []);
+    return metricsData?.chartData.notasVenta.map(item => ({
+      periodo: item.periodo,
+      cantidad: item.cantidad,
+      vendedor: item.vendedor,
+      horaEmision: item.horaEmision
+    })) || [];
+  }, [metricsData]);
 
   const pickingChartData = useMemo<PickingEjecutadoChartData[]>(() => {
-    return [];
-  }, []);
+    return metricsData?.chartData.pickingEjecutado.map(item => ({
+      periodo: item.periodo,
+      cantidad: item.cantidad,
+      operador: item.vendedor,
+      horaEjecucion: item.horaEmision
+    })) || [];
+  }, [metricsData]);
 
   const ordenesDespachadasChartData = useMemo<OrdenDespachadaChartData[]>(() => {
-    return [];
-  }, []);
+    return metricsData?.chartData.ordenesDespachadas.map(item => ({
+      periodo: item.periodo,
+      cantidad: item.cantidad,
+      conductor: item.vendedor,
+      horaDespacho: item.horaEmision
+    })) || [];
+  }, [metricsData]);
 
 
   /**
@@ -329,7 +355,7 @@ export const MetricsSection = (): React.ReactElement => {
               width={480}
               height={200}
               yAxisMin={0}
-              yAxisMax={10}
+              yAxisMax={Math.max(10, ...chartData.map(d => d.cantidad || 0)) || 10}
             />
           </div>
 
@@ -348,7 +374,7 @@ export const MetricsSection = (): React.ReactElement => {
               width={480}
               height={200}
               yAxisMin={0}
-              yAxisMax={10}
+              yAxisMax={Math.max(10, ...pickingChartData.map(d => d.cantidad || 0)) || 10}
             />
           </div>
 
@@ -367,17 +393,16 @@ export const MetricsSection = (): React.ReactElement => {
               width={480}
               height={200}
               yAxisMin={0}
-              yAxisMax={10}
+              yAxisMax={Math.max(10, ...ordenesDespachadasChartData.map(d => d.cantidad || 0)) || 10}
             />
           </div>
         </div>
 
-        {/* Nota sobre actualización en tiempo real */}
-        <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-          <p className="text-sm text-blue-800">
-            <span className="font-semibold">Nota:</span> Estas métricas se actualizarán en tiempo real mediante WebSocket cuando se implemente la funcionalidad.
-          </p>
-        </div>
+        {isLoading && (
+          <div className="p-4 bg-gray-50 rounded-lg border border-gray-200 flex items-center justify-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0052C9]"></div>
+          </div>
+        )}
       </div>
     </div>
   );

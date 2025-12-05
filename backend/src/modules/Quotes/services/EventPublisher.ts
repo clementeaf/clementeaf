@@ -1,5 +1,6 @@
 import { IEventPublisher } from '../interfaces/IEventPublisher';
 import { AwsEventBridgePublisher } from './aws/AwsEventBridgePublisher';
+import { LocalEventPublisher } from './LocalEventPublisher';
 
 /**
  * Servicio para publicar eventos de dominio
@@ -9,15 +10,24 @@ export class EventPublisher {
   private publisher: IEventPublisher;
 
   constructor(publisher?: IEventPublisher) {
-    // Si no se proporciona un publicador, usar AWS EventBridge por defecto
+    // Si no se proporciona un publicador, detectar el entorno
     if (publisher) {
       this.publisher = publisher;
     } else {
-      const eventBusName = process.env.EVENT_BRIDGE_BUS_NAME || 'default';
-      const source = process.env.EVENT_BRIDGE_SOURCE || 'banados.quotes';
-      const region = process.env.AWS_REGION || process.env.AWS_DEFAULT_REGION || 'us-east-1';
+      // En desarrollo local, usar LocalEventPublisher
+      // En AWS, usar AwsEventBridgePublisher
+      const isLocal = process.env.IS_OFFLINE === 'true' || process.env.NODE_ENV === 'development' || !process.env.AWS_LAMBDA_FUNCTION_NAME;
       
-      this.publisher = new AwsEventBridgePublisher(eventBusName, source, region);
+      if (isLocal) {
+        console.log('🔧 [EventPublisher] Usando LocalEventPublisher para desarrollo local');
+        this.publisher = new LocalEventPublisher();
+      } else {
+        const eventBusName = process.env.EVENT_BRIDGE_BUS_NAME || 'default';
+        const source = process.env.EVENT_BRIDGE_SOURCE || 'banados.quotes';
+        const region = process.env.AWS_REGION || process.env.AWS_DEFAULT_REGION || 'us-east-1';
+        
+        this.publisher = new AwsEventBridgePublisher(eventBusName, source, region);
+      }
     }
   }
 

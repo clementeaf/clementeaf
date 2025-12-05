@@ -3,6 +3,7 @@ import { handlerWrapper } from '../../Users/utils/handlerWrapper';
 import { successResponse, errorResponse } from '../../Users/utils/response';
 import { NotificationsService } from '../services/NotificationsService';
 import { AuthService } from '../../Users/services/AuthService';
+import { UsersService } from '../../Users/services/UsersService';
 
 /**
  * Handler para marcar todas las notificaciones como leídas
@@ -18,16 +19,18 @@ const markAllAsReadHandler = async (event: APIGatewayProxyEvent) => {
 
     const token = authHeader.replace('Bearer ', '');
     const authService = new AuthService();
-    const decoded = await authService.verifyToken(token);
+    const verifiedUser = await authService.verifyToken(token);
 
-    if (!decoded || !decoded.sub) {
-      return errorResponse(401, 'Token inválido');
+    // Obtener usuario completo desde la base de datos para obtener el ID
+    const usersService = new UsersService();
+    let user;
+    try {
+      user = await usersService.getUserByEmail(verifiedUser.email, false);
+    } catch (error) {
+      return errorResponse(401, 'Usuario no encontrado');
     }
 
-    const userId = parseInt(decoded.sub, 10);
-    if (isNaN(userId)) {
-      return errorResponse(401, 'ID de usuario inválido');
-    }
+    const userId = user.id;
 
     const notificationsService = new NotificationsService();
     const count = await notificationsService.markAllAsRead(userId);
