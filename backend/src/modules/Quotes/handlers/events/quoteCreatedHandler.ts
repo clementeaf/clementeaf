@@ -38,6 +38,23 @@ export const quoteCreatedHandler = async (
     // Convertir Quote a PickingOrder
     const pickingOrder = QuoteToPickingOrderService.convert(quote);
 
+    // Calcular monto total desde productos
+    let montoTotal = 0;
+    if (quote.productos) {
+      try {
+        const productosJson = JSON.parse(quote.productos);
+        if (Array.isArray(productosJson)) {
+          productosJson.forEach((prod: { precio?: number; cantidad?: number; cantidadSolicitada?: number }) => {
+            const precio = prod.precio || 0;
+            const cantidad = prod.cantidad || prod.cantidadSolicitada || 0;
+            montoTotal += precio * cantidad;
+          });
+        }
+      } catch (error) {
+        console.error('Error calculando monto total:', error);
+      }
+    }
+
     // Enviar vía WebSocket a todos los usuarios conectados (broadcast)
     // En producción, podrías filtrar por usuarios con permisos de picking
     // Usar el endpoint desde variables de entorno o fallback
@@ -52,10 +69,17 @@ export const quoteCreatedHandler = async (
     );
     const connectionService = new WebSocketConnectionService(webSocketClient);
 
-    // Preparar mensaje para WebSocket
+    // Preparar mensaje para WebSocket con información adicional para Home
     const message = {
       action: 'new_picking_order',
-      pickingOrder
+      pickingOrder,
+      // Información adicional para Home
+      quoteInfo: {
+        clienteNombre: quote.clienteNombre,
+        monto: montoTotal,
+        numeroCotizacion: quote.numeroCotizacion,
+        estado: quote.estado
+      }
     };
 
     // Enviar a todas las conexiones activas (broadcast)

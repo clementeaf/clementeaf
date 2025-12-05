@@ -26,9 +26,41 @@ export interface PickingOrder {
 }
 
 /**
+ * Interfaz extendida para incluir información adicional de la Quote
+ */
+export interface PickingOrderWithQuoteInfo extends PickingOrder {
+  clienteNombre?: string;
+  monto?: number;
+}
+
+/**
  * Servicio para convertir Quote a PickingOrder
  */
 export class QuoteToPickingOrderService {
+  /**
+   * Calcula el monto total desde los productos
+   * @param productosJson - JSON string de productos
+   * @returns Monto total calculado
+   */
+  static calculateMontoTotal(productosJson: string | null): number {
+    let montoTotal = 0;
+    if (productosJson) {
+      try {
+        const productos = JSON.parse(productosJson);
+        if (Array.isArray(productos)) {
+          productos.forEach((prod: { precio?: number; cantidad?: number; cantidadSolicitada?: number }) => {
+            const precio = prod.precio || 0;
+            const cantidad = prod.cantidad || prod.cantidadSolicitada || 0;
+            montoTotal += precio * cantidad;
+          });
+        }
+      } catch (error) {
+        console.error('Error calculando monto total:', error);
+      }
+    }
+    return montoTotal;
+  }
+
   /**
    * Convierte una Quote a PickingOrder
    * @param quote - Nota de venta a convertir
@@ -68,12 +100,37 @@ export class QuoteToPickingOrderService {
   }
 
   /**
+   * Convierte una Quote a PickingOrder con información adicional
+   * @param quote - Nota de venta a convertir
+   * @returns Orden de picking con información adicional
+   */
+  static convertWithQuoteInfo(quote: Quote): PickingOrderWithQuoteInfo {
+    const pickingOrder = this.convert(quote);
+    const montoTotal = this.calculateMontoTotal(quote.productos);
+    
+    return {
+      ...pickingOrder,
+      clienteNombre: quote.clienteNombre,
+      monto: montoTotal
+    };
+  }
+
+  /**
    * Convierte múltiples Quotes a PickingOrders
    * @param quotes - Array de notas de venta
    * @returns Array de órdenes de picking
    */
   static convertMany(quotes: Quote[]): PickingOrder[] {
     return quotes.map(quote => this.convert(quote));
+  }
+
+  /**
+   * Convierte múltiples Quotes a PickingOrders con información adicional
+   * @param quotes - Array de notas de venta
+   * @returns Array de órdenes de picking con información adicional
+   */
+  static convertManyWithQuoteInfo(quotes: Quote[]): PickingOrderWithQuoteInfo[] {
+    return quotes.map(quote => this.convertWithQuoteInfo(quote));
   }
 }
 

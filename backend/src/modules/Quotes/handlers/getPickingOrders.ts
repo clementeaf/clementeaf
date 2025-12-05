@@ -1,6 +1,6 @@
 import { type APIGatewayProxyEvent } from 'aws-lambda';
 import { QuotesService } from '../services/QuotesService';
-import { QuoteToPickingOrderService } from '../services/QuoteToPickingOrderService';
+import { QuoteToPickingOrderService, type PickingOrderWithQuoteInfo } from '../services/QuoteToPickingOrderService';
 import { handlerWrapper } from '../../Users/utils/handlerWrapper';
 import { successResponse, errorResponse } from '../../Users/utils/response';
 
@@ -21,8 +21,8 @@ const getPickingOrdersHandler = async (event: APIGatewayProxyEvent) => {
     // Obtener todas las quotes (en producción, filtrar por estado si es necesario)
     const quotesData = await quotesService.getAllQuotes(page, limit);
 
-    // Convertir Quotes a PickingOrders
-    const pickingOrders = QuoteToPickingOrderService.convertMany(quotesData.data);
+    // Convertir Quotes a PickingOrders con información adicional (cliente, monto)
+    const pickingOrders = QuoteToPickingOrderService.convertManyWithQuoteInfo(quotesData.data);
 
     // Filtrar por estado si se proporciona
     let filteredOrders = pickingOrders;
