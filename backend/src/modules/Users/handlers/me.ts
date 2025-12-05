@@ -21,8 +21,33 @@ const meHandler = async (event: APIGatewayProxyEvent) => {
     const verifiedUser = await authService.verifyToken(token);
 
     // Obtener usuario completo con rol y permisos desde la base de datos
+    // Buscar por email ya que el token de Cognito solo contiene email, no ID
     const usersService = new UsersService();
-    const user = await usersService.getUserById(verifiedUser.id, true);
+    let user;
+    try {
+      user = await usersService.getUserByEmail(verifiedUser.email, true);
+    } catch (error) {
+      // Si el usuario no existe en la BD, crearlo automáticamente
+      if (error instanceof Error && error.message === 'Usuario no encontrado') {
+        const { AppDataSource } = await import('../../../config/database');
+        const { User } = await import('../entities/User.entity');
+        const userRepository = AppDataSource.getRepository(User);
+        
+        // Crear usuario en la BD con el email de Cognito
+        const newUser = userRepository.create({
+          email: verifiedUser.email,
+          name: null,
+          password: '', // No se necesita password ya que se autentica con Cognito
+          roleId: null
+        });
+        await userRepository.save(newUser);
+        
+        // Obtener el usuario recién creado con permisos
+        user = await usersService.getUserByEmail(verifiedUser.email, true);
+      } else {
+        throw error;
+      }
+    }
 
     // Obtener permisos del rol si existe
     let permissions: string[] = [];

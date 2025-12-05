@@ -80,6 +80,30 @@ export class UsersService {
   }
 
   /**
+   * Obtiene un usuario por su email
+   * @param email - Email del usuario
+   * @param includePermissions - Si debe incluir los permisos del rol
+   * @returns Usuario encontrado sin contraseña
+   */
+  async getUserByEmail(email: string, includePermissions: boolean = false): Promise<Omit<User, 'password'>> {
+    const relations = includePermissions 
+      ? ['role', 'role.rolePermissions', 'role.rolePermissions.permission']
+      : ['role'];
+    
+    const user = await this.userRepository.findOne({
+      where: { email },
+      relations
+    });
+
+    if (!user) {
+      throw new Error('Usuario no encontrado');
+    }
+
+    const { password, ...userWithoutPassword } = user;
+    return userWithoutPassword;
+  }
+
+  /**
    * Actualiza el rol de un usuario
    * @param id - ID del usuario
    * @param roleId - ID del rol a asignar (null para quitar el rol)

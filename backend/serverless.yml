@@ -186,7 +186,6 @@ functions:
           path: auth/register
           method: post
           cors: true
-
   login:
     handler: dist/modules/Users/handlers/login.handler
     timeout: 30
@@ -197,7 +196,6 @@ functions:
           path: auth/login
           method: post
           cors: true
-
   me:
     handler: dist/modules/Users/handlers/me.handler
     timeout: 30
@@ -217,7 +215,6 @@ functions:
           path: auth/logout
           method: post
           cors: true
-
   refreshToken:
     handler: dist/modules/Users/handlers/refreshToken.handler
     timeout: 30
@@ -228,7 +225,6 @@ functions:
           path: auth/refresh
           method: post
           cors: true
-
   # Users endpoints
   getAllUsers:
     handler: dist/modules/Users/handlers/getAllUsers.handler

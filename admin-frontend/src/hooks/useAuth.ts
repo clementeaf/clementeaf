@@ -75,11 +75,40 @@ export const useCurrentUser = () => {
         
         return user;
       } catch (error) {
+        // Si el error es 401 (Unauthorized), el token es inválido o expiró
+        const axiosError = error as { response?: { status?: number } };
+        if (axiosError.response?.status === 401) {
+          console.warn('⚠️ [AUTH] Token inválido o expirado. Limpiando sesión...');
+          localStorage.removeItem('authToken');
+          localStorage.removeItem('refreshToken');
+          
+          // Redirigir a auth-frontend solo si no hay token en la URL
+          const urlParams = new URLSearchParams(window.location.search);
+          const tokenInUrl = urlParams.get('token');
+          
+          if (!tokenInUrl) {
+            const { auth: authUrl } = getFrontendUrls();
+            window.location.href = authUrl;
+          }
+          
+          // Retornar un usuario temporal para evitar errores
+          return {
+            id: 0,
+            email: '',
+            name: null,
+            role: null,
+            permissions: []
+          } as AuthUser;
+        }
+        
+        // Para otros errores, intentar usar el userId del token como fallback
         if (userIdFromToken) {
           const fallbackUser = {
             id: userIdFromToken,
             email: '',
-            name: null
+            name: null,
+            role: null,
+            permissions: []
           } as AuthUser;
           
           console.warn('⚠️ [AUTH] Usuario obtenido desde token (sin datos completos):', {

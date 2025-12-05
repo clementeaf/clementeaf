@@ -27,14 +27,25 @@ export const handlerWrapper = (
     if (event.httpMethod === 'OPTIONS') {
       return {
         statusCode: 200,
-        headers: getCorsHeaders(),
+        headers: {
+          ...getCorsHeaders(),
+          'Access-Control-Max-Age': '86400'
+        },
         body: ''
       };
     }
 
     try {
       await initializeDatabase();
-      return await handler(event);
+      const result = await handler(event);
+      // Asegurar que todas las respuestas tengan headers CORS
+      return {
+        ...result,
+        headers: {
+          ...getCorsHeaders(),
+          ...result.headers
+        }
+      };
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Internal server error';
       const statusCode = getErrorStatusCode(errorMessage);
