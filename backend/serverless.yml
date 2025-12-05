@@ -65,6 +65,14 @@ provider:
             - logs:CreateLogStream
             - logs:PutLogEvents
           Resource: arn:aws:logs:${self:provider.region}:*:log-group:/aws/lambda/*
+        # EventBridge para eventos de dominio
+        - Effect: Allow
+          Action:
+            - events:PutEvents
+            - events:PutRule
+            - events:PutTargets
+            - events:DescribeRule
+          Resource: '*'
   environment:
     AWS_ENDPOINT_URL: ${env:AWS_ENDPOINT_URL, ''}
     JWT_SECRET: ${env:JWT_SECRET, 'your-secret-key-change-in-production'}
@@ -453,6 +461,29 @@ functions:
           path: quotes/{id}
           method: delete
           cors: true
+
+  getPickingOrders:
+    handler: dist/modules/Quotes/handlers/getPickingOrders.handler
+    timeout: 30
+    memorySize: 512
+    events:
+      - http:
+          path: quotes/picking-orders
+          method: get
+          cors: true
+
+  # Quotes Event Handlers
+  quoteCreatedEventHandler:
+    handler: dist/modules/Quotes/handlers/events/quoteCreatedHandler.handler
+    timeout: 60
+    memorySize: 512
+    events:
+      - eventBridge:
+          pattern:
+            source:
+              - banados.quotes
+            detail-type:
+              - quote.created
 
   # Products endpoints
   searchProducts:

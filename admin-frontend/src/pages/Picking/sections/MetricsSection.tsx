@@ -66,104 +66,62 @@ interface PickingMetricsHistory {
  */
 
 export const MetricsSection = (): React.ReactElement => {
-  // Datos de ejemplo - En producción esto vendría de un hook/API y eventualmente WebSocket
   const [metrics] = useState<PickingMetrics>({
-    totalOrdenes: 127,
-    ordenesNotaVentaEmitida: 15,
-    ordenesPicking: 8,
-    ordenesConfirmacion: 5,
-    ordenesDespachadas: 99,
-    tiempoPromedioPicking: 45,
-    eficiencia: 87.5,
-    ordenesHoy: 23
+    totalOrdenes: 0,
+    ordenesNotaVentaEmitida: 0,
+    ordenesPicking: 0,
+    ordenesConfirmacion: 0,
+    ordenesDespachadas: 0,
+    tiempoPromedioPicking: 0,
+    eficiencia: 0,
+    ordenesHoy: 0
   });
 
-  // Datos históricos para calcular variaciones
   const [metricsHistory] = useState<PickingMetricsHistory>({
     diaAnterior: {
-      totalOrdenes: 120,
-      ordenesNotaVentaEmitida: 12,
-      ordenesPicking: 10,
-      ordenesConfirmacion: 4,
-      ordenesDespachadas: 95,
-      tiempoPromedioPicking: 50,
-      eficiencia: 85.0,
-      ordenesHoy: 20
+      totalOrdenes: 0,
+      ordenesNotaVentaEmitida: 0,
+      ordenesPicking: 0,
+      ordenesConfirmacion: 0,
+      ordenesDespachadas: 0,
+      tiempoPromedioPicking: 0,
+      eficiencia: 0,
+      ordenesHoy: 0
     },
     semanaAnterior: {
-      totalOrdenes: 115,
-      ordenesNotaVentaEmitida: 10,
-      ordenesPicking: 6,
-      ordenesConfirmacion: 3,
-      ordenesDespachadas: 90,
-      tiempoPromedioPicking: 55,
-      eficiencia: 82.0,
-      ordenesHoy: 18
+      totalOrdenes: 0,
+      ordenesNotaVentaEmitida: 0,
+      ordenesPicking: 0,
+      ordenesConfirmacion: 0,
+      ordenesDespachadas: 0,
+      tiempoPromedioPicking: 0,
+      eficiencia: 0,
+      ordenesHoy: 0
     },
     mesAnterior: {
-      totalOrdenes: 100,
-      ordenesNotaVentaEmitida: 8,
-      ordenesPicking: 5,
-      ordenesConfirmacion: 2,
-      ordenesDespachadas: 80,
-      tiempoPromedioPicking: 60,
-      eficiencia: 75.0,
-      ordenesHoy: 15
+      totalOrdenes: 0,
+      ordenesNotaVentaEmitida: 0,
+      ordenesPicking: 0,
+      ordenesConfirmacion: 0,
+      ordenesDespachadas: 0,
+      tiempoPromedioPicking: 0,
+      eficiencia: 0,
+      ordenesHoy: 0
     }
   });
 
-  // Estado para la temporalidad seleccionada
   const [temporalidad, setTemporalidad] = useState<Temporalidad>('Día');
 
-  // Datos del gráfico de notas de ventas emitidas con un punto de hoy
   const chartData = useMemo<NotaVentaChartData[]>(() => {
-    const hoy = new Date();
-    const dia = String(hoy.getDate()).padStart(2, '0');
-    const mes = String(hoy.getMonth() + 1).padStart(2, '0');
-    const anio = hoy.getFullYear();
-    const fechaFormateada = `${dia}/${mes}/${anio}`;
-    return [
-      {
-        periodo: fechaFormateada,
-        cantidad: 1,
-        vendedor: 'Clemente Arriagada',
-        horaEmision: '08:45'
-      }
-    ];
+    return [];
   }, []);
 
-  // Datos del gráfico de picking ejecutados con un punto de hoy
   const pickingChartData = useMemo<PickingEjecutadoChartData[]>(() => {
-    const hoy = new Date();
-    const dia = String(hoy.getDate()).padStart(2, '0');
-    const mes = String(hoy.getMonth() + 1).padStart(2, '0');
-    const anio = hoy.getFullYear();
-    const fechaFormateada = `${dia}/${mes}/${anio}`;
-    return [
-      {
-        periodo: fechaFormateada,
-        cantidad: 1,
-        operador: 'Juan Pérez',
-        horaEjecucion: '09:30'
-      }
-    ];
+    return [];
   }, []);
 
-  // Datos del gráfico de órdenes despachadas con un punto de hoy
   const ordenesDespachadasChartData = useMemo<OrdenDespachadaChartData[]>(() => {
-    const hoy = new Date();
-    const dia = String(hoy.getDate()).padStart(2, '0');
-    const mes = String(hoy.getMonth() + 1).padStart(2, '0');
-    const anio = hoy.getFullYear();
-    const fechaFormateada = `${dia}/${mes}/${anio}`;
-    return [
-      {
-        periodo: fechaFormateada,
-        cantidad: 1,
-        conductor: 'Carlos Rodríguez',
-        horaDespacho: '10:15'
-      }
-    ];
+    return [];
   }, []);
 
 

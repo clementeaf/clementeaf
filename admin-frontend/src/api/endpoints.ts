@@ -79,7 +79,8 @@ export const endpoints = {
     getAll: '',
     getNextNumber: 'next-number/query',
     update: '{id}',
-    delete: '{id}'
+    delete: '{id}',
+    getPickingOrders: 'picking-orders'
   }),
   products: buildEndpoints('products', {
     search: 'search/query'

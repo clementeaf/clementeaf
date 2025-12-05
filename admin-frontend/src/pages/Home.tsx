@@ -1,15 +1,13 @@
 import { useState } from 'react';
 import { HomeKanbanBoard } from './Home/components';
 import type { HomeOrder, HomeOrderStatus } from './Home/types';
-import { MOCK_HOME_ORDERS } from './Home/mockData';
 
 /**
  * Página de inicio
  * @returns Componente Home
  */
 export const Home = (): React.ReactElement => {
-  // Datos de ejemplo - En producción esto vendría de un hook/API
-  const [orders, setOrders] = useState<HomeOrder[]>(MOCK_HOME_ORDERS);
+  const [orders, setOrders] = useState<HomeOrder[]>([]);
 
   /**
    * Maneja el cambio de estado de una orden

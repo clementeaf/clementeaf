@@ -106,5 +106,19 @@ export class WebSocketConnectionRepository {
       return new Map();
     }
   }
+
+  /**
+   * Obtiene todas las conexiones activas (broadcast)
+   * @returns Array de connectionIds de todas las conexiones activas
+   */
+  async findAllConnections(): Promise<string[]> {
+    try {
+      const connections = await this.repository.find();
+      return connections.map(conn => conn.connectionId);
+    } catch (error) {
+      console.error('Error obteniendo todas las conexiones:', error);
+      return [];
+    }
+  }
 }
 

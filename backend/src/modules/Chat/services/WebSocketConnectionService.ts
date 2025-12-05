@@ -86,5 +86,20 @@ export class WebSocketConnectionService {
 
     return await this.webSocketClient.sendToConnections(allConnectionIds, message);
   }
+
+  /**
+   * Envía un mensaje a todas las conexiones activas (broadcast)
+   * @param message - Mensaje a enviar
+   * @returns Número total de conexiones a las que se envió el mensaje
+   */
+  async broadcast(message: unknown): Promise<number> {
+    const allConnectionIds = await this.connectionRepository.findAllConnections();
+    
+    if (allConnectionIds.length === 0) {
+      return 0;
+    }
+
+    return await this.webSocketClient.sendToConnections(allConnectionIds, message);
+  }
 }
 

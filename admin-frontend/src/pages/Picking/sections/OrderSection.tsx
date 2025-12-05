@@ -1,8 +1,9 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { PickingKanbanBoard } from '../components/PickingKanbanBoard';
 import type { PickingOrder, PickingOrderStatus } from '../types';
 import type { PickingFilters } from '../PickingSidebar';
-import { MOCK_PICKING_ORDERS } from './mockData';
+import { usePickingOrders } from '../../../hooks/usePickingOrders';
+import { usePickingOrdersWebSocket } from '../../../hooks/usePickingOrdersWebSocket';
 
 interface OrderSectionProps {
   filters?: PickingFilters;
@@ -14,8 +15,44 @@ interface OrderSectionProps {
  * @returns Componente OrderSection
  */
 export const OrderSection = ({ filters = {} }: OrderSectionProps): React.ReactElement => {
-  // Datos de ejemplo - En producción esto vendría de un hook/API
-  const [orders, setOrders] = useState<PickingOrder[]>(MOCK_PICKING_ORDERS);
+  // Obtener órdenes desde la API
+  const { data: ordersData, isLoading } = usePickingOrders(1, 100);
+  const [orders, setOrders] = useState<PickingOrder[]>([]);
+
+  // Actualizar órdenes cuando se cargan desde la API
+  useEffect(() => {
+    if (ordersData?.data) {
+      setOrders(ordersData.data);
+    }
+  }, [ordersData]);
+
+  /**
+   * Maneja la recepción de nuevas órdenes de picking vía WebSocket
+   */
+  const handleNewOrder = useCallback((newOrder: PickingOrder) => {
+    setOrders(prevOrders => {
+      // Verificar si la orden ya existe (evitar duplicados)
+      const orderExists = prevOrders.some(order => order.id === newOrder.id);
+      if (orderExists) {
+        console.log(`⚠️ [PICKING] Orden ${newOrder.id} ya existe, ignorando`);
+        return prevOrders;
+      }
+
+      // Agregar la nueva orden al inicio (más reciente primero)
+      console.log(`✅ [PICKING] Nueva orden agregada en tiempo real: ${newOrder.codigoOrden}`);
+      return [newOrder, ...prevOrders];
+    });
+  }, []);
+
+  /**
+   * Hook para escuchar eventos de picking orders vía WebSocket
+   */
+  usePickingOrdersWebSocket({
+    onNewOrder: handleNewOrder,
+    onError: (error) => {
+      console.error('❌ [PICKING] Error en WebSocket:', error);
+    }
+  });
 
   /**
    * Maneja el cambio de estado de una orden
@@ -64,6 +101,16 @@ export const OrderSection = ({ filters = {} }: OrderSectionProps): React.ReactEl
     return result;
   }, [orders, filters]);
 
+  if (isLoading) {
+    return (
+      <div className="flex-1 flex flex-col min-w-0 h-full">
+        <div className="flex-1 overflow-hidden rounded-lg shadow-sm bg-white border border-gray-200 p-4 h-full flex items-center justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0052C9]"></div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex-1 flex flex-col min-w-0 h-full">
       <div className="flex-1 overflow-hidden rounded-lg shadow-sm bg-white border border-gray-200 p-4 h-full">
@@ -85,4 +132,3 @@ export const OrderSection = ({ filters = {} }: OrderSectionProps): React.ReactEl
     </div>
   );
 };
-
