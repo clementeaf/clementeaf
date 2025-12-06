@@ -100,3 +100,27 @@ POST /migrations/seed-warehouses
 
 La Fase 1 está completamente funcional y lista. Puedes proceder con la Fase 2 (Historial de Movimientos) cuando estés listo.
 
+## 🧪 Pruebas
+
+Ver archivo `FASE1_TESTING.md` para guía completa de pruebas.
+
+### Pruebas Rápidas (5 minutos)
+
+1. **Backend:**
+   ```bash
+   cd backend
+   npm run build
+   npm run seed:warehouses
+   ```
+
+2. **Frontend:**
+   - Navegar a `/products/search`
+   - Buscar un producto (ej: "PROD")
+   - Seleccionar una bodega
+   - Verificar que todo funcione
+
+3. **Permisos:**
+   - Ir a `/roles/permissions`
+   - Sincronizar permisos
+   - Verificar que aparezca `view:products:search`
+

@@ -587,6 +587,26 @@ functions:
           method: get
           cors: true
 
+  getProductHistory:
+    handler: dist/modules/Products/handlers/getProductHistory.handler
+    timeout: 30
+    memorySize: 512
+    events:
+      - http:
+          path: products/{productId}/history
+          method: get
+          cors: true
+
+  createMovement:
+    handler: dist/modules/Products/handlers/createMovement.handler
+    timeout: 30
+    memorySize: 512
+    events:
+      - http:
+          path: products/movements
+          method: post
+          cors: true
+
   # Chat endpoints
   createConversation:
     handler: dist/modules/Chat/handlers/createConversation.handler

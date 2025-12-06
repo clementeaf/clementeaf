@@ -6,10 +6,10 @@ import { initializeDatabase } from '../../../config/database';
 
 /**
  * Handler para obtener todas las bodegas
- * @param event - Evento de API Gateway
+ * @param _event - Evento de API Gateway (no usado)
  * @returns Respuesta con lista de bodegas
  */
-const getWarehousesHandler = async (event: APIGatewayProxyEvent) => {
+const getWarehousesHandler = async (_event: APIGatewayProxyEvent) => {
   try {
     await initializeDatabase();
 

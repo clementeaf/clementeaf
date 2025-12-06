@@ -84,7 +84,9 @@ export const endpoints = {
   }),
   products: buildEndpoints('products', {
     search: 'search/query',
-    warehouses: 'warehouses'
+    warehouses: 'warehouses',
+    getHistory: '{productId}/history',
+    createMovement: 'movements'
   }),
   roles: buildEndpoints('roles', {
     create: '',

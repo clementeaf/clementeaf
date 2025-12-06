@@ -3,14 +3,139 @@ import { useQuery } from '@tanstack/react-query';
 import { PageHeader, SearchBar, DataTablePage, Select, Toggle, Tabs, type TabItem } from '../../components/commons';
 import { productsService } from '../../services/productsService';
 import { warehousesService } from '../../services/warehousesService';
+import { stockMovementsService, MovementType } from '../../services/stockMovementsService';
 import type { Product } from '../../services/productsService';
 import type { Warehouse } from '../../services/warehousesService';
 import { columns } from './columns';
+import { historyColumns } from './HistoryColumns';
 
 /**
  * Página de búsqueda de productos mejorada
  * @returns Componente SearchProducts
  */
+/**
+ * Componente para el tab de historial de movimientos
+ */
+const ProductHistoryTab = ({ 
+  product, 
+  warehouseId, 
+  warehouses 
+}: { 
+  product: Product; 
+  warehouseId: number | null; 
+  warehouses: Warehouse[] 
+}): React.ReactElement => {
+  const [selectedType, setSelectedType] = useState<MovementType | ''>('');
+  const [startDate, setStartDate] = useState<string>('');
+  const [endDate, setEndDate] = useState<string>('');
+
+  const { data: historyData, isLoading: isLoadingHistory } = useQuery({
+    queryKey: ['productHistory', product.id, warehouseId, selectedType, startDate, endDate],
+    queryFn: async () => {
+      return await stockMovementsService.getProductHistory({
+        productId: product.id || product.codigo,
+        warehouseId: warehouseId || undefined,
+        movementType: selectedType || undefined,
+        startDate: startDate || undefined,
+        endDate: endDate || undefined,
+        limit: 100
+      });
+    },
+    enabled: !!product.id || !!product.codigo,
+    staleTime: 1000 * 60 * 2
+  });
+
+  const movements = historyData?.data || [];
+  const currentStock = historyData?.currentStock || 0;
+  const totalMovements = historyData?.total || 0;
+
+  const typeOptions = [
+    { value: '', label: 'Todos los tipos' },
+    { value: MovementType.ENTRADA, label: 'Entrada' },
+    { value: MovementType.SALIDA, label: 'Salida' },
+    { value: MovementType.AJUSTE, label: 'Ajuste' },
+    { value: MovementType.TRANSFERENCIA, label: 'Transferencia' }
+  ];
+
+  return (
+    <div className="h-full flex flex-col">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 flex-1 flex flex-col min-h-0">
+        <div className="mb-4 space-y-3">
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              Historial de Movimientos
+            </h3>
+            <div className="flex items-center gap-4 text-sm text-gray-600">
+              <p>
+                Producto: <span className="font-medium">{product.codigo} - {product.nombre}</span>
+              </p>
+              {warehouseId && (
+                <p>
+                  Bodega: <span className="font-medium">{warehouses.find(w => w.id === warehouseId)?.nombre}</span>
+                </p>
+              )}
+              <p className="ml-auto">
+                Stock Actual: <span className="font-bold text-blue-600">{currentStock.toLocaleString('es-CL')}</span>
+              </p>
+            </div>
+          </div>
+
+          {/* Filtros */}
+          <div className="flex gap-4 items-end">
+            <div className="w-48">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Tipo de Movimiento
+              </label>
+              <Select
+                id="movement-type-filter"
+                value={selectedType}
+                onChange={(e) => setSelectedType(e.target.value as MovementType | '')}
+                options={typeOptions}
+                placeholder="Todos"
+              />
+            </div>
+            <div className="w-48">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Fecha Desde
+              </label>
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+            <div className="w-48">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Fecha Hasta
+              </label>
+              <input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+            <div className="text-sm text-gray-500">
+              Total: {totalMovements} movimientos
+            </div>
+          </div>
+        </div>
+
+        {/* Tabla de movimientos */}
+        <div className="flex-1 min-h-0">
+          <DataTablePage
+            data={movements}
+            columns={historyColumns}
+            isLoading={isLoadingHistory}
+            errorMessage="Error al cargar historial de movimientos"
+          />
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export const SearchProducts = (): React.ReactElement => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedWarehouseId, setSelectedWarehouseId] = useState<number | null>(null);
@@ -87,36 +212,11 @@ export const SearchProducts = (): React.ReactElement => {
       id: 'history',
       label: 'Historial',
       content: selectedProduct ? (
-        <div className="h-full flex flex-col">
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 flex-1 flex flex-col">
-            <div className="mb-4">
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                Historial de Movimientos
-              </h3>
-              <p className="text-sm text-gray-600">
-                Producto: <span className="font-medium">{selectedProduct.codigo} - {selectedProduct.nombre}</span>
-              </p>
-              {selectedWarehouseId && (
-                <p className="text-sm text-gray-600 mt-1">
-                  Bodega: <span className="font-medium">{warehouses.find(w => w.id === selectedWarehouseId)?.nombre}</span>
-                </p>
-              )}
-            </div>
-            <div className="flex-1 flex items-center justify-center border-2 border-dashed border-gray-200 rounded-lg">
-              <div className="text-center">
-                <div className="text-gray-400 mb-2">
-                  <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
-                </div>
-                <p className="text-gray-500 font-medium">Historial de movimientos</p>
-                <p className="text-sm text-gray-400 mt-1">
-                  Esta funcionalidad se implementará en la Fase 2
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
+        <ProductHistoryTab
+          product={selectedProduct}
+          warehouseId={selectedWarehouseId}
+          warehouses={warehouses}
+        />
       ) : (
         <div className="h-full flex items-center justify-center">
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center max-w-md">
