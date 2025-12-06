@@ -30,7 +30,36 @@ export class CapabilitiesDiscoveryService {
     const frontendCapabilities = await this.discoverFrontendCapabilities();
     capabilities.push(...frontendCapabilities);
 
+    // Agregar permisos manuales adicionales
+    const manualCapabilities = this.getManualCapabilities();
+    capabilities.push(...manualCapabilities);
+
     return capabilities;
+  }
+
+  /**
+   * Obtiene permisos manuales adicionales que no se descubren automáticamente
+   * @returns Lista de capacidades manuales
+   */
+  private getManualCapabilities(): Capability[] {
+    return [
+      {
+        code: 'view:products:history',
+        name: 'Ver Historial de Productos',
+        description: 'Permite ver el historial de movimientos de stock de productos',
+        category: 'Productos',
+        resource: 'products',
+        action: 'view'
+      },
+      {
+        code: 'create:products:movements',
+        name: 'Crear Movimientos de Stock',
+        description: 'Permite crear movimientos de stock (entradas, salidas, ajustes)',
+        category: 'Productos',
+        resource: 'products',
+        action: 'create'
+      }
+    ];
   }
 
   /**

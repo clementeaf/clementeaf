@@ -182,7 +182,7 @@ export const useNotifications = () => {
    * Elimina una notificación
    */
   const removeNotification = useCallback((notificationId: string): void => {
-    setNotifications(prev => prev.filter(notif => notif.id !== notificationId));
+    setLocalNotifications(prev => prev.filter(notif => notif.id !== notificationId));
   }, []);
 
   /**
