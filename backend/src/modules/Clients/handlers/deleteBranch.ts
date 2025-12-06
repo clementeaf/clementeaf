@@ -11,20 +11,23 @@ import { initializeDatabase } from '../../../config/database';
  */
 const deleteBranchHandler = async (event: APIGatewayProxyEvent) => {
   try {
-    const id = event.pathParameters?.id;
+    const clientIdParam = event.pathParameters?.clientId;
+    const branchIdParam = event.pathParameters?.id;
 
-    if (!id) {
-      return errorResponse(400, 'ID de la sucursal es requerido');
+    if (!clientIdParam || !branchIdParam) {
+      return errorResponse(400, 'ID del cliente y de la sucursal son requeridos');
     }
 
-    const branchId = parseInt(id, 10);
-    if (isNaN(branchId)) {
-      return errorResponse(400, 'ID de la sucursal debe ser un número válido');
+    const clientId = parseInt(clientIdParam, 10);
+    const branchId = parseInt(branchIdParam, 10);
+    
+    if (isNaN(clientId) || isNaN(branchId)) {
+      return errorResponse(400, 'IDs deben ser números válidos');
     }
 
     await initializeDatabase();
     const branchService = new BranchService();
-    await branchService.deleteBranch(branchId);
+    await branchService.deleteBranch(clientId, branchId);
 
     return successResponse(200, { message: 'Sucursal eliminada exitosamente' });
   } catch (error) {

@@ -11,20 +11,23 @@ import { initializeDatabase } from '../../../config/database';
  */
 const getBranchByIdHandler = async (event: APIGatewayProxyEvent) => {
   try {
-    const id = event.pathParameters?.id;
+    const clientIdParam = event.pathParameters?.clientId;
+    const branchIdParam = event.pathParameters?.id;
 
-    if (!id) {
-      return errorResponse(400, 'ID de la sucursal es requerido');
+    if (!clientIdParam || !branchIdParam) {
+      return errorResponse(400, 'ID del cliente y de la sucursal son requeridos');
     }
 
-    const branchId = parseInt(id, 10);
-    if (isNaN(branchId)) {
-      return errorResponse(400, 'ID de la sucursal debe ser un número válido');
+    const clientId = parseInt(clientIdParam, 10);
+    const branchId = parseInt(branchIdParam, 10);
+    
+    if (isNaN(clientId) || isNaN(branchId)) {
+      return errorResponse(400, 'IDs deben ser números válidos');
     }
 
     await initializeDatabase();
     const branchService = new BranchService();
-    const branch = await branchService.getBranchById(branchId);
+    const branch = await branchService.getBranchById(clientId, branchId);
 
     return successResponse(200, {
       id: branch.id,

@@ -31,13 +31,14 @@ export class BranchService {
   }
 
   /**
-   * Obtiene una sucursal por ID
-   * @param id - ID de la sucursal
+   * Obtiene una sucursal por ID validando que pertenezca al cliente
+   * @param clientId - ID del cliente
+   * @param branchId - ID de la sucursal
    * @returns Sucursal encontrada
    */
-  async getBranchById(id: number): Promise<Branch> {
+  async getBranchById(clientId: number, branchId: number): Promise<Branch> {
     const branch = await this.branchRepository.findOne({
-      where: { id },
+      where: { id: branchId, clientId },
       relations: ['client']
     });
 
@@ -71,13 +72,14 @@ export class BranchService {
   }
 
   /**
-   * Actualiza una sucursal
-   * @param id - ID de la sucursal
+   * Actualiza una sucursal validando que pertenezca al cliente
+   * @param clientId - ID del cliente
+   * @param branchId - ID de la sucursal
    * @param updateBranchDto - Datos a actualizar
    * @returns Sucursal actualizada
    */
-  async updateBranch(id: number, updateBranchDto: UpdateBranchDto): Promise<Branch> {
-    const branch = await this.getBranchById(id);
+  async updateBranch(clientId: number, branchId: number, updateBranchDto: UpdateBranchDto): Promise<Branch> {
+    const branch = await this.getBranchById(clientId, branchId);
 
     if (updateBranchDto.nombre !== undefined) {
       branch.nombre = updateBranchDto.nombre;
@@ -111,11 +113,12 @@ export class BranchService {
   }
 
   /**
-   * Elimina una sucursal (soft delete)
-   * @param id - ID de la sucursal
+   * Elimina una sucursal (soft delete) validando que pertenezca al cliente
+   * @param clientId - ID del cliente
+   * @param branchId - ID de la sucursal
    */
-  async deleteBranch(id: number): Promise<void> {
-    const branch = await this.getBranchById(id);
+  async deleteBranch(clientId: number, branchId: number): Promise<void> {
+    const branch = await this.getBranchById(clientId, branchId);
     branch.isActive = false;
     await this.branchRepository.save(branch);
   }

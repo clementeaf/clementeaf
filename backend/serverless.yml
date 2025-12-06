@@ -466,7 +466,7 @@ functions:
     memorySize: 512
     events:
       - http:
-          path: branches/{id}
+          path: clients/{clientId}/branches/{id}
           method: get
           cors: true
 
@@ -476,7 +476,7 @@ functions:
     memorySize: 512
     events:
       - http:
-          path: branches
+          path: clients/{clientId}/branches
           method: post
           cors: true
 
@@ -486,7 +486,7 @@ functions:
     memorySize: 512
     events:
       - http:
-          path: branches/{id}
+          path: clients/{clientId}/branches/{id}
           method: put
           cors: true
 
@@ -496,7 +496,7 @@ functions:
     memorySize: 512
     events:
       - http:
-          path: branches/{id}
+          path: clients/{clientId}/branches/{id}
           method: delete
           cors: true
 

@@ -105,7 +105,7 @@ export const BranchModal = ({
           contactoTelefono: contactoTelefono.trim() || undefined,
           contactoEmail: contactoEmail.trim() || undefined
         };
-        await updateBranchMutation.mutateAsync({ id: branch.id, dto });
+        await updateBranchMutation.mutateAsync({ clientId, branchId: branch.id, dto });
         toast.success('Sucursal actualizada exitosamente');
       } else {
         const dto: CreateBranchDto = {
@@ -119,7 +119,7 @@ export const BranchModal = ({
           contactoTelefono: contactoTelefono.trim() || undefined,
           contactoEmail: contactoEmail.trim() || undefined
         };
-        await createBranchMutation.mutateAsync(dto);
+        await createBranchMutation.mutateAsync({ clientId, dto });
         toast.success('Sucursal creada exitosamente');
       }
 

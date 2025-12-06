@@ -30,8 +30,8 @@ export const useCreateBranch = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (dto: CreateBranchDto) => {
-      return await branchesService.createBranch(dto);
+    mutationFn: async ({ clientId, dto }: { clientId: number; dto: CreateBranchDto }) => {
+      return await branchesService.createBranch(clientId, dto);
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['branches', variables.clientId] });
@@ -47,8 +47,8 @@ export const useUpdateBranch = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, dto }: { id: number; dto: UpdateBranchDto }) => {
-      return await branchesService.updateBranch(id, dto);
+    mutationFn: async ({ clientId, branchId, dto }: { clientId: number; branchId: number; dto: UpdateBranchDto }) => {
+      return await branchesService.updateBranch(clientId, branchId, dto);
     },
     onSuccess: (branch) => {
       queryClient.invalidateQueries({ queryKey: ['branches', branch.clientId] });
@@ -64,9 +64,9 @@ export const useDeleteBranch = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, clientId }: { id: number; clientId: number }) => {
-      await branchesService.deleteBranch(id);
-      return { id, clientId };
+    mutationFn: async ({ clientId, branchId }: { clientId: number; branchId: number }) => {
+      await branchesService.deleteBranch(clientId, branchId);
+      return { clientId, branchId };
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['branches', variables.clientId] });

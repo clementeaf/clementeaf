@@ -62,7 +62,7 @@ export const BranchesSection = ({ clientId }: BranchesSectionProps): React.React
     }
 
     try {
-      await deleteBranchMutation.mutateAsync({ id: branch.id, clientId });
+      await deleteBranchMutation.mutateAsync({ clientId, branchId: branch.id });
       toast.success('Sucursal eliminada exitosamente');
     } catch (error: unknown) {
       const errorMessage = (error as { response?: { data?: { message?: string } }; message?: string })?.response?.data?.message || 

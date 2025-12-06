@@ -77,43 +77,54 @@ export const branchesService = {
 
   /**
    * Obtiene una sucursal por ID
-   * @param id - ID de la sucursal
+   * @param clientId - ID del cliente
+   * @param branchId - ID de la sucursal
    * @returns Sucursal encontrada
    */
-  async getBranchById(id: number): Promise<Branch> {
-    const url = endpoints.branches.getById.replace('{id}', id.toString());
+  async getBranchById(clientId: number, branchId: number): Promise<Branch> {
+    const url = endpoints.clients.getBranchById
+      .replace('{clientId}', clientId.toString())
+      .replace('{id}', branchId.toString());
     const { data } = await apiClient.get<{ data: Branch }>(url);
     return data.data;
   },
 
   /**
    * Crea una nueva sucursal
+   * @param clientId - ID del cliente
    * @param dto - Datos de la sucursal
    * @returns Sucursal creada
    */
-  async createBranch(dto: CreateBranchDto): Promise<Branch> {
-    const { data } = await apiClient.post<{ data: Branch }>(endpoints.branches.create, dto);
+  async createBranch(clientId: number, dto: CreateBranchDto): Promise<Branch> {
+    const url = endpoints.clients.createBranch.replace('{clientId}', clientId.toString());
+    const { data } = await apiClient.post<{ data: Branch }>(url, dto);
     return data.data;
   },
 
   /**
    * Actualiza una sucursal
-   * @param id - ID de la sucursal
+   * @param clientId - ID del cliente
+   * @param branchId - ID de la sucursal
    * @param dto - Datos a actualizar
    * @returns Sucursal actualizada
    */
-  async updateBranch(id: number, dto: UpdateBranchDto): Promise<Branch> {
-    const url = endpoints.branches.update.replace('{id}', id.toString());
+  async updateBranch(clientId: number, branchId: number, dto: UpdateBranchDto): Promise<Branch> {
+    const url = endpoints.clients.updateBranch
+      .replace('{clientId}', clientId.toString())
+      .replace('{id}', branchId.toString());
     const { data } = await apiClient.put<{ data: Branch }>(url, dto);
     return data.data;
   },
 
   /**
    * Elimina una sucursal (soft delete)
-   * @param id - ID de la sucursal
+   * @param clientId - ID del cliente
+   * @param branchId - ID de la sucursal
    */
-  async deleteBranch(id: number): Promise<void> {
-    const url = endpoints.branches.delete.replace('{id}', id.toString());
+  async deleteBranch(clientId: number, branchId: number): Promise<void> {
+    const url = endpoints.clients.deleteBranch
+      .replace('{clientId}', clientId.toString())
+      .replace('{id}', branchId.toString());
     await apiClient.delete(url);
   }
 };

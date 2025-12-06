@@ -13,6 +13,17 @@ import type { CreateBranchDto } from '../dto/CreateBranchDto';
  */
 const createBranchHandler = async (event: APIGatewayProxyEvent) => {
   try {
+    const clientIdParam = event.pathParameters?.clientId;
+
+    if (!clientIdParam) {
+      return errorResponse(400, 'ID del cliente es requerido');
+    }
+
+    const clientId = parseInt(clientIdParam, 10);
+    if (isNaN(clientId)) {
+      return errorResponse(400, 'ID del cliente debe ser un número válido');
+    }
+
     const bodyError = validateBody(event);
     if (bodyError) return bodyError;
 
@@ -21,8 +32,9 @@ const createBranchHandler = async (event: APIGatewayProxyEvent) => {
       return errorResponse(400, 'Invalid JSON format');
     }
 
-    if (!dto.clientId || isNaN(dto.clientId)) {
-      return errorResponse(400, 'clientId es requerido y debe ser un número válido');
+    // Validar que el clientId del path coincida con el del body
+    if (dto.clientId !== clientId) {
+      return errorResponse(400, 'El ID del cliente en el cuerpo no coincide con el de la URL');
     }
 
     if (!dto.nombre || dto.nombre.trim().length === 0) {
