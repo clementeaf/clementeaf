@@ -20,11 +20,19 @@ export const ProtectedRoute = ({
   requiredPermissions,
   requireAny = false
 }: ProtectedRouteProps): React.ReactElement => {
-  const { hasPermission, hasAnyPermission, hasAllPermissions, isLoading, isSuperAdmin } = usePermissions();
+  const { hasPermission, hasAnyPermission, hasAllPermissions, isLoading, isSuperAdmin, user } = usePermissions();
 
-  // Si está cargando, mostrar loading (o podrías mostrar un spinner)
-  if (isLoading) {
-    return <div className="flex items-center justify-center h-screen">Cargando...</div>;
+  // Si está cargando Y no hay usuario (ni siquiera optimista), mostrar loading
+  // Si hay usuario optimista, permitir renderizar (los permisos se validarán cuando carguen)
+  if (isLoading && !user) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0052C9] mx-auto mb-4"></div>
+          <p className="text-gray-600">Cargando...</p>
+        </div>
+      </div>
+    );
   }
 
   // Super admins tienen acceso a todo

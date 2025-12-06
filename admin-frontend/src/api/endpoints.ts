@@ -83,7 +83,8 @@ export const endpoints = {
     getPickingOrders: 'picking-orders'
   }),
   products: buildEndpoints('products', {
-    search: 'search/query'
+    search: 'search/query',
+    warehouses: 'warehouses'
   }),
   roles: buildEndpoints('roles', {
     create: '',

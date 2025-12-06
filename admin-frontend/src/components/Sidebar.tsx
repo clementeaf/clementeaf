@@ -34,7 +34,7 @@ const getSubModulePermissionCode = (path: string): string => {
 export const Sidebar = () => {
   const location = useLocation();
   const { logout } = useLogout();
-  const { hasPermission, hasModuleAccess, isSuperAdmin } = usePermissions();
+  const { hasPermission, hasModuleAccess, isSuperAdmin, isLoading, user } = usePermissions();
   const [isSellsExpanded, setIsSellsExpanded] = useState(false);
   const [isPickingExpanded, setIsPickingExpanded] = useState(false);
   const [isRolesExpanded, setIsRolesExpanded] = useState(false);
@@ -47,12 +47,23 @@ export const Sidebar = () => {
 
   /**
    * Filtra los módulos según los permisos del usuario
+   * Si aún está cargando y hay usuario optimista, mostrar todos los módulos básicos
+   * Los permisos se validarán cuando carguen del servidor
    */
   const filteredNavItems = useMemo(() => {
+    // Si está cargando pero hay usuario, mostrar módulos básicos (se filtrarán cuando carguen permisos)
+    const shouldShowAllBasic = isLoading && user;
+
     const filtered = navItems.filter(item => {
       // Inicio y Chat siempre visibles (sin restricción de permisos)
       if (item.name === 'Inicio' || item.name === 'Chat' || item.name === 'Soporte') {
         return true;
+      }
+
+      // Si aún está cargando permisos, mostrar módulos básicos temporalmente
+      if (shouldShowAllBasic) {
+        // Mostrar módulos principales mientras cargan permisos
+        return item.name === 'Ventas' || item.name === 'Picking' || item.name === 'Roles' || item.name === 'Productos';
       }
 
       // Para módulos con submódulos, verificar acceso al módulo
@@ -94,7 +105,7 @@ export const Sidebar = () => {
     }
 
     return filtered;
-  }, [hasPermission, hasModuleAccess]);
+  }, [hasPermission, hasModuleAccess, isLoading, user]);
 
   /**
    * Filtra los submódulos según los permisos del usuario

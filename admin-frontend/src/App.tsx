@@ -10,6 +10,7 @@ const Home = lazy(() => import('./pages/Home').then(module => ({ default: module
 const Articles = lazy(() => import('./pages/Articles').then(module => ({ default: module.Articles })));
 const Opportunities = lazy(() => import('./pages/Opportunities').then(module => ({ default: module.Opportunities })));
 const Components = lazy(() => import('./pages/Components').then(module => ({ default: module.Components })));
+const SearchProducts = lazy(() => import('./pages/Products/SearchProducts').then(module => ({ default: module.SearchProducts })));
 const Sells = lazy(() => import('./pages/Sells').then(module => ({ default: module.Sells })));
 const Clients = lazy(() => import('./pages/Clients').then(module => ({ default: module.Clients })));
 const CreateClient = lazy(() => import('./pages/Clients/CreateClient').then(module => ({ default: module.CreateClient })));
@@ -187,6 +188,16 @@ function App(): React.ReactNode {
               element={
                 <ProtectedRoute requiredPermission="view:roles:users">
                   <CreateUser />
+                </ProtectedRoute>
+              } 
+            />
+            
+            {/* Rutas de Productos */}
+            <Route 
+              path={routes.productsSearch} 
+              element={
+                <ProtectedRoute requiredPermission="view:products:search">
+                  <SearchProducts />
                 </ProtectedRoute>
               } 
             />

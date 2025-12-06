@@ -46,12 +46,35 @@ const getUserIdFromToken = (): number | null => {
 };
 
 /**
+ * Obtiene datos básicos del usuario desde el token JWT (sin llamada HTTP)
+ * @returns Usuario básico desde token o null
+ */
+const getOptimisticUserFromToken = (): AuthUser | null => {
+  const token = localStorage.getItem('authToken');
+  if (!token) return null;
+
+  const decoded = decodeJWT(token);
+  if (!decoded || !decoded.userId) return null;
+
+  // Retornar usuario optimista con permisos vacíos (se cargarán del servidor)
+  return {
+    id: decoded.userId,
+    email: decoded.email || '',
+    name: null,
+    role: null,
+    permissions: [] // Se cargarán del servidor
+  } as AuthUser;
+};
+
+/**
  * Hook para obtener el usuario actual autenticado
- * Intenta obtener desde el servidor, si falla usa el token JWT
+ * Usa datos optimistas del token para renderizar inmediatamente
+ * Luego actualiza con datos del servidor en background
  */
 export const useCurrentUser = () => {
   const token = localStorage.getItem('authToken');
   const userIdFromToken = getUserIdFromToken();
+  const optimisticUser = getOptimisticUserFromToken();
 
   return useQuery({
     queryKey: ['currentUser'],
@@ -59,19 +82,21 @@ export const useCurrentUser = () => {
       try {
         const user = await authService.getCurrentUser();
         
-        // Log del usuario actual
-        console.log('🔐 [AUTH] Usuario autenticado:', {
-          id: user.id,
-          email: user.email,
-          name: user.name || 'Sin nombre',
-          role: user.role ? {
-            id: user.role.id,
-            name: user.role.name,
-            isActive: user.role.isActive
-          } : 'Sin rol asignado',
-          permissions: user.permissions || [],
-          permissionsCount: user.permissions?.length || 0
-        });
+        // Log del usuario actual (solo en desarrollo o primera carga)
+        if (process.env.NODE_ENV === 'development') {
+          console.log('🔐 [AUTH] Usuario autenticado:', {
+            id: user.id,
+            email: user.email,
+            name: user.name || 'Sin nombre',
+            role: user.role ? {
+              id: user.role.id,
+              name: user.role.name,
+              isActive: user.role.isActive
+            } : 'Sin rol asignado',
+            permissions: user.permissions || [],
+            permissionsCount: user.permissions?.length || 0
+          });
+        }
         
         return user;
       } catch (error) {
@@ -102,29 +127,24 @@ export const useCurrentUser = () => {
         }
         
         // Para otros errores, intentar usar el userId del token como fallback
-        if (userIdFromToken) {
-          const fallbackUser = {
-            id: userIdFromToken,
-            email: '',
-            name: null,
-            role: null,
-            permissions: []
-          } as AuthUser;
-          
-          console.warn('⚠️ [AUTH] Usuario obtenido desde token (sin datos completos):', {
-            id: fallbackUser.id,
-            email: fallbackUser.email || 'No disponible',
-            name: fallbackUser.name || 'No disponible'
-          });
-          
-          return fallbackUser;
+        if (userIdFromToken && optimisticUser) {
+          console.warn('⚠️ [AUTH] Usando datos optimistas del token (sin datos completos del servidor)');
+          return optimisticUser;
         }
         throw error;
       }
     },
-    staleTime: 1000 * 60 * 5,
-    retry: false,
-    enabled: !!token || !!userIdFromToken
+    staleTime: 1000 * 60 * 10, // 10 minutos - datos frescos por más tiempo
+    gcTime: 1000 * 60 * 30, // 30 minutos - mantener en caché más tiempo
+    retry: 1, // Reintentar una vez en caso de error de red
+    retryDelay: 1000, // Esperar 1 segundo antes de reintentar
+    enabled: !!token || !!userIdFromToken,
+    // Datos optimistas: mostrar usuario básico inmediatamente mientras carga del servidor
+    placeholderData: optimisticUser || undefined,
+    // Refetch en background para actualizar permisos sin bloquear UI
+    refetchOnMount: 'always', // Siempre refetch pero no bloquea
+    refetchOnWindowFocus: false, // No refetch al cambiar de pestaña
+    refetchOnReconnect: true // Refetch solo al reconectar internet
   });
 };
 

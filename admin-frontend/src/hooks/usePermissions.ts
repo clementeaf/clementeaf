@@ -7,7 +7,7 @@ import { isSuperAdmin } from '../config/superAdmins';
  * @returns Objeto con permisos y funciones de verificación
  */
 export const usePermissions = () => {
-  const { data: user, isLoading } = useCurrentUser();
+  const { data: user, isLoading, isPlaceholderData = false } = useCurrentUser();
 
   /**
    * Verifica si el usuario actual es super administrador
@@ -17,22 +17,30 @@ export const usePermissions = () => {
   }, [user?.email]);
 
   /**
+   * Si estamos usando datos optimistas, considerar que aún está cargando permisos
+   * pero permitir renderizar la UI básica
+   */
+  const isActuallyLoading = isLoading && !isPlaceholderData;
+
+  /**
    * Lista de códigos de permisos del usuario
    */
   const permissions = useMemo(() => {
     const userPermissions = user?.permissions || [];
     
-    // Log de permisos cuando se cargan
-    if (user && !isLoading) {
+    // Log de permisos cuando se cargan (solo si no son datos optimistas)
+    if (user && !isActuallyLoading && !isPlaceholderData && user.permissions.length > 0) {
       const isAdmin = isSuperAdmin(user.email);
-      console.log('🔑 [PERMISSIONS] Permisos del usuario cargados:', {
-        userId: user.id,
-        email: user.email,
-        roleName: user.role?.name || 'Sin rol',
-        isSuperAdmin: isAdmin,
-        permissionsCount: userPermissions.length,
-        permissions: isAdmin ? 'SUPER ADMIN - Acceso completo' : (userPermissions.length > 0 ? userPermissions : 'Sin permisos asignados')
-      });
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🔑 [PERMISSIONS] Permisos del usuario cargados:', {
+          userId: user.id,
+          email: user.email,
+          roleName: user.role?.name || 'Sin rol',
+          isSuperAdmin: isAdmin,
+          permissionsCount: userPermissions.length,
+          permissions: isAdmin ? 'SUPER ADMIN - Acceso completo' : (userPermissions.length > 0 ? userPermissions : 'Sin permisos asignados')
+        });
+      }
     }
     
     return userPermissions;
@@ -107,7 +115,7 @@ export const usePermissions = () => {
     hasAnyPermission,
     hasAllPermissions,
     hasModuleAccess,
-    isLoading,
+    isLoading: isActuallyLoading,
     user,
     isSuperAdmin: isUserSuperAdmin
   };
