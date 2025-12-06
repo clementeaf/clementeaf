@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { PageHeader, SearchBar, DataTablePage, Select, Toggle, Tabs, type TabItem } from '../../components/commons';
+import { PageHeader, SearchBar, DataTablePage, Select, Toggle, Tabs, type TabItem, Button } from '../../components/commons';
 import { productsService } from '../../services/productsService';
 import { warehousesService } from '../../services/warehousesService';
 import { stockMovementsService, MovementType } from '../../services/stockMovementsService';
@@ -8,6 +8,7 @@ import type { Product } from '../../services/productsService';
 import type { Warehouse } from '../../services/warehousesService';
 import { columns } from './columns';
 import { historyColumns } from './HistoryColumns';
+import { CreateMovementModal } from './CreateMovementModal';
 
 /**
  * Página de búsqueda de productos mejorada
@@ -19,11 +20,13 @@ import { historyColumns } from './HistoryColumns';
 const ProductHistoryTab = ({ 
   product, 
   warehouseId, 
-  warehouses 
+  warehouses,
+  onCreateMovement
 }: { 
   product: Product; 
   warehouseId: number | null; 
-  warehouses: Warehouse[] 
+  warehouses: Warehouse[];
+  onCreateMovement: () => void;
 }): React.ReactElement => {
   const [selectedType, setSelectedType] = useState<MovementType | ''>('');
   const [startDate, setStartDate] = useState<string>('');
@@ -77,6 +80,17 @@ const ProductHistoryTab = ({
               <p className="ml-auto">
                 Stock Actual: <span className="font-bold text-blue-600">{currentStock.toLocaleString('es-CL')}</span>
               </p>
+            </div>
+            <div className="flex justify-end">
+              <Button
+                onClick={onCreateMovement}
+                className="px-4 py-2 text-white bg-[#004BB7] rounded-lg hover:bg-[#003a8f] flex items-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                Crear Movimiento
+              </Button>
             </div>
           </div>
 
@@ -142,6 +156,7 @@ export const SearchProducts = (): React.ReactElement => {
   const [includeLots, setIncludeLots] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [activeTab, setActiveTab] = useState<string>('search');
+  const [isCreateMovementModalOpen, setIsCreateMovementModalOpen] = useState(false);
 
   /**
    * Obtiene las bodegas disponibles
@@ -216,6 +231,7 @@ export const SearchProducts = (): React.ReactElement => {
           product={selectedProduct}
           warehouseId={selectedWarehouseId}
           warehouses={warehouses}
+          onCreateMovement={() => setIsCreateMovementModalOpen(true)}
         />
       ) : (
         <div className="h-full flex items-center justify-center">
@@ -371,6 +387,17 @@ export const SearchProducts = (): React.ReactElement => {
           </div>
         </div>
       </div>
+
+      {/* Modal para crear movimientos */}
+      <CreateMovementModal
+        isOpen={isCreateMovementModalOpen}
+        onClose={() => setIsCreateMovementModalOpen(false)}
+        product={selectedProduct}
+        warehouses={warehouses}
+        onSuccess={() => {
+          // El historial se actualizará automáticamente por la invalidación de queries
+        }}
+      />
     </div>
   );
 };

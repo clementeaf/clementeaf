@@ -28,6 +28,10 @@ export interface ModalProps {
    * Clases CSS adicionales para el contenido del modal
    */
   contentClassName?: string;
+  /**
+   * Tamaño del modal
+   */
+  size?: 'sm' | 'md' | 'lg' | 'xl';
 }
 
 /**
@@ -41,7 +45,8 @@ export const Modal = ({
   children,
   title,
   containerClassName = '',
-  contentClassName = ''
+  contentClassName = '',
+  size = 'md'
 }: ModalProps): React.ReactElement | null => {
   if (!isOpen) {
     return null;
@@ -59,7 +64,12 @@ export const Modal = ({
       onClick={handleBackdropClick}
     >
       <div
-        className={`bg-white rounded-lg shadow-xl max-w-md w-full mx-4 transition-transform duration-300 ${contentClassName}`}
+        className={`bg-white rounded-lg shadow-xl w-full mx-4 transition-transform duration-300 ${
+          size === 'sm' ? 'max-w-sm' : 
+          size === 'md' ? 'max-w-md' : 
+          size === 'lg' ? 'max-w-2xl' : 
+          'max-w-4xl'
+        } ${contentClassName}`}
         onClick={(e): void => e.stopPropagation()}
       >
         {title && (
@@ -75,7 +85,7 @@ export const Modal = ({
             </button>
           </div>
         )}
-        <div className={title ? 'p-6' : ''}>
+        <div className={title ? 'p-6' : 'p-6'}>
           {children}
         </div>
       </div>

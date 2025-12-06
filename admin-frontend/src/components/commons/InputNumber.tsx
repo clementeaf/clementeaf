@@ -80,9 +80,9 @@ export const InputNumber = ({
       return;
     }
 
-    // Solo permitir números enteros (sin decimales)
-    if (/^\d+$/.test(inputValue)) {
-      const numValue = parseInt(inputValue, 10);
+    // Permitir números con decimales
+    if (/^\d*\.?\d*$/.test(inputValue)) {
+      const numValue = parseFloat(inputValue);
       
       // Validar min
       if (min !== undefined && numValue < min) {
@@ -143,8 +143,8 @@ export const InputNumber = ({
         )}
         <input
           type="text"
-          inputMode="numeric"
-          pattern="[0-9]*"
+          inputMode="decimal"
+          pattern="[0-9]*\.?[0-9]*"
           className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#004BB7] focus:border-transparent h-[42px] ${
             leftIcon ? 'pl-10' : ''
           } ${rightIcon ? 'pr-10' : ''} ${error ? 'border-red-500' : ''} ${
