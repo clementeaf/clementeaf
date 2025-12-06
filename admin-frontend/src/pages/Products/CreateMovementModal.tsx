@@ -69,9 +69,11 @@ export const CreateMovementModal = ({
       onSuccess?.();
       onClose();
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error('Error al crear movimiento:', error);
-      setErrors({ submit: 'Error al crear el movimiento. Intenta nuevamente.' });
+      // Si el error es de stock insuficiente, mostrarlo específicamente
+      const errorMessage = error?.response?.data?.message || error?.message || 'Error al crear el movimiento. Intenta nuevamente.';
+      setErrors({ submit: errorMessage });
     }
   });
 
@@ -89,8 +91,8 @@ export const CreateMovementModal = ({
       newErrors.cantidad = 'La cantidad debe ser mayor a 0';
     }
 
-    if (movementType === MovementType.SALIDA && product?.stock && cantidad > product.stock) {
-      newErrors.cantidad = `No hay suficiente stock. Stock disponible: ${product.stock}`;
+    if (movementType === MovementType.SALIDA && product?.stock !== undefined && cantidad > product.stock) {
+      newErrors.cantidad = `No hay suficiente stock. Stock disponible: ${product.stock.toLocaleString('es-CL')}`;
     }
 
     setErrors(newErrors);

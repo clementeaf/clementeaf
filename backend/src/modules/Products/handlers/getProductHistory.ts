@@ -3,6 +3,7 @@ import { StockMovementService } from '../services/StockMovementService';
 import { MovementType } from '../entities/StockMovement.entity';
 import { handlerWrapper } from '../../Users/utils/handlerWrapper';
 import { successResponse, errorResponse } from '../../Users/utils/response';
+import { validatePermission } from '../../Users/utils/permissions';
 import { initializeDatabase } from '../../../config/database';
 
 /**
@@ -12,6 +13,10 @@ import { initializeDatabase } from '../../../config/database';
  */
 const getProductHistoryHandler = async (event: APIGatewayProxyEvent) => {
   try {
+    // Validar permiso para ver historial
+    const permissionError = await validatePermission(event, 'view:products:history');
+    if (permissionError) return permissionError;
+
     const productId = event.pathParameters?.productId;
     
     if (!productId) {

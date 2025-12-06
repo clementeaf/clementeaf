@@ -202,6 +202,10 @@ function App(): React.ReactNode {
               } 
             />
             
+            {/* Nota: Los permisos view:products:history y create:products:movements 
+                se validan en el backend. El frontend solo valida view:products:search 
+                para acceder a la página. */}
+            
             {/* Rutas legacy (sin protección por ahora) */}
             <Route path={routes.articles} element={<Articles />} />
             <Route path={routes.opportunities} element={<Opportunities />} />

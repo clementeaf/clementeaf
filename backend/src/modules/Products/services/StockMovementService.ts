@@ -157,19 +157,28 @@ export class StockMovementService {
    * Crea un nuevo movimiento de stock
    * @param dto - Datos del movimiento
    * @returns Movimiento creado
+   * @throws Error si no hay stock suficiente para salidas
    */
   async createMovement(dto: CreateMovementDto): Promise<StockMovement> {
     // Obtener stock actual
     const stockAnterior = await this.getCurrentStock(dto.productId, dto.warehouseId);
+
+    // Validar stock disponible para salidas
+    if (dto.type === MovementType.SALIDA) {
+      const cantidad = Number(dto.cantidad);
+      if (cantidad > stockAnterior) {
+        throw new Error(`Stock insuficiente. Stock disponible: ${stockAnterior.toLocaleString('es-CL')}, cantidad solicitada: ${cantidad.toLocaleString('es-CL')}`);
+      }
+    }
 
     // Calcular nuevo stock según el tipo de movimiento
     let stockNuevo: number;
     if (dto.type === MovementType.ENTRADA || dto.type === MovementType.AJUSTE) {
       stockNuevo = stockAnterior + Number(dto.cantidad);
     } else if (dto.type === MovementType.SALIDA) {
-      stockNuevo = Math.max(0, stockAnterior - Number(dto.cantidad)); // No permitir stock negativo
+      stockNuevo = stockAnterior - Number(dto.cantidad); // Ya validamos que hay stock suficiente
     } else {
-      // TRANSFERENCIA: se manejará en Fase 3
+      // TRANSFERENCIA: se manejará en Fase 4
       stockNuevo = stockAnterior;
     }
 

@@ -4,6 +4,7 @@ import { MovementType } from '../entities/StockMovement.entity';
 import { handlerWrapper } from '../../Users/utils/handlerWrapper';
 import { validateBody, parseBody } from '../../Users/utils/validation';
 import { successResponse, errorResponse } from '../../Users/utils/response';
+import { validatePermission, getUserWithPermissions } from '../../Users/utils/permissions';
 import { initializeDatabase } from '../../../config/database';
 import type { CreateMovementDto } from '../dto/CreateMovementDto';
 
@@ -14,6 +15,16 @@ import type { CreateMovementDto } from '../dto/CreateMovementDto';
  */
 const createMovementHandler = async (event: APIGatewayProxyEvent) => {
   try {
+    // Validar permiso para crear movimientos
+    const permissionError = await validatePermission(event, 'create:products:movements');
+    if (permissionError) return permissionError;
+
+    // Obtener usuario autenticado para auditoría
+    const user = await getUserWithPermissions(event);
+    if (!user) {
+      return errorResponse(401, 'No autenticado');
+    }
+
     const bodyError = validateBody(event);
     if (bodyError) return bodyError;
 
@@ -46,6 +57,7 @@ const createMovementHandler = async (event: APIGatewayProxyEvent) => {
     // Convertir fechaDocumento de string a Date si existe
     const fechaDocumento = dto.fechaDocumento ? new Date(dto.fechaDocumento) : undefined;
 
+    // Usar el usuario autenticado para auditoría (sobrescribe el que viene del frontend por seguridad)
     const movement = await stockMovementService.createMovement({
       productId: dto.productId,
       productCode: dto.productCode,
@@ -58,7 +70,7 @@ const createMovementHandler = async (event: APIGatewayProxyEvent) => {
       fechaDocumento,
       lote: dto.lote,
       observaciones: dto.observaciones,
-      createdBy: dto.createdBy
+      createdBy: user.id // Usar el ID del usuario autenticado (más seguro)
     });
 
     return successResponse(201, {
@@ -79,6 +91,12 @@ const createMovementHandler = async (event: APIGatewayProxyEvent) => {
       createdAt: movement.createdAt.toISOString()
     });
   } catch (error) {
+    // Si es error de stock insuficiente, retornar 400 en lugar de 500
+    if (error instanceof Error && error.message.includes('Stock insuficiente')) {
+      console.error('Error de stock insuficiente en createMovementHandler:', error);
+      return errorResponse(400, error.message);
+    }
+    
     const errorMessage = error instanceof Error ? error.message : 'Error desconocido al crear movimiento';
     console.error('Error en createMovementHandler:', error);
     return errorResponse(500, errorMessage);
