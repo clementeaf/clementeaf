@@ -66,6 +66,11 @@ export const Sidebar = () => {
         return item.name === 'Ventas' || item.name === 'Picking' || item.name === 'Roles' || item.name === 'Productos';
       }
 
+      // Validación específica para módulo Productos
+      if (item.name === 'Productos') {
+        return hasPermission('view:products:search');
+      }
+
       // Para módulos con submódulos, verificar acceso al módulo
       if (item.hasSubItems) {
         let subModuleCodes: string[] = [];

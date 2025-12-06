@@ -188,6 +188,16 @@ functions:
           method: post
           cors: true
 
+  seedWarehouses:
+    handler: dist/handlers/seedWarehouses.handler
+    timeout: 60
+    memorySize: 512
+    events:
+      - http:
+          path: migrations/seed-warehouses
+          method: post
+          cors: true
+
   register:
     handler: dist/modules/Users/handlers/register.handler
     timeout: 30

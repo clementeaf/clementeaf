@@ -21,10 +21,11 @@ export const SearchProducts = (): React.ReactElement => {
   /**
    * Obtiene las bodegas disponibles
    */
-  const { data: warehousesData } = useQuery({
+  const { data: warehousesData, isLoading: isLoadingWarehouses, error: warehousesError } = useQuery({
     queryKey: ['warehouses'],
     queryFn: async () => await warehousesService.getAllWarehouses(),
-    staleTime: 1000 * 60 * 10
+    staleTime: 1000 * 60 * 10,
+    retry: 1
   });
 
   const warehouses = warehousesData?.data || [];
@@ -168,16 +169,32 @@ export const SearchProducts = (): React.ReactElement => {
 
                 {/* Filtros */}
                 <div className="flex gap-4 items-end">
-                  <div className="w-80">
-                    <Select
-                      id="warehouse-filter"
-                      label="Filtrar por bodega"
-                      value={selectedWarehouseId?.toString() || ''}
-                      onChange={(e) => setSelectedWarehouseId(e.target.value ? parseInt(e.target.value, 10) : null)}
-                      options={warehouseOptions}
-                      placeholder="Todas las bodegas"
-                    />
-                  </div>
+                <div className="w-80">
+                  <Select
+                    id="warehouse-filter"
+                    label="Filtrar por bodega"
+                    value={selectedWarehouseId?.toString() || ''}
+                    onChange={(e) => setSelectedWarehouseId(e.target.value ? parseInt(e.target.value, 10) : null)}
+                    options={warehouseOptions}
+                    placeholder={warehouses.length === 0 ? "No hay bodegas disponibles" : "Todas las bodegas"}
+                    disabled={warehouses.length === 0}
+                  />
+                  {isLoadingWarehouses && (
+                    <p className="text-xs text-gray-400 mt-1">
+                      Cargando bodegas...
+                    </p>
+                  )}
+                  {!isLoadingWarehouses && warehouses.length === 0 && !warehousesError && (
+                    <p className="text-xs text-amber-600 mt-1">
+                      No hay bodegas disponibles. Contacta al administrador.
+                    </p>
+                  )}
+                  {warehousesError && (
+                    <p className="text-xs text-red-600 mt-1">
+                      Error al cargar bodegas. Intenta recargar la página.
+                    </p>
+                  )}
+                </div>
                   <div className="pb-2">
                     <Toggle
                       id="include-lots"

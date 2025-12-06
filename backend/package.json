@@ -13,7 +13,8 @@
     "deploy:aws": "tsc && serverless deploy --stage prod",
     "build": "tsc",
     "lint": "eslint .",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "seed:warehouses": "tsc && node dist/migrations/seed-warehouses.js"
   },
   "dependencies": {
     "@aws-sdk/client-apigatewaymanagementapi": "^3.927.0",
