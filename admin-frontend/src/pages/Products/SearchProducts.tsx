@@ -33,7 +33,7 @@ const ProductHistoryTab = ({
     queryKey: ['productHistory', product.id, warehouseId, selectedType, startDate, endDate],
     queryFn: async () => {
       return await stockMovementsService.getProductHistory({
-        productId: product.id || product.codigo,
+        productId: product.codigo || product.id?.toString() || '',
         warehouseId: warehouseId || undefined,
         movementType: selectedType || undefined,
         startDate: startDate || undefined,
