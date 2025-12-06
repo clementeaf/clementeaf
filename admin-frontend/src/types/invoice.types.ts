@@ -1,5 +1,5 @@
 export interface InvoiceData {
-    [key: string]: any;
+    [key: string]: unknown;
 }
 
 export interface ParsedInvoice {

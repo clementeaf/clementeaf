@@ -46,11 +46,11 @@ export const ClientDetails = (): React.ReactElement => {
 
   /**
    * Maneja la adición de sucursal
+   * Nota: Ahora se maneja directamente en BranchesSection
    */
   const handleAddBranch = useCallback((): void => {
-    // TODO: Implementar modal/formulario para añadir sucursal
-    console.log('Añadir sucursal para cliente:', clientId);
-  }, [clientId]);
+    // La funcionalidad se maneja en BranchesSection
+  }, []);
 
   // Sub-tabs de información - se recrean cuando cambia el cliente
   // IMPORTANTE: Todos los hooks deben estar antes de cualquier return condicional

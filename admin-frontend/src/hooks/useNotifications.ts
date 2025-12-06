@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import type { Notification, PickingNotification, SalesNotification } from '../types/notifications';
 import { usePermissions } from './usePermissions';
 import { notificationsService } from '../services/notificationsService';
@@ -11,13 +11,12 @@ import type { PickingOrder } from '../pages/Picking/types';
  */
 export const useNotifications = () => {
   const { hasPermission, isSuperAdmin } = usePermissions();
-  const queryClient = useQueryClient();
   const [localNotifications, setLocalNotifications] = useState<Notification[]>([]);
 
   /**
    * Carga notificaciones desde la API
    */
-  const { data: apiNotifications, isLoading, refetch } = useQuery({
+  const { data: apiNotifications, refetch } = useQuery({
     queryKey: ['notifications'],
     queryFn: async () => {
       const response = await notificationsService.getNotifications(50, 0);

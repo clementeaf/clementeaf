@@ -42,6 +42,13 @@ export const endpoints = {
     getAll: '',
     search: 'search/query',
     update: '{id}',
+    delete: '{id}',
+    getBranches: '{clientId}/branches'
+  }),
+  branches: buildEndpoints('branches', {
+    getById: '{id}',
+    create: '',
+    update: '{id}',
     delete: '{id}'
   }),
   chat: buildEndpoints('chat', {

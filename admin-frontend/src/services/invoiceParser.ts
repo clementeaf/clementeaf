@@ -129,7 +129,7 @@ export class InvoiceParserService {
     /**
      * Find a value in nested object using multiple possible paths
      */
-    private findValue(obj: any, paths: string[]): string | undefined {
+    private findValue(obj: unknown, paths: string[]): string | undefined {
         for (const path of paths) {
             const value = get(obj, path);
             if (value !== undefined && value !== null) {
@@ -142,7 +142,7 @@ export class InvoiceParserService {
     /**
      * Find a numeric value in nested object
      */
-    private findNumericValue(obj: any, paths: string[]): number | undefined {
+    private findNumericValue(obj: unknown, paths: string[]): number | undefined {
         const value = this.findValue(obj, paths);
         if (value) {
             const num = parseFloat(value);

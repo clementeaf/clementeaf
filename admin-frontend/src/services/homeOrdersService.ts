@@ -24,12 +24,10 @@ export const convertPickingOrderToHomeOrder = (
 ): HomeOrder => {
   // Calcular monto desde productos si no viene en quoteInfo
   let monto = quoteInfo?.monto || 0;
-  if (monto === 0 && pickingOrder.productos) {
-    pickingOrder.productos.forEach(prod => {
-      // Si los productos tienen precio, calcularlo
-      // Por ahora, usar cantidadProductos como aproximación
-      monto += pickingOrder.cantidadProductos * 1000; // Valor por defecto
-    });
+  if (monto === 0 && pickingOrder.productos && pickingOrder.productos.length > 0) {
+    // Si los productos tienen precio, calcularlo
+    // Por ahora, usar cantidadProductos como aproximación
+    monto += pickingOrder.cantidadProductos * 1000; // Valor por defecto
   }
 
   // Mapear estado de Picking a Home

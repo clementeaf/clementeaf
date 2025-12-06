@@ -104,7 +104,7 @@ export const CreateQuote = () => {
    */
   const getStepData = (step: number): Record<string, unknown> => {
     switch (step) {
-      case 1:
+      case 1: {
         // Si retiroEnBodega está marcado, ignorar dirección, región y comuna
         const retiroEnBodega = formData.retiroEnBodega === 'true';
         
@@ -129,18 +129,22 @@ export const CreateQuote = () => {
           contactoCountryCode: formData.contactoCountryCode || '',
           contactoCountryDialCode: formData.contactoCountryDialCode || ''
         };
-      case 2:
+      }
+      case 2: {
         return {
           condiciones: formData.condiciones || {}
         };
-      case 3:
+      }
+      case 3: {
         return {
           productos: formData.productos || []
         };
-      case 4:
+      }
+      case 4: {
         return {
           revision: formData.revision || {}
         };
+      }
       default:
         return {} as Record<string, unknown>;
     }

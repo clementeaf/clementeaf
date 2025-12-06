@@ -13,7 +13,7 @@ import { toast } from 'react-toastify';
  */
 export const Home = (): React.ReactElement => {
   // Obtener órdenes desde la API
-  const { data: ordersData, isLoading, refetch } = useHomeOrders(1, 100);
+  const { data: ordersData, refetch } = useHomeOrders(1, 100);
   const [orders, setOrders] = useState<HomeOrder[]>([]);
   const { createSalesNotification } = useNotifications();
 

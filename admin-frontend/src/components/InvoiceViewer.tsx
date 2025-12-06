@@ -20,7 +20,7 @@ export const InvoiceViewer: React.FC<InvoiceViewerProps> = ({ invoice, onClose }
         URL.revokeObjectURL(url);
     };
 
-    const renderValue = (value: any, depth: number = 0): React.ReactNode => {
+    const renderValue = (value: unknown, depth: number = 0): React.ReactNode => {
         if (value === null || value === undefined) {
             return <span className="text-gray-400 italic">null</span>;
         }

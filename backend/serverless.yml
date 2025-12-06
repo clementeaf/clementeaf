@@ -449,6 +449,57 @@ functions:
           method: delete
           cors: true
 
+  # Branches endpoints
+  getBranchesByClientId:
+    handler: dist/modules/Clients/handlers/getBranchesByClientId.handler
+    timeout: 30
+    memorySize: 512
+    events:
+      - http:
+          path: clients/{clientId}/branches
+          method: get
+          cors: true
+
+  getBranchById:
+    handler: dist/modules/Clients/handlers/getBranchById.handler
+    timeout: 30
+    memorySize: 512
+    events:
+      - http:
+          path: branches/{id}
+          method: get
+          cors: true
+
+  createBranch:
+    handler: dist/modules/Clients/handlers/createBranch.handler
+    timeout: 30
+    memorySize: 512
+    events:
+      - http:
+          path: branches
+          method: post
+          cors: true
+
+  updateBranch:
+    handler: dist/modules/Clients/handlers/updateBranch.handler
+    timeout: 30
+    memorySize: 512
+    events:
+      - http:
+          path: branches/{id}
+          method: put
+          cors: true
+
+  deleteBranch:
+    handler: dist/modules/Clients/handlers/deleteBranch.handler
+    timeout: 30
+    memorySize: 512
+    events:
+      - http:
+          path: branches/{id}
+          method: delete
+          cors: true
+
   # Quotes endpoints
   createQuote:
     handler: dist/modules/Quotes/handlers/createQuote.handler

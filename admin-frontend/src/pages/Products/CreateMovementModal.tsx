@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Modal, Button, Input, Select, InputNumber } from '../../components/commons';
 import { stockMovementsService, MovementType, type CreateMovementDto } from '../../services/stockMovementsService';
-import { warehousesService, type Warehouse } from '../../services/warehousesService';
+import type { Warehouse } from '../../services/warehousesService';
 import type { Product } from '../../services/productsService';
 import { useCurrentUser } from '../../hooks/useAuth';
 
@@ -69,10 +69,12 @@ export const CreateMovementModal = ({
       onSuccess?.();
       onClose();
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       console.error('Error al crear movimiento:', error);
       // Si el error es de stock insuficiente, mostrarlo específicamente
-      const errorMessage = error?.response?.data?.message || error?.message || 'Error al crear el movimiento. Intenta nuevamente.';
+      const errorMessage = (error as { response?: { data?: { message?: string } }; message?: string })?.response?.data?.message || 
+                          (error as { message?: string })?.message || 
+                          'Error al crear el movimiento. Intenta nuevamente.';
       setErrors({ submit: errorMessage });
     }
   });
