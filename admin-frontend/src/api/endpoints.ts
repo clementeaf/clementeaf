@@ -107,6 +107,13 @@ export const endpoints = {
   }),
   picking: buildEndpoints('picking', {
     getMetrics: 'metrics'
+  }),
+  whatsapp: buildEndpoints('whatsapp', {
+    status: 'status',
+    connect: 'connect',
+    disconnect: 'disconnect',
+    sendMessage: 'send-message',
+    sendImage: 'send-image'
   })
 } as const;
 
