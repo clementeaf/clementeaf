@@ -58,6 +58,30 @@ export class CapabilitiesDiscoveryService {
         category: 'Productos',
         resource: 'products',
         action: 'create'
+      },
+      {
+        code: 'view:whatsapp:status',
+        name: 'Ver Estado de WhatsApp',
+        description: 'Permite ver el estado de conexión de WhatsApp',
+        category: 'WhatsApp',
+        resource: 'whatsapp',
+        action: 'view:status'
+      },
+      {
+        code: 'manage:whatsapp:connection',
+        name: 'Gestionar Conexión de WhatsApp',
+        description: 'Permite conectar y desconectar WhatsApp',
+        category: 'WhatsApp',
+        resource: 'whatsapp',
+        action: 'manage:connection'
+      },
+      {
+        code: 'send:whatsapp:messages',
+        name: 'Enviar Mensajes de WhatsApp',
+        description: 'Permite enviar mensajes de texto e imágenes por WhatsApp',
+        category: 'WhatsApp',
+        resource: 'whatsapp',
+        action: 'send:messages'
       }
     ];
   }

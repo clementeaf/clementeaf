@@ -952,6 +952,57 @@ functions:
       - websocket:
           route: $default
 
+  # WhatsApp handlers
+  getWhatsAppStatus:
+    handler: dist/modules/WhatsApp/handlers/getStatus.handler
+    timeout: 30
+    memorySize: 512
+    events:
+      - http:
+          path: whatsapp/status
+          method: get
+          cors: true
+
+  connectWhatsApp:
+    handler: dist/modules/WhatsApp/handlers/connect.handler
+    timeout: 30
+    memorySize: 512
+    events:
+      - http:
+          path: whatsapp/connect
+          method: post
+          cors: true
+
+  disconnectWhatsApp:
+    handler: dist/modules/WhatsApp/handlers/disconnect.handler
+    timeout: 30
+    memorySize: 512
+    events:
+      - http:
+          path: whatsapp/disconnect
+          method: post
+          cors: true
+
+  sendWhatsAppMessage:
+    handler: dist/modules/WhatsApp/handlers/sendMessage.handler
+    timeout: 30
+    memorySize: 512
+    events:
+      - http:
+          path: whatsapp/send-message
+          method: post
+          cors: true
+
+  sendWhatsAppImage:
+    handler: dist/modules/WhatsApp/handlers/sendImage.handler
+    timeout: 30
+    memorySize: 512
+    events:
+      - http:
+          path: whatsapp/send-image
+          method: post
+          cors: true
+
 resources:
   Resources:
     # Dead Letter Queues para eventos de EventBridge
