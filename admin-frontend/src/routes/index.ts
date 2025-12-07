@@ -31,6 +31,7 @@ export const routes = {
   permissions: '/roles/permissions',
   users: '/roles/users',
   createUser: '/roles/users/create',
+  whatsapp: '/whatsapp',
   notFound: '/*'
 } as const;
 

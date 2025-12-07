@@ -30,6 +30,7 @@ const CreateRole = lazy(() => import('./pages/Roles/CreateRole').then(module => 
 const PermissionsManagement = lazy(() => import('./pages/Roles/PermissionsManagement').then(module => ({ default: module.PermissionsManagement })));
 const UsersManagement = lazy(() => import('./pages/Roles/UsersManagement').then(module => ({ default: module.UsersManagement })));
 const CreateUser = lazy(() => import('./pages/Roles/CreateUser').then(module => ({ default: module.CreateUser })));
+const WhatsApp = lazy(() => import('./pages/WhatsApp').then(module => ({ default: module.WhatsApp })));
 
 /**
  * Componente de carga para Suspense
@@ -205,6 +206,16 @@ function App(): React.ReactNode {
             {/* Nota: Los permisos view:products:history y create:products:movements 
                 se validan en el backend. El frontend solo valida view:products:search 
                 para acceder a la página. */}
+            
+            {/* Rutas de WhatsApp */}
+            <Route 
+              path={routes.whatsapp} 
+              element={
+                <ProtectedRoute requiredPermission="view:whatsapp:status">
+                  <WhatsApp />
+                </ProtectedRoute>
+              } 
+            />
             
             {/* Rutas legacy (sin protección por ahora) */}
             <Route path={routes.articles} element={<Articles />} />

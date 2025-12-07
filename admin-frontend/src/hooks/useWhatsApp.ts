@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { whatsappService, type WhatsAppStatus, type SendMessageResponse } from '../services/whatsappService';
+import { whatsappService, type SendMessageResponse } from '../services/whatsappService';
 import { toast } from 'react-toastify';
 
 /**
