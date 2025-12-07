@@ -1,0 +1,17 @@
+import pino from 'pino';
+import config from '../config/config.js';
+
+// Configurar el logger de Pino
+const logger = pino({
+  level: config.logging.level,
+  transport: config.logging.prettyPrint ? {
+    target: 'pino-pretty',
+    options: {
+      colorize: true,
+      translateTime: 'SYS:standard',
+      ignore: 'pid,hostname'
+    }
+  } : undefined
+} as pino.LoggerOptions);
+
+export default logger;
