@@ -60,7 +60,7 @@ const createTicketHandler = async (event: APIGatewayProxyEvent) => {
       type: ticket.type,
       priority: ticket.priority,
       estado: ticket.status,
-      assigneeId: ticket.assigneeId
+      assigneeId: ticket.assigneeId ?? undefined
     },
     userId
   );
