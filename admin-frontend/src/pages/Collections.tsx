@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useCallback, useMemo, useState } from 'react';
+import { Fragment, useEffect, useRef, useCallback, useMemo, useState } from 'react';
 import { sum } from 'radashi';
 import { cn } from '../utils/cn';
 import { useQueryClient } from '@tanstack/react-query';
@@ -909,7 +909,7 @@ export const Collections = () => {
                     const mostrarFlecha = tieneSucursales || tieneDocumentosDirectos;
 
                     return (
-                      <React.Fragment key={empresa.rut}>
+                      <Fragment key={empresa.rut}>
                         {/* Fila de empresa */}
                         <tr className={`hover: bg - gray - 50 ${isSelected ? 'bg-blue-50' : ''} `}>
                           <td className="px-4 py-3 text-center">
@@ -1038,7 +1038,7 @@ export const Collections = () => {
                           const isSucursalSelected = selectedCompanies.has(sucursal.rut || '');
 
                           return (
-                            <React.Fragment key={sucursal.rut}>
+                            <Fragment key={sucursal.rut}>
                               {/* Fila de sucursal */}
                               <tr className={`bg - gray - 50 hover: bg - gray - 100 ${isSucursalSelected ? 'bg-blue-100' : ''} `}>
                                 <td className="px-4 py-3 text-center">
@@ -1163,7 +1163,7 @@ export const Collections = () => {
                                   </tr>
                                 );
                               })}
-                            </React.Fragment>
+                            </Fragment>
                           );
                         })}
 
@@ -1228,7 +1228,7 @@ export const Collections = () => {
                             </tr>
                           );
                         })}
-                      </React.Fragment>
+                      </Fragment>
                     );
                   })}
                 </tbody>

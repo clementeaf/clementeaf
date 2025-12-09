@@ -1,4 +1,4 @@
-import React from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { clientsService, type CreateClientDto, type Client, type PaginatedClientsResponse } from '../services/clientsService';
 import { logger } from '../utils/logger';
@@ -194,11 +194,11 @@ const areClientsDifferent = (oldData: PaginatedClientsResponse | null, newData: 
  * @param limit - Límite de resultados por página
  */
 export const useAllClients = (page: number = 1, limit: number = 50) => {
-  const [hasDataChanged, setHasDataChanged] = React.useState(false);
-  const persistedData = React.useMemo(() => getPersistedClients(page, limit), [page, limit]);
+  const [hasDataChanged, setHasDataChanged] = useState(false);
+  const persistedData = useMemo(() => getPersistedClients(page, limit), [page, limit]);
   
   // Guardar los datos persistidos originales antes de la query
-  const originalPersistedData = React.useRef<PaginatedClientsResponse | null>(persistedData);
+  const originalPersistedData = useRef<PaginatedClientsResponse | null>(persistedData);
 
   const query = useQuery({
     queryKey: ['clients', page, limit],
@@ -228,7 +228,7 @@ export const useAllClients = (page: number = 1, limit: number = 50) => {
   });
 
   // Actualizar la referencia cuando los datos persistidos cambian
-  React.useEffect(() => {
+  useEffect(() => {
     originalPersistedData.current = persistedData;
   }, [persistedData]);
 

@@ -1,6 +1,8 @@
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
+import type { ReactElement } from 'react';
 import { ReusableLineChart } from '../components/ReusableLineChart';
 import { usePickingMetrics } from '../../../hooks/usePickingMetrics';
+import { formatTime } from '../../../utils/dateUtils';
 
 
 /**
@@ -66,14 +68,14 @@ interface PickingMetricsHistory {
  * @returns Componente MetricsSection
  */
 
-export const MetricsSection = (): React.ReactElement => {
+export const MetricsSection = (): ReactElement => {
   const [temporalidad, setTemporalidad] = useState<Temporalidad>('Día');
   
   // Obtener métricas desde la API con actualización en tiempo real
   const { data: metricsData, isLoading, refetch } = usePickingMetrics({ temporalidad });
 
   // Refrescar métricas cuando cambia la temporalidad
-  React.useEffect(() => {
+  useEffect(() => {
     refetch();
   }, [temporalidad, refetch]);
 
@@ -150,19 +152,6 @@ export const MetricsSection = (): React.ReactElement => {
     })) || [];
   }, [metricsData]);
 
-
-  /**
-   * Formatea el tiempo en minutos a formato legible
-   */
-  const formatTime = (minutes: number): string => {
-    if (minutes < 60) {
-      return `${minutes} min`;
-    }
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-    return mins > 0 ? `${hours}h ${mins}min` : `${hours}h`;
-  };
-
   /**
    * Calcula la variación porcentual entre dos valores
    * @param valorActual - Valor actual
@@ -211,7 +200,7 @@ export const MetricsSection = (): React.ReactElement => {
    * @param invertirColores - Si es true, invierte los colores (útil para métricas donde menos es mejor)
    * @returns Elemento React con el porcentaje formateado
    */
-  const renderizarVariacion = (variacion: number, invertirColores = false): React.ReactElement => {
+  const renderizarVariacion = (variacion: number, invertirColores = false): ReactElement => {
     const esPositivo = variacion > 0;
     const esNegativo = variacion < 0;
     let color: string;

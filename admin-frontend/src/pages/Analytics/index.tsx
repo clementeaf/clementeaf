@@ -5,8 +5,14 @@ import {
   useResumenVendedores,
   useDeudasActivas
 } from '../../hooks/useAnalytics';
+import { formatCurrency } from '../../utils/formatUtils';
+import { formatDateShort } from '../../utils/dateUtils';
 
-export const Analytics = () => {
+/**
+ * Página de Analytics - Cuentas por Cobrar
+ * @returns Componente Analytics
+ */
+export const Analytics = (): React.ReactElement => {
   const [page, setPage] = useState(1);
   const limit = 50;
 
@@ -14,17 +20,6 @@ export const Analytics = () => {
   const { data: topClientes, isLoading: loadingClientes } = useResumenClientes(10);
   const { data: topVendedores, isLoading: loadingVendedores } = useResumenVendedores(10);
   const { data: deudasActivas, isLoading: loadingDeudas } = useDeudasActivas({ page, limit });
-
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('es-CL', {
-      style: 'currency',
-      currency: 'CLP'
-    }).format(value);
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('es-CL');
-  };
 
   if (loadingStats) {
     return (
@@ -41,7 +36,7 @@ export const Analytics = () => {
         <h1 className="text-3xl font-bold text-gray-800">Cuentas por Cobrar</h1>
         {estadisticas && (
           <div className="text-sm text-gray-500">
-            Última sincronización: {formatDate(estadisticas.ultima_sincronizacion)}
+            Última sincronización: {formatDateShort(estadisticas.ultima_sincronizacion)}
           </div>
         )}
       </div>
@@ -175,7 +170,7 @@ export const Analytics = () => {
                           {formatCurrency(deuda.total_deuda || 0)}
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap text-sm text-right">
-                          {deuda.vencimientoMasReciente ? formatDate(deuda.vencimientoMasReciente) : '-'}
+                          {deuda.vencimientoMasReciente ? formatDateShort(deuda.vencimientoMasReciente) : '-'}
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap text-sm text-right">
                           <span className={`px-2 py-1 rounded ${

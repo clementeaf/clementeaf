@@ -119,3 +119,17 @@ export const formatDateWithTime = (dateString: string): string => {
   });
 };
 
+/**
+ * Formatea minutos a formato legible (ej: "45 min", "2h 30min", "3h")
+ * @param minutes - Número de minutos
+ * @returns String formateado
+ */
+export const formatTime = (minutes: number): string => {
+  if (minutes < 60) {
+    return `${minutes} min`;
+  }
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  return mins > 0 ? `${hours}h ${mins}min` : `${hours}h`;
+};
+

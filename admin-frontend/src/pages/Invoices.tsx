@@ -1,14 +1,58 @@
-import React, { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { ParsedInvoice } from '../types/invoice.types';
 import { invoiceParser } from '../services/invoiceParser';
 import { InvoiceUploader } from '../components/InvoiceUploader';
 import { InvoiceViewer } from '../components/InvoiceViewer';
 import { InvoiceDataTable } from '../components/InvoiceDataTable';
+import { logger } from '../utils/logger';
 
-export const Invoices: React.FC = () => {
+const INVOICES_STORAGE_KEY = 'processed_invoices';
+
+/**
+ * Página de procesamiento de facturas XML
+ * @returns Componente Invoices
+ */
+export const Invoices = (): React.ReactElement => {
     const [invoices, setInvoices] = useState<ParsedInvoice[]>([]);
     const [selectedInvoice, setSelectedInvoice] = useState<ParsedInvoice | null>(null);
     const [error, setError] = useState<string | null>(null);
+
+    /**
+     * Carga facturas persistidas desde localStorage al montar
+     */
+    useEffect(() => {
+        try {
+            const stored = localStorage.getItem(INVOICES_STORAGE_KEY);
+            if (stored) {
+                const parsed = JSON.parse(stored);
+                // Convertir uploadDate de string a Date
+                const invoicesWithDates = parsed.map((inv: ParsedInvoice) => ({
+                    ...inv,
+                    uploadDate: new Date(inv.uploadDate)
+                }));
+                setInvoices(invoicesWithDates);
+                logger.debug('Facturas cargadas desde localStorage', { count: invoicesWithDates.length });
+            }
+        } catch (error) {
+            logger.error('Error cargando facturas desde localStorage', error);
+        }
+    }, []);
+
+    /**
+     * Persiste facturas en localStorage cuando cambian
+     */
+    useEffect(() => {
+        try {
+            if (invoices.length > 0) {
+                localStorage.setItem(INVOICES_STORAGE_KEY, JSON.stringify(invoices));
+                logger.debug('Facturas guardadas en localStorage', { count: invoices.length });
+            } else {
+                localStorage.removeItem(INVOICES_STORAGE_KEY);
+            }
+        } catch (error) {
+            logger.error('Error guardando facturas en localStorage', error);
+        }
+    }, [invoices]);
 
     const handleFileUpload = async (file: File) => {
         try {
@@ -37,7 +81,7 @@ export const Invoices: React.FC = () => {
             setInvoices(prev => [newInvoice, ...prev]);
             setSelectedInvoice(newInvoice);
         } catch (err) {
-            console.error('Error processing file:', err);
+            logger.error('Error processing file', err);
             setError(err instanceof Error ? err.message : 'Error al procesar el archivo');
         }
     };

@@ -1,4 +1,4 @@
-import React from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { quotesService, type CreateQuoteDto, type Quote, type PaginatedQuotesResponse } from '../services/quotesService';
 
@@ -158,9 +158,9 @@ const areQuotesDifferent = (oldData: PaginatedQuotesResponse | null, newData: Pa
  * @param limit - Límite de resultados por página
  */
 export const useAllQuotes = (page: number = 1, limit: number = 50) => {
-  const [hasDataChanged, setHasDataChanged] = React.useState(false);
-  const persistedData = React.useMemo(() => getPersistedQuotes(page, limit), [page, limit]);
-  const originalPersistedData = React.useRef<PaginatedQuotesResponse | null>(persistedData);
+  const [hasDataChanged, setHasDataChanged] = useState(false);
+  const persistedData = useMemo(() => getPersistedQuotes(page, limit), [page, limit]);
+  const originalPersistedData = useRef<PaginatedQuotesResponse | null>(persistedData);
 
   const query = useQuery({
     queryKey: ['quotes', page, limit],
@@ -179,7 +179,7 @@ export const useAllQuotes = (page: number = 1, limit: number = 50) => {
     refetchOnWindowFocus: false
   });
 
-  React.useEffect(() => {
+  useEffect(() => {
     originalPersistedData.current = persistedData;
   }, [persistedData]);
 
