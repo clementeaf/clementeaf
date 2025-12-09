@@ -1,5 +1,6 @@
 import dotenv from 'dotenv';
 import express, { Express } from 'express';
+import path from 'path';
 import logger from './logger.js';
 import config from '../config/config.js';
 import { WhatsAppService } from './services/WhatsAppService.js';
@@ -27,6 +28,13 @@ async function main(): Promise<void> {
     // Health check
     app.get('/health', (_req, res) => {
       res.json({ status: 'ok', timestamp: new Date().toISOString() });
+    });
+
+    // Servir página HTML para mostrar QR Code
+    app.get('/', (_req, res) => {
+      // En CommonJS, __dirname está disponible automáticamente
+      // Pero en TypeScript compilado necesitamos usar process.cwd()
+      res.sendFile(path.join(process.cwd(), 'qr-display.html'));
     });
 
     // Rutas de WhatsApp
