@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { useCurrentUser } from './useAuth';
 import { isSuperAdmin } from '../config/superAdmins';
+import { logger } from '../utils/logger';
 
 /**
  * Hook para gestionar permisos del usuario autenticado
@@ -31,16 +32,14 @@ export const usePermissions = () => {
     // Log de permisos cuando se cargan (solo si no son datos optimistas)
     if (user && !isActuallyLoading && !isPlaceholderData && user.permissions.length > 0) {
       const isAdmin = isSuperAdmin(user.email);
-      if (import.meta.env.DEV) {
-        console.log('🔑 [PERMISSIONS] Permisos del usuario cargados:', {
-          userId: user.id,
-          email: user.email,
-          roleName: user.role?.name || 'Sin rol',
-          isSuperAdmin: isAdmin,
-          permissionsCount: userPermissions.length,
-          permissions: isAdmin ? 'SUPER ADMIN - Acceso completo' : (userPermissions.length > 0 ? userPermissions : 'Sin permisos asignados')
-        });
-      }
+      logger.debug('[PERMISSIONS] Permisos del usuario cargados', {
+        userId: user.id,
+        email: user.email,
+        roleName: user.role?.name || 'Sin rol',
+        isSuperAdmin: isAdmin,
+        permissionsCount: userPermissions.length,
+        permissions: isAdmin ? 'SUPER ADMIN - Acceso completo' : (userPermissions.length > 0 ? userPermissions : 'Sin permisos asignados')
+      });
     }
     
     return userPermissions;

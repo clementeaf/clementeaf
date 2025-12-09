@@ -3,6 +3,7 @@ import type { PickingOrder } from '../pages/Picking/types';
 import type { HomeOrder } from '../pages/Home/types';
 import { useCurrentUser } from './useAuth';
 import { convertPickingOrderToHomeOrder } from '../services/homeOrdersService';
+import { logger } from '../utils/logger';
 
 const WSS_ENDPOINT = import.meta.env.VITE_WS_URL || 'wss://5msg0dgwyi.execute-api.us-east-1.amazonaws.com/dev';
 
@@ -66,12 +67,12 @@ export const useHomeOrdersWebSocket = (options: UseHomeOrdersWebSocketOptions) =
       const wsUrl = token 
         ? `${WSS_ENDPOINT}?token=${encodeURIComponent(token)}&userId=${currentUser.id}`
         : `${WSS_ENDPOINT}?userId=${currentUser.id}`;
-      console.log(`🔌 [HOME WS] Conectando a: ${wsUrl.replace(/token=[^&]+/, 'token=***')}`);
+      logger.debug(`[HOME WS] Conectando a: ${wsUrl.replace(/token=[^&]+/, 'token=***')}`);
       const ws = new WebSocket(wsUrl);
       wsRef.current = ws;
 
       ws.onopen = () => {
-        console.log('✅ [HOME WS] WebSocket conectado');
+        logger.info('[HOME WS] WebSocket conectado');
         reconnectAttempts.current = 0;
       };
 
@@ -80,7 +81,7 @@ export const useHomeOrdersWebSocket = (options: UseHomeOrdersWebSocketOptions) =
           const data: HomeOrdersWebSocketMessage = JSON.parse(event.data);
           
           if (data.action === 'new_picking_order' && data.pickingOrder && data.quoteInfo) {
-            console.log('📦 [HOME WS] Nueva orden recibida:', data.pickingOrder);
+            logger.debug('[HOME WS] Nueva orden recibida', data.pickingOrder);
             
             // Convertir PickingOrder a HomeOrder
             const homeOrder = convertPickingOrderToHomeOrder(
@@ -88,11 +89,10 @@ export const useHomeOrdersWebSocket = (options: UseHomeOrdersWebSocketOptions) =
               data.quoteInfo
             );
             
-            console.log('🏠 [HOME WS] Orden convertida a HomeOrder:', homeOrder);
+            logger.debug('[HOME WS] Orden convertida a HomeOrder', homeOrder);
             onNewOrder?.(homeOrder);
           } else if (data.action === 'quote_status_changed') {
-            // Cuando cambia el estado, notificar al callback
-            console.log('🔄 [HOME WS] Estado de quote cambiado:', {
+            logger.debug('[HOME WS] Estado de quote cambiado', {
               quoteId: data.quoteId,
               estadoAnterior: data.estadoAnterior,
               estadoNuevo: data.estadoNuevo
@@ -102,30 +102,30 @@ export const useHomeOrdersWebSocket = (options: UseHomeOrdersWebSocketOptions) =
             }
           }
         } catch (error) {
-          console.error('❌ [HOME WS] Error parseando mensaje:', error);
+          logger.error('[HOME WS] Error parseando mensaje', error);
         }
       };
 
       ws.onerror = (error) => {
-        console.error('❌ [HOME WS] Error en WebSocket:', error);
+        logger.error('[HOME WS] Error en WebSocket', error);
         onError?.(new Error('WebSocket connection error'));
       };
 
       ws.onclose = (event) => {
-        console.log(`🔌 [HOME WS] WebSocket cerrado. Code: ${event.code}`);
+        logger.debug(`[HOME WS] WebSocket cerrado. Code: ${event.code}`);
         
         if (!isManuallyDisconnected.current && reconnectAttempts.current < maxReconnectAttempts) {
           const delay = Math.min(1000 * Math.pow(2, reconnectAttempts.current), 30000);
           reconnectAttempts.current++;
           
           reconnectTimeoutRef.current = setTimeout(() => {
-            console.log(`🔄 [HOME WS] Reintentando conexión ${reconnectAttempts.current}/${maxReconnectAttempts}`);
+            logger.debug(`[HOME WS] Reintentando conexión ${reconnectAttempts.current}/${maxReconnectAttempts}`);
             connect();
           }, delay);
         }
       };
     } catch (error) {
-      console.error('❌ [HOME WS] Error creando WebSocket:', error);
+      logger.error('[HOME WS] Error creando WebSocket', error);
       onError?.(error instanceof Error ? error : new Error('Failed to create WebSocket'));
     }
   }, [currentUser?.id, onNewOrder, onError]);
@@ -153,10 +153,10 @@ export const useHomeOrdersWebSocket = (options: UseHomeOrdersWebSocketOptions) =
     
     // Solo conectar si hay userId y cambió desde la última vez
     if (currentUser?.id && currentUser.id !== previousUserId && !isManuallyDisconnected.current) {
-      console.log(`🔄 [HOME WS] userId cambió de ${previousUserId} a ${currentUser.id}, reconectando...`);
+      logger.debug(`[HOME WS] userId cambió de ${previousUserId} a ${currentUser.id}, reconectando...`);
       // Desconectar la conexión anterior si existe y está abierta
       if (previousUserId !== null && wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-        console.log(`🔌 [HOME WS] Desconectando conexión anterior para userId ${previousUserId}...`);
+        logger.debug(`[HOME WS] Desconectando conexión anterior para userId ${previousUserId}...`);
         isManuallyDisconnected.current = true;
         disconnect();
       }
@@ -166,13 +166,13 @@ export const useHomeOrdersWebSocket = (options: UseHomeOrdersWebSocketOptions) =
       connect();
     } else if (!currentUser?.id && previousUserId !== null) {
       // Si userId se vuelve null, desconectar
-      console.log(`🔌 [HOME WS] userId se volvió null, desconectando...`);
+      logger.debug('[HOME WS] userId se volvió null, desconectando...');
       lastUserIdRef.current = null;
       isManuallyDisconnected.current = true;
       disconnect();
     } else if (currentUser?.id && currentUser.id === previousUserId && !isManuallyDisconnected.current && wsRef.current?.readyState !== WebSocket.OPEN) {
       // Si userId es el mismo pero no hay conexión, conectar
-      console.log(`🔌 [HOME WS] userId es el mismo (${currentUser.id}) pero no hay conexión, conectando...`);
+      logger.debug(`[HOME WS] userId es el mismo (${currentUser.id}) pero no hay conexión, conectando...`);
       connect();
     }
 
@@ -184,14 +184,14 @@ export const useHomeOrdersWebSocket = (options: UseHomeOrdersWebSocketOptions) =
       // o cuando es la primera conexión (null -> userId)
       if (currentUser?.id !== previousUserId && previousUserId !== null && currentUser?.id !== null && currentUser) {
         // userId cambió de un valor a otro (no es la primera conexión)
-        console.log(`🔌 [HOME WS] Cleanup: userId cambió de ${previousUserId} a ${currentUser.id}, desconectando...`);
+        logger.debug(`[HOME WS] Cleanup: userId cambió de ${previousUserId} a ${currentUser.id}, desconectando...`);
         if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
           isManuallyDisconnected.current = true;
           disconnect();
         }
       } else if (!currentUser?.id && previousUserId !== null) {
         // userId se volvió null
-        console.log(`🔌 [HOME WS] Cleanup: userId se volvió null, desconectando...`);
+        logger.debug('[HOME WS] Cleanup: userId se volvió null, desconectando...');
         if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
           isManuallyDisconnected.current = true;
           disconnect();
@@ -201,7 +201,9 @@ export const useHomeOrdersWebSocket = (options: UseHomeOrdersWebSocketOptions) =
       // porque el WebSocket aún no se ha conectado y React Strict Mode ejecuta el cleanup inmediatamente
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentUser?.id]); // Solo dependemos de currentUser?.id, no de connect/disconnect
+    // Justificación: No incluir connect/disconnect en deps para evitar loops infinitos.
+    // Estos callbacks son estables (useCallback) y solo dependen de refs.
+  }, [currentUser?.id]);
 
   return { disconnect };
 };

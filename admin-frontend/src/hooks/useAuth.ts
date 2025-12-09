@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { authService, type AuthUser } from '../services/authService';
 import { getFrontendUrls } from '../config/frontendUrls';
+import { logger } from '../utils/logger';
 
 /**
  * Decodifica un JWT y extrae el payload
@@ -9,7 +10,7 @@ const decodeJWT = (token: string): { userId?: number; email?: string } | null =>
   try {
     const base64Url = token.split('.')[1];
     if (!base64Url) {
-      console.error('Token JWT inválido: no tiene payload');
+      logger.error('Token JWT inválido: no tiene payload');
       return null;
     }
     const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
@@ -22,7 +23,7 @@ const decodeJWT = (token: string): { userId?: number; email?: string } | null =>
     const decoded = JSON.parse(jsonPayload);
     return decoded;
   } catch (error) {
-    console.error('Error decodificando JWT:', error);
+    logger.error('Error decodificando JWT', error);
     return null;
   }
 };
@@ -82,28 +83,26 @@ export const useCurrentUser = () => {
       try {
         const user = await authService.getCurrentUser();
         
-        // Log del usuario actual (solo en desarrollo o primera carga)
-        if (import.meta.env.DEV) {
-          console.log('🔐 [AUTH] Usuario autenticado:', {
-            id: user.id,
-            email: user.email,
-            name: user.name || 'Sin nombre',
-            role: user.role ? {
-              id: user.role.id,
-              name: user.role.name,
-              isActive: user.role.isActive
-            } : 'Sin rol asignado',
-            permissions: user.permissions || [],
-            permissionsCount: user.permissions?.length || 0
-          });
-        }
+        // Log del usuario actual (solo en desarrollo)
+        logger.debug('[AUTH] Usuario autenticado', {
+          id: user.id,
+          email: user.email,
+          name: user.name || 'Sin nombre',
+          role: user.role ? {
+            id: user.role.id,
+            name: user.role.name,
+            isActive: user.role.isActive
+          } : 'Sin rol asignado',
+          permissions: user.permissions || [],
+          permissionsCount: user.permissions?.length || 0
+        });
         
         return user;
       } catch (error) {
         // Si el error es 401 (Unauthorized), el token es inválido o expiró
         const axiosError = error as { response?: { status?: number } };
         if (axiosError.response?.status === 401) {
-          console.warn('⚠️ [AUTH] Token inválido o expirado. Limpiando sesión...');
+          logger.warn('[AUTH] Token inválido o expirado. Limpiando sesión...');
           localStorage.removeItem('authToken');
           localStorage.removeItem('refreshToken');
           
@@ -128,7 +127,7 @@ export const useCurrentUser = () => {
         
         // Para otros errores, intentar usar el userId del token como fallback
         if (userIdFromToken && optimisticUser) {
-          console.warn('⚠️ [AUTH] Usando datos optimistas del token (sin datos completos del servidor)');
+          logger.warn('[AUTH] Usando datos optimistas del token (sin datos completos del servidor)');
           return optimisticUser;
         }
         throw error;
@@ -165,7 +164,7 @@ export const useLogout = () => {
       await authService.logout();
     } catch (error) {
       // Si falla, continuar con la limpieza local
-      console.error('Error al cerrar sesión:', error);
+      logger.error('Error al cerrar sesión', error);
     } finally {
       // Limpiar tokens del localStorage
       localStorage.removeItem('authToken');

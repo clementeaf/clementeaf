@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Input, Checkbox } from '../../../components/commons';
 import { quotesService } from '../../../services/quotesService';
+import { logger } from '../../../utils/logger';
 
 /**
  * Props del componente QuoteConditionsForm
@@ -89,6 +90,8 @@ export const QuoteConditionsForm = ({ onDataChange, initialData }: QuoteConditio
       return { ...prev, ...initialData };
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
+    // Justificación: Solo queremos ejecutar cuando initialDataString cambia.
+    // Incluir formData causaría loops infinitos (setFormData dentro del efecto).
   }, [initialDataString]);
 
   /**
@@ -111,7 +114,7 @@ export const QuoteConditionsForm = ({ onDataChange, initialData }: QuoteConditio
             updates.numeroCotizacion = nextNumber;
           }
         } catch (error) {
-          console.error('Error al obtener número de orden:', error);
+          logger.error('Error al obtener número de orden', error);
         } finally {
           if (isMounted) {
             setIsLoadingNumber(false);
@@ -163,7 +166,9 @@ export const QuoteConditionsForm = ({ onDataChange, initialData }: QuoteConditio
       clearTimeout(timeoutId);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Solo ejecutar una vez al montar
+    // Justificación: Este efecto debe ejecutarse solo una vez al montar el componente.
+    // Incluir dependencias causaría que se ejecute múltiples veces innecesariamente.
+  }, []);
 
   const handleCheckboxChange = (checked: boolean): void => {
     handleFieldChange('sinCostoEnvio', checked ? 'true' : 'false');

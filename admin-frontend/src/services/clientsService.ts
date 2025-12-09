@@ -1,5 +1,6 @@
 import { apiClient } from './api';
 import { endpoints } from '../api/endpoints';
+import { logger } from '../utils/logger';
 
 /**
  * DTO para crear un cliente
@@ -152,20 +153,20 @@ export const clientsService = {
   async getClientById(id: number): Promise<Client | null> {
     try {
       const url = endpoints.clients.getById.replace('{id}', id.toString());
-      console.log('clientsService.getClientById - URL:', url, 'ID:', id);
+      logger.debug('clientsService.getClientById', { url, id });
       const response = await apiClient.get<{ data: Client }>(url);
-      console.log('clientsService.getClientById - Respuesta recibida:', response.data);
+      logger.debug('clientsService.getClientById - Respuesta recibida', response.data);
       // El backend devuelve { data: Client } directamente, no { data: { data: Client } }
       const client = response.data.data;
-      console.log('clientsService.getClientById - Cliente extraído:', client ? `ID ${client.id}` : 'null');
+      logger.debug('clientsService.getClientById - Cliente extraído', { clientId: client?.id || null });
       return client;
     } catch (error: unknown) {
-      console.error('clientsService.getClientById - Error:', error);
+      logger.error('clientsService.getClientById - Error', error);
       // Si es un error 404 (cliente no encontrado), devolver null en lugar de lanzar error
       if (error && typeof error === 'object' && 'response' in error) {
         const axiosError = error as { response?: { status?: number; data?: { error?: string } } };
         if (axiosError.response?.status === 404) {
-          console.log('clientsService.getClientById - Cliente no encontrado (404)');
+          logger.debug('clientsService.getClientById - Cliente no encontrado (404)');
           return null;
         }
       }

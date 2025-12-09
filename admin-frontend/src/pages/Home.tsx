@@ -6,6 +6,7 @@ import { useHomeOrdersWebSocket } from '../hooks/useHomeOrdersWebSocket';
 import { homeOrdersService } from '../services/homeOrdersService';
 import { useNotifications } from '../hooks/useNotifications';
 import { toast } from 'react-toastify';
+import { logger } from '../utils/logger';
 
 /**
  * Página de inicio
@@ -32,7 +33,7 @@ export const Home = (): React.ReactElement => {
     setOrders(prevOrders =>
       prevOrders.map(order => {
         if (order.id === quoteId) {
-          console.log(`🔄 [HOME] Actualizando orden ${order.codigoOrden} desde WebSocket: ${estadoAnterior} → ${estadoNuevo}`);
+          logger.debug(`[HOME] Actualizando orden ${order.codigoOrden} desde WebSocket: ${estadoAnterior} → ${estadoNuevo}`);
           return { ...order, estado: estadoNuevo as HomeOrderStatus };
         }
         return order;
@@ -48,12 +49,12 @@ export const Home = (): React.ReactElement => {
       // Verificar si la orden ya existe (evitar duplicados)
       const orderExists = prevOrders.some(order => order.id === newOrder.id);
       if (orderExists) {
-        console.log(`⚠️ [HOME] Orden ${newOrder.id} ya existe, ignorando`);
+        logger.debug(`[HOME] Orden ${newOrder.id} ya existe, ignorando`);
         return prevOrders;
       }
 
       // Agregar la nueva orden al inicio (más reciente primero)
-      console.log(`✅ [HOME] Nueva orden agregada en tiempo real: ${newOrder.codigoOrden}`);
+      logger.debug(`[HOME] Nueva orden agregada en tiempo real: ${newOrder.codigoOrden}`);
       return [newOrder, ...prevOrders];
     });
   }, []);
@@ -69,7 +70,7 @@ export const Home = (): React.ReactElement => {
     },
     onStatusChange: handleStatusChangeFromWebSocket,
     onError: (error) => {
-      console.error('❌ [HOME] Error en WebSocket:', error);
+      logger.error('[HOME] Error en WebSocket', error);
     }
   });
 
@@ -111,7 +112,7 @@ export const Home = (): React.ReactElement => {
       
       toast.success('Nota de venta eliminada exitosamente');
     } catch (error) {
-      console.error('Error eliminando nota de venta:', error);
+      logger.error('Error eliminando nota de venta', error);
       toast.error('Error al eliminar la nota de venta');
     }
   }, []);

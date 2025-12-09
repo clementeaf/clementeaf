@@ -1,6 +1,7 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { useCurrentUser } from './useAuth';
 import { useQueryClient, type QueryKey } from '@tanstack/react-query';
+import { logger } from '../utils/logger';
 
 const WSS_ENDPOINT = import.meta.env.VITE_WS_URL || 'wss://5msg0dgwyi.execute-api.us-east-1.amazonaws.com/dev';
 
@@ -127,16 +128,12 @@ export const useWebSocketEvents = (options: UseWebSocketEventsOptions) => {
             }
           }
         } catch (error) {
-          if (import.meta.env.DEV) {
-            console.error(`❌ [${logPrefix}] Error parseando mensaje:`, error);
-          }
+          logger.error(`[${logPrefix}] Error parseando mensaje`, error);
         }
       };
 
       ws.onerror = (error) => {
-        if (import.meta.env.DEV) {
-          console.error(`❌ [${logPrefix}] Error en WebSocket:`, error);
-        }
+        logger.error(`[${logPrefix}] Error en WebSocket`, error);
         onError?.(new Error('WebSocket connection error'));
       };
 
@@ -150,9 +147,7 @@ export const useWebSocketEvents = (options: UseWebSocketEventsOptions) => {
         }
       };
     } catch (error) {
-      if (import.meta.env.DEV) {
-        console.error(`❌ [${logPrefix}] Error creando WebSocket:`, error);
-      }
+      logger.error(`[${logPrefix}] Error creando WebSocket`, error);
       onError?.(error instanceof Error ? error : new Error('Failed to create WebSocket'));
     }
   }, [currentUser?.id, queryClient, events, onError, logPrefix]);

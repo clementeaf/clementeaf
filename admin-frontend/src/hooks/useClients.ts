@@ -1,6 +1,7 @@
 import React from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { clientsService, type CreateClientDto, type Client, type PaginatedClientsResponse } from '../services/clientsService';
+import { logger } from '../utils/logger';
 
 /**
  * Hook para crear un cliente
@@ -107,10 +108,10 @@ export const useClientById = (id: number | null) => {
     queryKey: ['client', id],
     queryFn: async () => {
       if (!id) throw new Error('ID is required');
-      console.log('useClientById - Buscando cliente con ID:', id);
+      logger.debug('useClientById - Buscando cliente', { id });
       // El servicio devuelve null si el cliente no existe (404)
       const client = await clientsService.getClientById(id);
-      console.log('useClientById - Cliente encontrado:', client ? 'Sí' : 'No');
+      logger.debug('useClientById - Cliente encontrado', { found: !!client });
       return client;
     },
     enabled: !!id,
@@ -138,7 +139,7 @@ const getPersistedClients = (page: number, limit: number): PaginatedClientsRespo
       }
     }
   } catch (error) {
-    console.error('Error al leer datos persistidos de clientes:', error);
+    logger.error('Error al leer datos persistidos de clientes', error);
   }
   return null;
 };
@@ -150,7 +151,7 @@ const persistClients = (data: PaginatedClientsResponse, page: number, limit: num
   try {
     localStorage.setItem(`${CLIENTS_STORAGE_KEY}_${page}_${limit}`, JSON.stringify(data));
   } catch (error) {
-    console.error('Error al persistir datos de clientes:', error);
+    logger.error('Error al persistir datos de clientes', error);
   }
 };
 

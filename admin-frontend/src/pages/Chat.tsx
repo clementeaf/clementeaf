@@ -8,6 +8,7 @@ import { useWebSocket } from '../hooks/useWebSocket';
 import { useAllUsers } from '../hooks/useUsers';
 import { useCurrentUser } from '../hooks/useAuth';
 import { useBrowserNotifications } from '../hooks/useBrowserNotifications';
+import { logger } from '../utils/logger';
 import { StartConversationModal } from './Chat/StartConversationModal';
 import { ContactsList } from './Chat/ContactsList';
 import { ChatHeader } from './Chat/ChatHeader';
@@ -29,7 +30,7 @@ export const Chat = () => {
 
   useEffect(() => {
     if (currentUserError) {
-      console.error('Error obteniendo usuario actual:', currentUserError);
+      logger.error('Error obteniendo usuario actual', currentUserError);
     }
   }, [currentUserError]);
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
@@ -47,7 +48,9 @@ export const Chat = () => {
   }, [conversationsData]);
 
   useEffect(() => {
-    requestPermission().catch(console.error);
+    requestPermission().catch((error) => {
+      logger.error('Error solicitando permiso de notificaciones', error);
+    });
   }, [requestPermission]);
 
   useEffect(() => {
@@ -116,7 +119,9 @@ export const Chat = () => {
       );
 
       if (isFromOtherUser) {
-        chatService.markConversationMessagesAsRead(message.conversationId, currentUserId).catch(console.error);
+        chatService.markConversationMessagesAsRead(message.conversationId, currentUserId).catch((error) => {
+          logger.error('Error marcando mensajes como leídos', error);
+        });
       }
     } else {
       queryClient.setQueryData(['conversations', currentUserId], (oldData: Conversation[] | undefined) => {
@@ -173,13 +178,13 @@ export const Chat = () => {
     onMessage: handleWebSocketMessage,
     onTyping: handleWebSocketTyping,
     onError: (error: Error) => {
-      console.error('WebSocket error:', error);
+      logger.error('WebSocket error', error);
     },
     onConnect: () => {
-      console.log('WebSocket connected');
+      logger.debug('WebSocket connected');
     },
     onDisconnect: () => {
-      console.log('WebSocket disconnected');
+      logger.debug('WebSocket disconnected');
     }
   });
 
@@ -202,7 +207,7 @@ export const Chat = () => {
       
       await chatService.markConversationMessagesAsRead(selectedConversation.id, currentUserId);
     } catch (error) {
-      console.error('Error sending message:', error);
+      logger.error('Error sending message', error);
     }
   };
 
@@ -268,7 +273,7 @@ export const Chat = () => {
         queryClient.invalidateQueries({ queryKey: ['conversations'] });
       }
     } catch (error) {
-      console.error('Error creating conversation:', error);
+      logger.error('Error creating conversation', error);
       throw error;
     }
   };

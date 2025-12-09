@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import { logger } from '../../utils/logger';
 import { CreateQuoteHeader } from './CreateQuote/CreateQuoteHeader';
 import { QuoteStepper } from './CreateQuote/QuoteStepper';
 import { QuoteClientForm } from './CreateQuote/QuoteClientForm';
@@ -296,7 +297,9 @@ export const CreateQuote = () => {
                 <Button
                   onClick={(): void => {
                     // TODO: Implementar guardar borrador
-                    console.log('Guardar borrador');
+                    // Funcionalidad pendiente: guardar estado del formulario como borrador
+                    logger.info('Guardar borrador - Funcionalidad pendiente');
+                    toast.info('Funcionalidad de guardar borrador pendiente de implementación');
                   }}
                   className="bg-[#0052C9] text-white hover:bg-[#004BB7] px-6 py-2"
                 >

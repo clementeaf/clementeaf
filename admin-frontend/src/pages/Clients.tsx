@@ -7,6 +7,7 @@ import { useAllClients } from '../hooks/useClients';
 import { useClientsWebSocket } from '../hooks/useClientsWebSocket';
 import { routes } from '../routes';
 import { clearClientsCache } from '../utils/clearClientsCache';
+import { logger } from '../utils/logger';
 import type { ClientRow } from './Clients/columns';
 
 /**
@@ -28,7 +29,7 @@ export const Clients = () => {
   // Limpiar caché si hay inconsistencias (datos persistidos diferentes a API)
   useEffect(() => {
     if (hasDataChanged && clientsData) {
-      console.log('⚠️ Datos inconsistentes detectados. Limpiando caché...');
+      logger.warn('Datos inconsistentes detectados. Limpiando caché...');
       clearClientsCache();
     }
   }, [hasDataChanged, clientsData]);

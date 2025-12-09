@@ -6,6 +6,7 @@ import { usePickingOrders } from '../../../hooks/usePickingOrders';
 import { usePickingOrdersWebSocket } from '../../../hooks/usePickingOrdersWebSocket';
 import { useUpdateQuote } from '../../../hooks/useQuotes';
 import { toast } from 'react-toastify';
+import { logger } from '../../../utils/logger';
 
 interface OrderSectionProps {
   filters?: PickingFilters;
@@ -37,12 +38,12 @@ export const OrderSection = ({ filters = {} }: OrderSectionProps): React.ReactEl
       // Verificar si la orden ya existe (evitar duplicados)
       const orderExists = prevOrders.some(order => order.id === newOrder.id);
       if (orderExists) {
-        console.log(`⚠️ [PICKING] Orden ${newOrder.id} ya existe, ignorando`);
+        logger.debug(`[PICKING] Orden ${newOrder.id} ya existe, ignorando`);
         return prevOrders;
       }
 
       // Agregar la nueva orden al inicio (más reciente primero)
-      console.log(`✅ [PICKING] Nueva orden agregada en tiempo real: ${newOrder.codigoOrden}`);
+      logger.debug(`[PICKING] Nueva orden agregada en tiempo real: ${newOrder.codigoOrden}`);
       
       // La notificación se crea automáticamente en useNotifications hook
       // que escucha el mismo WebSocket
@@ -59,7 +60,7 @@ export const OrderSection = ({ filters = {} }: OrderSectionProps): React.ReactEl
     setOrders(prevOrders =>
       prevOrders.map(order => {
         if (order.id === quoteId) {
-          console.log(`🔄 [PICKING] Actualizando orden ${order.codigoOrden} desde WebSocket: ${estadoAnterior} → ${estadoNuevo}`);
+          logger.debug(`[PICKING] Actualizando orden ${order.codigoOrden} desde WebSocket: ${estadoAnterior} → ${estadoNuevo}`);
           return { ...order, estado: estadoNuevo as PickingOrderStatus };
         }
         return order;
@@ -78,7 +79,7 @@ export const OrderSection = ({ filters = {} }: OrderSectionProps): React.ReactEl
     },
     onStatusChange: handleStatusChangeFromWebSocket,
     onError: (error) => {
-      console.error('❌ [PICKING] Error en WebSocket:', error);
+      logger.error('[PICKING] Error en WebSocket', error);
     }
   });
 
@@ -110,7 +111,7 @@ export const OrderSection = ({ filters = {} }: OrderSectionProps): React.ReactEl
     try {
       const quoteId = parseInt(orderId, 10);
       if (isNaN(quoteId)) {
-        console.error('❌ [PICKING] ID de orden inválido:', orderId);
+        logger.error('[PICKING] ID de orden inválido', { orderId });
         toast.error('Error: ID de orden inválido');
         // Revertir cambio optimista
         refetch();
@@ -125,7 +126,7 @@ export const OrderSection = ({ filters = {} }: OrderSectionProps): React.ReactEl
 
       toast.success(`Orden actualizada a: ${newStatus}`);
     } catch (error) {
-      console.error('❌ [PICKING] Error actualizando estado:', error);
+      logger.error('[PICKING] Error actualizando estado', error);
       toast.error('Error al actualizar el estado de la orden');
       // Revertir cambio optimista
       refetch();

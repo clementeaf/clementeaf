@@ -82,6 +82,8 @@ export const QuoteClientForm = ({ onDataChange, initialData }: QuoteClientFormPr
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
+    // Justificación: Solo queremos ejecutar cuando initialDataString cambia.
+    // Incluir contactCountry causaría loops infinitos (setContactCountry dentro del efecto).
   }, [initialDataString]);
 
   /**
