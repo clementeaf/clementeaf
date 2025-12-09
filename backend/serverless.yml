@@ -588,11 +588,8 @@ functions:
     handler: dist/modules/Quotes/handlers/events/quoteCreatedHandler.handler
     timeout: 60
     memorySize: 512
-    deadLetter:
-      targetArn:
-        Fn::GetAtt:
-          - QuoteCreatedEventDLQ
-          - Arn
+    # Nota: deadLetter no es compatible con EventBridge en Serverless Framework v3
+    # Las DLQs se configuran directamente en EventBridge rules
     events:
       - eventBridge:
           pattern:
@@ -605,11 +602,8 @@ functions:
     handler: dist/modules/Quotes/handlers/events/quoteStatusChangedHandler.handler
     timeout: 60
     memorySize: 512
-    deadLetter:
-      targetArn:
-        Fn::GetAtt:
-          - QuoteStatusChangedEventDLQ
-          - Arn
+    # Nota: deadLetter no es compatible con EventBridge en Serverless Framework v3
+    # Las DLQs se configuran directamente en EventBridge rules
     events:
       - eventBridge:
           pattern:
