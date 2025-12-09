@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import { useNotifications } from '../../hooks/useNotifications';
 import { usePickingOrdersWebSocket } from '../../hooks/usePickingOrdersWebSocket';
 import type { PickingOrder } from '../../pages/Picking/types';

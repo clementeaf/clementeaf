@@ -84,3 +84,38 @@ export const formatConversationDate = (dateString: string | null): string => {
   });
 };
 
+/**
+ * Formatea una fecha ISO a formato DD/MM/YYYY
+ * @param dateString - Fecha en formato ISO string o null
+ * @returns Fecha formateada o '-' si no es válida
+ */
+export const formatDateShort = (dateString: string | null | undefined): string => {
+  if (!dateString) return '-';
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return '-';
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  } catch {
+    return '-';
+  }
+};
+
+/**
+ * Formatea una fecha con hora completa (DD/MM/YYYY HH:MM)
+ * @param dateString - Fecha en formato ISO string
+ * @returns Fecha formateada con hora
+ */
+export const formatDateWithTime = (dateString: string): string => {
+  const date = new Date(dateString);
+  return date.toLocaleDateString('es-CL', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+};
+

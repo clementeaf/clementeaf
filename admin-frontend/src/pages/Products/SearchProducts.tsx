@@ -171,12 +171,8 @@ export const SearchProducts = (): React.ReactElement => {
 
   const warehouses = warehousesData?.data || [];
 
-  // WebSocket para eventos de movimientos de stock
-  useStockMovementsWebSocket({
-    onMovementCreated: () => {
-      // La invalidación de queries se hace automáticamente en el hook
-    }
-  });
+  // WebSocket para eventos de movimientos de stock (invalidación automática de queries)
+  useStockMovementsWebSocket();
 
   /**
    * Busca productos cuando hay un término de búsqueda
@@ -390,7 +386,7 @@ export const SearchProducts = (): React.ReactElement => {
               tabs={tabs}
               activeTab={activeTab}
               onTabChange={setActiveTab}
-              className="flex-1 min-h-0"
+              containerClassName="flex-1 min-h-0"
             />
           </div>
         </div>

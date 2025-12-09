@@ -83,7 +83,7 @@ export const useCurrentUser = () => {
         const user = await authService.getCurrentUser();
         
         // Log del usuario actual (solo en desarrollo o primera carga)
-        if (process.env.NODE_ENV === 'development') {
+        if (import.meta.env.DEV) {
           console.log('🔐 [AUTH] Usuario autenticado:', {
             id: user.id,
             email: user.email,

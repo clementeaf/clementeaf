@@ -31,7 +31,7 @@ export const usePermissions = () => {
     // Log de permisos cuando se cargan (solo si no son datos optimistas)
     if (user && !isActuallyLoading && !isPlaceholderData && user.permissions.length > 0) {
       const isAdmin = isSuperAdmin(user.email);
-      if (process.env.NODE_ENV === 'development') {
+      if (import.meta.env.DEV) {
         console.log('🔑 [PERMISSIONS] Permisos del usuario cargados:', {
           userId: user.id,
           email: user.email,

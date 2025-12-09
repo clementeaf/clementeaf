@@ -71,8 +71,8 @@ export const OrderSection = ({ filters = {} }: OrderSectionProps): React.ReactEl
    * Hook para escuchar eventos de picking orders vía WebSocket
    */
   usePickingOrdersWebSocket({
-    onNewOrder: (order, quoteInfo) => {
-      handleNewOrder(order, quoteInfo);
+    onNewOrder: (order) => {
+      handleNewOrder(order);
       // Refrescar datos desde la API para asegurar sincronización
       refetch();
     },

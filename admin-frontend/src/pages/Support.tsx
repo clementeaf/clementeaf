@@ -23,18 +23,8 @@ export const Support = () => {
 
   const tickets = ticketsData?.data ?? [];
 
-  // WebSocket para eventos de tickets
-  useTicketsWebSocket({
-    onTicketCreated: () => {
-      // La invalidación de queries se hace automáticamente en el hook
-    },
-    onTicketUpdated: () => {
-      // La invalidación de queries se hace automáticamente en el hook
-    },
-    onTicketStatusChanged: () => {
-      // La invalidación de queries se hace automáticamente en el hook
-    }
-  });
+  // WebSocket para eventos de tickets (invalidación automática de queries)
+  useTicketsWebSocket();
 
   const handleTicketClick = (ticket: Ticket): void => {
     setSelectedTicket(ticket);

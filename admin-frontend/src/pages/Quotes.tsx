@@ -5,6 +5,7 @@ import { columns } from './Quotes/columns';
 import { useAllQuotes } from '../hooks/useQuotes';
 import { useQuotesWebSocket } from '../hooks/useQuotesWebSocket';
 import { routes } from '../routes';
+import { formatDateShort } from '../utils/dateUtils';
 import type { QuoteRow } from './Quotes/columns';
 
 /**
@@ -14,42 +15,13 @@ import type { QuoteRow } from './Quotes/columns';
 export const Quotes = () => {
   const navigate = useNavigate();
   const [searchValue, setSearchValue] = useState('');
-  const [page] = useState(1);
+  const page = 1;
   const limit = 50;
 
   const { data: quotesData, isLoading, error, hasDataChanged } = useAllQuotes(page, limit);
 
-  // WebSocket para eventos de quotes
-  useQuotesWebSocket({
-    onQuoteCreated: () => {
-      // La invalidación de queries se hace automáticamente en el hook
-    },
-    onQuoteUpdated: () => {
-      // La invalidación de queries se hace automáticamente en el hook
-    },
-    onQuoteDeleted: () => {
-      // La invalidación de queries se hace automáticamente en el hook
-    }
-  });
-
-  /**
-   * Formatea una fecha ISO a formato DD/MM/YYYY
-   * @param dateString - Fecha en formato ISO string o null
-   * @returns Fecha formateada o '-' si no es válida
-   */
-  const formatDate = (dateString: string | null | undefined): string => {
-    if (!dateString) return '-';
-    try {
-      const date = new Date(dateString);
-      if (isNaN(date.getTime())) return '-';
-      const day = date.getDate().toString().padStart(2, '0');
-      const month = (date.getMonth() + 1).toString().padStart(2, '0');
-      const year = date.getFullYear();
-      return `${day}/${month}/${year}`;
-    } catch {
-      return '-';
-    }
-  };
+  // WebSocket para eventos de quotes (invalidación automática de queries)
+  useQuotesWebSocket();
 
   /**
    * Mapea los datos del API a la estructura esperada por la tabla
@@ -58,7 +30,7 @@ export const Quotes = () => {
     id: quote.id.toString(),
     clienteNombre: quote.clienteNombre || '-',
     numeroCotizacion: quote.numeroCotizacion || '-',
-    fecha: formatDate(quote.fecha),
+    fecha: formatDateShort(quote.fecha),
     estado: quote.estado || 'borrador'
   })) || [];
 

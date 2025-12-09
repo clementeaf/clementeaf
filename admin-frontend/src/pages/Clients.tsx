@@ -17,23 +17,13 @@ export const Clients = () => {
   const navigate = useNavigate();
   const [searchValue, setSearchValue] = useState('');
   const [isRutModalOpen, setIsRutModalOpen] = useState(false);
-  const [page] = useState(1);
+  const page = 1;
   const limit = 50;
 
   const { data: clientsData, isLoading, error, hasDataChanged } = useAllClients(page, limit);
 
-  // WebSocket para eventos de clientes
-  useClientsWebSocket({
-    onClientCreated: () => {
-      // La invalidación de queries se hace automáticamente en el hook
-    },
-    onClientUpdated: () => {
-      // La invalidación de queries se hace automáticamente en el hook
-    },
-    onClientDeleted: () => {
-      // La invalidación de queries se hace automáticamente en el hook
-    }
-  });
+  // WebSocket para eventos de clientes (invalidación automática de queries)
+  useClientsWebSocket();
 
   // Limpiar caché si hay inconsistencias (datos persistidos diferentes a API)
   useEffect(() => {

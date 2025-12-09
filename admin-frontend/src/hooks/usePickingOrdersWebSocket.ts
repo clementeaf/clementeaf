@@ -171,7 +171,7 @@ export const usePickingOrdersWebSocket = (options: UsePickingOrdersWebSocketOpti
       // 2. Y hay una conexión establecida (OPEN)
       // Esto evita desconectar durante React Strict Mode cuando el WebSocket aún no se ha conectado
       // o cuando es la primera conexión (null -> userId)
-      if (currentUser?.id !== previousUserId && previousUserId !== null && currentUser?.id !== null) {
+      if (currentUser?.id !== previousUserId && previousUserId !== null && currentUser?.id !== null && currentUser) {
         // userId cambió de un valor a otro (no es la primera conexión)
         console.log(`🔌 [PICKING WS] Cleanup: userId cambió de ${previousUserId} a ${currentUser.id}, desconectando...`);
         if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {

@@ -2,6 +2,7 @@ import { type ColumnDef } from '@tanstack/react-table';
 import type { StockMovement } from '../../services/stockMovementsService';
 import { MovementType } from '../../services/stockMovementsService';
 import { cn } from '../../utils/cn';
+import { formatDateWithTime } from '../../utils/dateUtils';
 
 /**
  * Obtiene el color y label para el tipo de movimiento
@@ -22,20 +23,6 @@ const getMovementTypeStyle = (type: MovementType): { label: string; className: s
 };
 
 /**
- * Formatea una fecha para mostrar
- */
-const formatDate = (dateString: string): string => {
-  const date = new Date(dateString);
-  return date.toLocaleDateString('es-CL', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  });
-};
-
-/**
  * Columnas para la tabla de historial de movimientos
  */
 export const historyColumns: ColumnDef<StockMovement>[] = [
@@ -44,7 +31,7 @@ export const historyColumns: ColumnDef<StockMovement>[] = [
     header: 'Fecha',
     cell: ({ row }) => (
       <div className="text-sm text-gray-900">
-        {formatDate(row.original.createdAt)}
+        {formatDateWithTime(row.original.createdAt)}
       </div>
     )
   },

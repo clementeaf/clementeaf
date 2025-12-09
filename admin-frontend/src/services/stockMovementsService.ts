@@ -4,12 +4,14 @@ import { endpoints } from '../api/endpoints';
 /**
  * Tipo de movimiento de stock
  */
-export enum MovementType {
-  ENTRADA = 'entrada',
-  SALIDA = 'salida',
-  AJUSTE = 'ajuste',
-  TRANSFERENCIA = 'transferencia'
-}
+export const MovementType = {
+  ENTRADA: 'entrada',
+  SALIDA: 'salida',
+  AJUSTE: 'ajuste',
+  TRANSFERENCIA: 'transferencia'
+} as const;
+
+export type MovementType = typeof MovementType[keyof typeof MovementType];
 
 /**
  * Movimiento de stock desde la API

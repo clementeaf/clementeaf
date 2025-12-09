@@ -30,19 +30,8 @@ export const BranchesSection = ({ clientId }: BranchesSectionProps): React.React
 
   const deleteBranchMutation = useDeleteBranch();
 
-  // WebSocket para eventos de sucursales
-  useBranchesWebSocket({
-    clientId,
-    onBranchCreated: () => {
-      // La invalidación de queries se hace automáticamente en el hook
-    },
-    onBranchUpdated: () => {
-      // La invalidación de queries se hace automáticamente en el hook
-    },
-    onBranchDeleted: () => {
-      // La invalidación de queries se hace automáticamente en el hook
-    }
-  });
+  // WebSocket para eventos de sucursales (invalidación automática de queries)
+  useBranchesWebSocket({ clientId });
 
   /**
    * Maneja la apertura del modal para crear nueva sucursal

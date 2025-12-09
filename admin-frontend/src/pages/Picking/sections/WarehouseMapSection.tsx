@@ -10,7 +10,7 @@ import type { WarehouseProduct, WarehouseZone, WarehouseShelf, WarehouseMapConfi
 export const WarehouseMapSection = (): React.ReactElement => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedProduct, setSelectedProduct] = useState<WarehouseProduct | null>(null);
-  const [zoom] = useState(1);
+  const zoom = 1;
   const [isEditMode, setIsEditMode] = useState(false);
   const [clickedPosition, setClickedPosition] = useState<WarehouseCoordinates3D | null>(null);
   const [isCreatingProduct, setIsCreatingProduct] = useState(false);
