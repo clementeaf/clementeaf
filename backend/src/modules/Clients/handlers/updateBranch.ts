@@ -5,6 +5,10 @@ import { validateBody, parseBody } from '../../Users/utils/validation';
 import { successResponse, errorResponse } from '../../Users/utils/response';
 import { initializeDatabase } from '../../../config/database';
 import type { UpdateBranchDto } from '../dto/UpdateBranchDto';
+import { EventPublisher } from '../../Quotes/services/EventPublisher';
+import { BranchUpdatedEventFactory } from '../events/BranchUpdatedEvent';
+import { extractToken } from '../../Users/utils/auth';
+import { AuthService } from '../../Users/services/AuthService';
 
 /**
  * Handler para actualizar una sucursal
@@ -38,6 +42,48 @@ const updateBranchHandler = async (event: APIGatewayProxyEvent) => {
     await initializeDatabase();
     const branchService = new BranchService();
     const branch = await branchService.updateBranch(clientId, branchId, dto);
+
+    // Obtener userId del token si está disponible
+    let updatedBy: number | undefined;
+    try {
+      const token = extractToken(event);
+      if (token) {
+        const authService = new AuthService();
+        const verifiedUser = await authService.verifyToken(token);
+        const usersService = new (await import('../../Users/services/UsersService')).UsersService();
+        const user = await usersService.getUserByEmail(verifiedUser.email, false);
+        if (user) {
+          updatedBy = user.id;
+        }
+      }
+    } catch (error) {
+      console.warn('No se pudo obtener userId del token:', error);
+    }
+
+    // Publicar evento de actualización (no bloqueante)
+    const eventPublisher = new EventPublisher();
+    const updatedFields = Object.keys(dto);
+    const updatedEvent = BranchUpdatedEventFactory.create(
+      {
+        id: branch.id,
+        clientId: branch.clientId,
+        nombre: branch.nombre
+      },
+      updatedBy,
+      updatedFields
+    );
+
+    eventPublisher.publish('branch.updated', updatedEvent)
+      .then(success => {
+        if (success) {
+          console.log(`✅ Evento branch.updated publicado para branch ID: ${branch.id}`);
+        } else {
+          console.error(`❌ Error publicando evento branch.updated para branch ID: ${branch.id}`);
+        }
+      })
+      .catch(error => {
+        console.error(`❌ Error publicando evento branch.updated:`, error);
+      });
 
     return successResponse(200, {
       id: branch.id,

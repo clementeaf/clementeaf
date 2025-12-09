@@ -7,6 +7,8 @@ import { successResponse, errorResponse } from '../../Users/utils/response';
 import { validatePermission, getUserWithPermissions } from '../../Users/utils/permissions';
 import { initializeDatabase } from '../../../config/database';
 import type { CreateMovementDto } from '../dto/CreateMovementDto';
+import { EventPublisher } from '../../Quotes/services/EventPublisher';
+import { StockMovementCreatedEventFactory } from '../events/StockMovementCreatedEvent';
 
 /**
  * Handler para crear un movimiento de stock
@@ -72,6 +74,35 @@ const createMovementHandler = async (event: APIGatewayProxyEvent) => {
       observaciones: dto.observaciones,
       createdBy: user.id // Usar el ID del usuario autenticado (más seguro)
     });
+
+    // Publicar evento de creación de movimiento (no bloqueante)
+    const eventPublisher = new EventPublisher();
+    const createdEvent = StockMovementCreatedEventFactory.create(
+      {
+        id: movement.id,
+        productId: movement.productId,
+        productCode: movement.productCode,
+        productName: movement.productName,
+        warehouseId: movement.warehouseId,
+        type: movement.type,
+        cantidad: movement.cantidad,
+        stockAnterior: movement.stockAnterior,
+        stockNuevo: movement.stockNuevo
+      },
+      user.id
+    );
+
+    eventPublisher.publish('stock_movement.created', createdEvent)
+      .then(success => {
+        if (success) {
+          console.log(`✅ Evento stock_movement.created publicado para movement ID: ${movement.id}`);
+        } else {
+          console.error(`❌ Error publicando evento stock_movement.created para movement ID: ${movement.id}`);
+        }
+      })
+      .catch(error => {
+        console.error(`❌ Error publicando evento stock_movement.created:`, error);
+      });
 
     return successResponse(201, {
       id: movement.id,

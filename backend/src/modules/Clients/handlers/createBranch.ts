@@ -5,6 +5,10 @@ import { validateBody, parseBody } from '../../Users/utils/validation';
 import { successResponse, errorResponse } from '../../Users/utils/response';
 import { initializeDatabase } from '../../../config/database';
 import type { CreateBranchDto } from '../dto/CreateBranchDto';
+import { EventPublisher } from '../../Quotes/services/EventPublisher';
+import { BranchCreatedEventFactory } from '../events/BranchCreatedEvent';
+import { extractToken } from '../../Users/utils/auth';
+import { AuthService } from '../../Users/services/AuthService';
 
 /**
  * Handler para crear una nueva sucursal
@@ -44,6 +48,46 @@ const createBranchHandler = async (event: APIGatewayProxyEvent) => {
     await initializeDatabase();
     const branchService = new BranchService();
     const branch = await branchService.createBranch(dto);
+
+    // Obtener userId del token si está disponible
+    let createdBy: number | undefined;
+    try {
+      const token = extractToken(event);
+      if (token) {
+        const authService = new AuthService();
+        const verifiedUser = await authService.verifyToken(token);
+        const usersService = new (await import('../../Users/services/UsersService')).UsersService();
+        const user = await usersService.getUserByEmail(verifiedUser.email, false);
+        if (user) {
+          createdBy = user.id;
+        }
+      }
+    } catch (error) {
+      console.warn('No se pudo obtener userId del token:', error);
+    }
+
+    // Publicar evento de creación (no bloqueante)
+    const eventPublisher = new EventPublisher();
+    const createdEvent = BranchCreatedEventFactory.create(
+      {
+        id: branch.id,
+        clientId: branch.clientId,
+        nombre: branch.nombre
+      },
+      createdBy
+    );
+
+    eventPublisher.publish('branch.created', createdEvent)
+      .then(success => {
+        if (success) {
+          console.log(`✅ Evento branch.created publicado para branch ID: ${branch.id}`);
+        } else {
+          console.error(`❌ Error publicando evento branch.created para branch ID: ${branch.id}`);
+        }
+      })
+      .catch(error => {
+        console.error(`❌ Error publicando evento branch.created:`, error);
+      });
 
     return successResponse(201, {
       id: branch.id,

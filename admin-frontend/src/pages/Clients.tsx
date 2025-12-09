@@ -4,6 +4,7 @@ import { PageHeader, FiltersPanel, SearchBar, DataTablePage, type ActionButton }
 import { VerifyRutModal } from './Clients/CreateClient/VerifyRutModal';
 import { columns } from './Clients/columns';
 import { useAllClients } from '../hooks/useClients';
+import { useClientsWebSocket } from '../hooks/useClientsWebSocket';
 import { routes } from '../routes';
 import { clearClientsCache } from '../utils/clearClientsCache';
 import type { ClientRow } from './Clients/columns';
@@ -20,6 +21,19 @@ export const Clients = () => {
   const limit = 50;
 
   const { data: clientsData, isLoading, error, hasDataChanged } = useAllClients(page, limit);
+
+  // WebSocket para eventos de clientes
+  useClientsWebSocket({
+    onClientCreated: () => {
+      // La invalidación de queries se hace automáticamente en el hook
+    },
+    onClientUpdated: () => {
+      // La invalidación de queries se hace automáticamente en el hook
+    },
+    onClientDeleted: () => {
+      // La invalidación de queries se hace automáticamente en el hook
+    }
+  });
 
   // Limpiar caché si hay inconsistencias (datos persistidos diferentes a API)
   useEffect(() => {

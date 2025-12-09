@@ -4,6 +4,7 @@ import { PageHeader, SearchBar, DataTablePage, Select, Toggle, Tabs, type TabIte
 import { productsService } from '../../services/productsService';
 import { warehousesService } from '../../services/warehousesService';
 import { stockMovementsService, MovementType } from '../../services/stockMovementsService';
+import { useStockMovementsWebSocket } from '../../hooks/useStockMovementsWebSocket';
 import type { Product } from '../../services/productsService';
 import type { Warehouse } from '../../services/warehousesService';
 import { columns } from './columns';
@@ -169,6 +170,13 @@ export const SearchProducts = (): React.ReactElement => {
   });
 
   const warehouses = warehousesData?.data || [];
+
+  // WebSocket para eventos de movimientos de stock
+  useStockMovementsWebSocket({
+    onMovementCreated: () => {
+      // La invalidación de queries se hace automáticamente en el hook
+    }
+  });
 
   /**
    * Busca productos cuando hay un término de búsqueda

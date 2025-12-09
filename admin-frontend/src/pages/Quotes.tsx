@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { PageHeader, FiltersPanel, SearchBar, DataTablePage, type ActionButton } from '../components/commons';
 import { columns } from './Quotes/columns';
 import { useAllQuotes } from '../hooks/useQuotes';
+import { useQuotesWebSocket } from '../hooks/useQuotesWebSocket';
 import { routes } from '../routes';
 import type { QuoteRow } from './Quotes/columns';
 
@@ -17,6 +18,19 @@ export const Quotes = () => {
   const limit = 50;
 
   const { data: quotesData, isLoading, error, hasDataChanged } = useAllQuotes(page, limit);
+
+  // WebSocket para eventos de quotes
+  useQuotesWebSocket({
+    onQuoteCreated: () => {
+      // La invalidación de queries se hace automáticamente en el hook
+    },
+    onQuoteUpdated: () => {
+      // La invalidación de queries se hace automáticamente en el hook
+    },
+    onQuoteDeleted: () => {
+      // La invalidación de queries se hace automáticamente en el hook
+    }
+  });
 
   /**
    * Formatea una fecha ISO a formato DD/MM/YYYY

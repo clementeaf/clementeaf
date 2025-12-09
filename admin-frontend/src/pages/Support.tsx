@@ -5,6 +5,7 @@ import { KanbanBoard } from './Support/KanbanBoard';
 import { CreateTicketModal } from './Support/CreateTicketModal';
 import { TicketDetailsModal } from './Support/TicketDetailsModal';
 import { useAllTickets, useCreateTicket } from '../hooks/useTickets';
+import { useTicketsWebSocket } from '../hooks/useTicketsWebSocket';
 import { Button, PlusIcon } from '../components/commons';
 import { s3Service } from '../services/s3Service';
 
@@ -21,6 +22,19 @@ export const Support = () => {
   const [isTicketDetailsModalOpen, setIsTicketDetailsModalOpen] = useState(false);
 
   const tickets = ticketsData?.data ?? [];
+
+  // WebSocket para eventos de tickets
+  useTicketsWebSocket({
+    onTicketCreated: () => {
+      // La invalidación de queries se hace automáticamente en el hook
+    },
+    onTicketUpdated: () => {
+      // La invalidación de queries se hace automáticamente en el hook
+    },
+    onTicketStatusChanged: () => {
+      // La invalidación de queries se hace automáticamente en el hook
+    }
+  });
 
   const handleTicketClick = (ticket: Ticket): void => {
     setSelectedTicket(ticket);

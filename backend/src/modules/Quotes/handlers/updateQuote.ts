@@ -6,6 +6,7 @@ import { validateBody, parseBody } from '../../Users/utils/validation';
 import { successResponse, errorResponse } from '../../Users/utils/response';
 import { EventPublisher } from '../services/EventPublisher';
 import { QuoteStatusChangedEventFactory } from '../events/QuoteStatusChangedEvent';
+import { QuoteUpdatedEventFactory } from '../events/QuoteUpdatedEvent';
 import { extractToken } from '../../Users/utils/auth';
 import { AuthService } from '../../Users/services/AuthService';
 
@@ -43,27 +44,28 @@ const updateQuoteHandler = async (event: APIGatewayProxyEvent) => {
   // Actualizar la Quote
   const quote = await quotesService.updateQuote(quoteId, updateData);
   
+  // Obtener userId del token si está disponible
+  let updatedBy: number | undefined;
+  try {
+    const token = extractToken(event);
+    if (token) {
+      const authService = new AuthService();
+      const verifiedUser = await authService.verifyToken(token);
+      const usersService = new (await import('../../Users/services/UsersService')).UsersService();
+      const user = await usersService.getUserByEmail(verifiedUser.email, false);
+      if (user) {
+        updatedBy = user.id;
+      }
+    }
+  } catch (error) {
+    console.warn('No se pudo obtener userId del token:', error);
+  }
+
+  const eventPublisher = new EventPublisher();
+  const updatedFields = Object.keys(updateData);
+
   // Si el estado cambió, publicar evento de cambio de estado
   if (updateData.estado && updateData.estado !== estadoAnterior) {
-    // Obtener userId del token si está disponible
-    let changedBy: number | undefined;
-    try {
-      const token = extractToken(event);
-      if (token) {
-        const authService = new AuthService();
-        const verifiedUser = await authService.verifyToken(token);
-        const usersService = new (await import('../../Users/services/UsersService')).UsersService();
-        const user = await usersService.getUserByEmail(verifiedUser.email, false);
-        if (user) {
-          changedBy = user.id;
-        }
-      }
-    } catch (error) {
-      console.warn('No se pudo obtener userId del token:', error);
-    }
-
-    // Publicar evento de cambio de estado (no bloqueante)
-    const eventPublisher = new EventPublisher();
     const statusChangedEvent = QuoteStatusChangedEventFactory.create(
       {
         id: quote.id,
@@ -72,7 +74,7 @@ const updateQuoteHandler = async (event: APIGatewayProxyEvent) => {
       },
       estadoAnterior,
       updateData.estado,
-      changedBy
+      updatedBy
     );
 
     eventPublisher.publish('quote.status_changed', statusChangedEvent)
@@ -85,6 +87,30 @@ const updateQuoteHandler = async (event: APIGatewayProxyEvent) => {
       })
       .catch(error => {
         console.error(`❌ Error publicando evento quote.status_changed:`, error);
+      });
+  } else if (updatedFields.length > 0) {
+    // Si se actualizó pero no cambió el estado, publicar evento de actualización
+    const updatedEvent = QuoteUpdatedEventFactory.create(
+      {
+        id: quote.id,
+        numeroCotizacion: quote.numeroCotizacion,
+        clienteNombre: quote.clienteNombre,
+        estado: quote.estado
+      },
+      updatedBy,
+      updatedFields
+    );
+
+    eventPublisher.publish('quote.updated', updatedEvent)
+      .then(success => {
+        if (success) {
+          console.log(`✅ Evento quote.updated publicado para quote ID: ${quote.id}`);
+        } else {
+          console.error(`❌ Error publicando evento quote.updated para quote ID: ${quote.id}`);
+        }
+      })
+      .catch(error => {
+        console.error(`❌ Error publicando evento quote.updated:`, error);
       });
   }
 

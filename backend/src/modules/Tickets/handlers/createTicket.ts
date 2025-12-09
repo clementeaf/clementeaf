@@ -7,6 +7,8 @@ import { handlerWrapper } from '../../Users/utils/handlerWrapper';
 import { validateBody, parseBody, validateRequiredFields } from '../../Users/utils/validation';
 import { extractToken } from '../../Users/utils/auth';
 import { successResponse, errorResponse } from '../../Users/utils/response';
+import { EventPublisher } from '../../Quotes/services/EventPublisher';
+import { TicketCreatedEventFactory } from '../events/TicketCreatedEvent';
 
 /**
  * Handler para crear un nuevo ticket
@@ -48,6 +50,32 @@ const createTicketHandler = async (event: APIGatewayProxyEvent) => {
 
   const ticketsService = new TicketsService();
   const ticket = await ticketsService.createTicket(createTicketDto, userId);
+
+  // Publicar evento de creación (no bloqueante)
+  const eventPublisher = new EventPublisher();
+  const createdEvent = TicketCreatedEventFactory.create(
+    {
+      id: ticket.id,
+      title: ticket.title,
+      type: ticket.type,
+      priority: ticket.priority,
+      estado: ticket.status,
+      assigneeId: ticket.assigneeId
+    },
+    userId
+  );
+
+  eventPublisher.publish('ticket.created', createdEvent)
+    .then(success => {
+      if (success) {
+        console.log(`✅ Evento ticket.created publicado para ticket ID: ${ticket.id}`);
+      } else {
+        console.error(`❌ Error publicando evento ticket.created para ticket ID: ${ticket.id}`);
+      }
+    })
+    .catch(error => {
+      console.error(`❌ Error publicando evento ticket.created:`, error);
+    });
 
   // STREAMING: Notificar creación de ticket vía WebSocket (no bloqueante)
   // Notificamos al usuario asignado si existe

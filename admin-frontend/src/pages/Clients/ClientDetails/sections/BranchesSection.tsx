@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useBranches, useDeleteBranch } from '../../../../hooks/useBranches';
+import { useBranchesWebSocket } from '../../../../hooks/useBranchesWebSocket';
 import { BranchModal } from '../BranchModal';
 import type { Branch } from '../../../../services/branchesService';
 import { Button } from '../../../../components/commons';
@@ -28,6 +29,20 @@ export const BranchesSection = ({ clientId }: BranchesSectionProps): React.React
   const branches = branchesData?.data || [];
 
   const deleteBranchMutation = useDeleteBranch();
+
+  // WebSocket para eventos de sucursales
+  useBranchesWebSocket({
+    clientId,
+    onBranchCreated: () => {
+      // La invalidación de queries se hace automáticamente en el hook
+    },
+    onBranchUpdated: () => {
+      // La invalidación de queries se hace automáticamente en el hook
+    },
+    onBranchDeleted: () => {
+      // La invalidación de queries se hace automáticamente en el hook
+    }
+  });
 
   /**
    * Maneja la apertura del modal para crear nueva sucursal

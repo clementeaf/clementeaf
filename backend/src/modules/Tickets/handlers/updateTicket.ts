@@ -5,6 +5,10 @@ import { type UpdateTicketDto } from '../dto/UpdateTicketDto';
 import { handlerWrapper } from '../../Users/utils/handlerWrapper';
 import { validateBody, parseBody } from '../../Users/utils/validation';
 import { successResponse, errorResponse } from '../../Users/utils/response';
+import { EventPublisher } from '../../Quotes/services/EventPublisher';
+import { TicketUpdatedEventFactory, TicketStatusChangedEventFactory } from '../events';
+import { extractToken } from '../../Users/utils/auth';
+import { AuthService } from '../../Users/services/AuthService';
 
 /**
  * Handler para actualizar un ticket
@@ -38,9 +42,76 @@ const updateTicketHandler = async (event: APIGatewayProxyEvent) => {
   
   const ticket = await ticketsService.updateTicket(ticketId, updateTicketDto);
 
+  // Obtener userId del token si está disponible
+  let updatedBy: number | undefined;
+  try {
+    const token = extractToken(event);
+    if (token) {
+      const authService = new AuthService();
+      const verifiedUser = await authService.verifyToken(token);
+      const usersService = new (await import('../../Users/services/UsersService')).UsersService();
+      const user = await usersService.getUserByEmail(verifiedUser.email, false);
+      if (user) {
+        updatedBy = user.id;
+      }
+    }
+  } catch (error) {
+    console.warn('No se pudo obtener userId del token:', error);
+  }
+
   // STREAMING: Notificar cambios vía WebSocket (no bloqueante)
   // Notificamos cuando cambia el estado o la asignación del ticket
   const hasStatusChanged = updateTicketDto.status && updateTicketDto.status !== previousTicket.status;
+  
+  // Publicar eventos (no bloqueante)
+  const eventPublisher = new EventPublisher();
+  const updatedFields = Object.keys(updateTicketDto);
+
+  if (hasStatusChanged) {
+    const statusChangedEvent = TicketStatusChangedEventFactory.create(
+      {
+        id: ticket.id,
+        title: ticket.title
+      },
+      previousTicket.status,
+      updateTicketDto.status!,
+      updatedBy
+    );
+
+    eventPublisher.publish('ticket.status_changed', statusChangedEvent)
+      .then(success => {
+        if (success) {
+          console.log(`✅ Evento ticket.status_changed publicado para ticket ID: ${ticket.id}`);
+        } else {
+          console.error(`❌ Error publicando evento ticket.status_changed para ticket ID: ${ticket.id}`);
+        }
+      })
+      .catch(error => {
+        console.error(`❌ Error publicando evento ticket.status_changed:`, error);
+      });
+  } else if (updatedFields.length > 0) {
+    const updatedEvent = TicketUpdatedEventFactory.create(
+      {
+        id: ticket.id,
+        title: ticket.title,
+        estado: ticket.status
+      },
+      updatedBy,
+      updatedFields
+    );
+
+    eventPublisher.publish('ticket.updated', updatedEvent)
+      .then(success => {
+        if (success) {
+          console.log(`✅ Evento ticket.updated publicado para ticket ID: ${ticket.id}`);
+        } else {
+          console.error(`❌ Error publicando evento ticket.updated para ticket ID: ${ticket.id}`);
+        }
+      })
+      .catch(error => {
+        console.error(`❌ Error publicando evento ticket.updated:`, error);
+      });
+  }
   const hasAssigneeChanged = updateTicketDto.assigneeId !== undefined && updateTicketDto.assigneeId !== previousTicket.assigneeId;
 
   if (hasStatusChanged || hasAssigneeChanged) {
