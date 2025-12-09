@@ -51,10 +51,27 @@ export const Home = (): React.ReactElement => {
       // Refrescar datos desde la API para asegurar sincronización
       refetch();
     },
+    onStatusChange: handleStatusChangeFromWebSocket,
     onError: (error) => {
       console.error('❌ [HOME] Error en WebSocket:', error);
     }
   });
+
+  /**
+   * Maneja el cambio de estado recibido desde WebSocket
+   */
+  const handleStatusChangeFromWebSocket = useCallback((quoteId: string, estadoAnterior: string, estadoNuevo: string): void => {
+    // Actualizar la orden localmente cuando se recibe un cambio de estado desde WebSocket
+    setOrders(prevOrders =>
+      prevOrders.map(order => {
+        if (order.id === quoteId) {
+          console.log(`🔄 [HOME] Actualizando orden ${order.codigoOrden} desde WebSocket: ${estadoAnterior} → ${estadoNuevo}`);
+          return { ...order, estado: estadoNuevo as HomeOrderStatus };
+        }
+        return order;
+      })
+    );
+  }, []);
 
   /**
    * Maneja el cambio de estado de una orden

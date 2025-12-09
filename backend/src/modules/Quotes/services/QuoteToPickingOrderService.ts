@@ -88,13 +88,28 @@ export class QuoteToPickingOrderService {
       }
     }
 
+    // Mapear el estado de Quote al estado de PickingOrder
+    const estadoMap: Record<string, PickingOrder['estado']> = {
+      'borrador': 'Nota de venta emitida',
+      'enviada': 'Nota de venta emitida',
+      'aceptada': 'Nota de venta emitida',
+      'Nota de venta emitida': 'Nota de venta emitida',
+      'Picking': 'Picking',
+      'Confirmación': 'Confirmación',
+      'Despachado': 'Despachado',
+      'rechazada': 'Nota de venta emitida',
+      'cancelada': 'Nota de venta emitida'
+    };
+
+    const pickingEstado = estadoMap[quote.estado] || 'Nota de venta emitida';
+
     return {
       id: String(quote.id),
       codigoOrden: quote.numeroCotizacion || `QUOTE-${quote.id}`,
       fechaHoraOrden: quote.createdAt?.toISOString() || new Date().toISOString(),
       vendedor: quote.asesorAsignado || 'Sin asignar',
       cantidadProductos: productos.length,
-      estado: 'Nota de venta emitida',
+      estado: pickingEstado,
       productos
     };
   }

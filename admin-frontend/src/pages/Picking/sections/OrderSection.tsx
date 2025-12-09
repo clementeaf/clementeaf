@@ -4,6 +4,8 @@ import type { PickingOrder, PickingOrderStatus } from '../types';
 import type { PickingFilters } from '../PickingSidebar';
 import { usePickingOrders } from '../../../hooks/usePickingOrders';
 import { usePickingOrdersWebSocket } from '../../../hooks/usePickingOrdersWebSocket';
+import { useUpdateQuote } from '../../../hooks/useQuotes';
+import { toast } from 'react-toastify';
 
 interface OrderSectionProps {
   filters?: PickingFilters;
@@ -18,6 +20,7 @@ export const OrderSection = ({ filters = {} }: OrderSectionProps): React.ReactEl
   // Obtener órdenes desde la API
   const { data: ordersData, isLoading, refetch } = usePickingOrders(1, 100);
   const [orders, setOrders] = useState<PickingOrder[]>([]);
+  const updateQuoteMutation = useUpdateQuote();
 
   // Actualizar órdenes cuando se cargan desde la API
   useEffect(() => {
@@ -49,6 +52,22 @@ export const OrderSection = ({ filters = {} }: OrderSectionProps): React.ReactEl
   }, []);
 
   /**
+   * Maneja el cambio de estado recibido desde WebSocket
+   */
+  const handleStatusChangeFromWebSocket = useCallback((quoteId: string, estadoAnterior: string, estadoNuevo: string): void => {
+    // Actualizar la orden localmente cuando se recibe un cambio de estado desde WebSocket
+    setOrders(prevOrders =>
+      prevOrders.map(order => {
+        if (order.id === quoteId) {
+          console.log(`🔄 [PICKING] Actualizando orden ${order.codigoOrden} desde WebSocket: ${estadoAnterior} → ${estadoNuevo}`);
+          return { ...order, estado: estadoNuevo as PickingOrderStatus };
+        }
+        return order;
+      })
+    );
+  }, []);
+
+  /**
    * Hook para escuchar eventos de picking orders vía WebSocket
    */
   usePickingOrdersWebSocket({
@@ -57,21 +76,61 @@ export const OrderSection = ({ filters = {} }: OrderSectionProps): React.ReactEl
       // Refrescar datos desde la API para asegurar sincronización
       refetch();
     },
+    onStatusChange: handleStatusChangeFromWebSocket,
     onError: (error) => {
       console.error('❌ [PICKING] Error en WebSocket:', error);
     }
   });
 
   /**
+   * Mapea el estado de picking al estado de quote
+   */
+  const mapPickingStatusToQuoteStatus = (status: PickingOrderStatus): string => {
+    const statusMap: Record<PickingOrderStatus, string> = {
+      'Nota de venta emitida': 'Nota de venta emitida',
+      'Picking': 'Picking',
+      'Confirmación': 'Confirmación',
+      'Despachado': 'Despachado'
+    };
+    return statusMap[status] || status;
+  };
+
+  /**
    * Maneja el cambio de estado de una orden
    */
-  const handleStatusChange = (orderId: string, newStatus: PickingOrderStatus): void => {
+  const handleStatusChange = useCallback(async (orderId: string, newStatus: PickingOrderStatus): Promise<void> => {
+    // Actualización optimista en el frontend
     setOrders(prevOrders =>
       prevOrders.map(order =>
         order.id === orderId ? { ...order, estado: newStatus } : order
       )
     );
-  };
+
+    // Actualizar en el backend
+    try {
+      const quoteId = parseInt(orderId, 10);
+      if (isNaN(quoteId)) {
+        console.error('❌ [PICKING] ID de orden inválido:', orderId);
+        toast.error('Error: ID de orden inválido');
+        // Revertir cambio optimista
+        refetch();
+        return;
+      }
+
+      const quoteStatus = mapPickingStatusToQuoteStatus(newStatus);
+      await updateQuoteMutation.mutateAsync({
+        id: quoteId,
+        data: { estado: quoteStatus }
+      });
+
+      toast.success(`Orden actualizada a: ${newStatus}`);
+    } catch (error) {
+      console.error('❌ [PICKING] Error actualizando estado:', error);
+      toast.error('Error al actualizar el estado de la orden');
+      // Revertir cambio optimista
+      refetch();
+    }
+  }, [updateQuoteMutation, refetch]);
 
   /**
    * Filtra las órdenes según los filtros aplicados

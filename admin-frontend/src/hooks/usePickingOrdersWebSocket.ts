@@ -22,6 +22,7 @@ interface PickingOrdersWebSocketMessage {
 
 interface UsePickingOrdersWebSocketOptions {
   onNewOrder?: (order: PickingOrder, quoteInfo?: { clienteNombre?: string; monto?: number; numeroCotizacion?: string; estado?: string }) => void;
+  onStatusChange?: (quoteId: string, estadoAnterior: string, estadoNuevo: string) => void;
   onError?: (error: Error) => void;
 }
 
@@ -31,7 +32,7 @@ interface UsePickingOrdersWebSocketOptions {
  * @returns Estado de conexión
  */
 export const usePickingOrdersWebSocket = (options: UsePickingOrdersWebSocketOptions) => {
-  const { onNewOrder, onError } = options;
+  const { onNewOrder, onStatusChange, onError } = options;
   const { data: currentUser } = useCurrentUser();
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -79,13 +80,15 @@ export const usePickingOrdersWebSocket = (options: UsePickingOrdersWebSocketOpti
             console.log('📦 [PICKING WS] Nueva orden de picking recibida:', data.pickingOrder);
             onNewOrder?.(data.pickingOrder, data.quoteInfo);
           } else if (data.action === 'quote_status_changed') {
-            // Cuando cambia el estado, refrescar datos
+            // Cuando cambia el estado, notificar al callback
             console.log('🔄 [PICKING WS] Estado de quote cambiado:', {
               quoteId: data.quoteId,
               estadoAnterior: data.estadoAnterior,
               estadoNuevo: data.estadoNuevo
             });
-            // El hook usePickingOrders se encargará de refrescar automáticamente
+            if (data.quoteId && data.estadoAnterior && data.estadoNuevo) {
+              onStatusChange?.(data.quoteId, data.estadoAnterior, data.estadoNuevo);
+            }
           }
         } catch (error) {
           console.error('❌ [PICKING WS] Error parseando mensaje:', error);
@@ -187,7 +190,7 @@ export const usePickingOrdersWebSocket = (options: UsePickingOrdersWebSocketOpti
       // porque el WebSocket aún no se ha conectado y React Strict Mode ejecuta el cleanup inmediatamente
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentUser?.id]); // Solo dependemos de currentUser?.id, no de connect/disconnect
+  }, [currentUser?.id, onNewOrder, onStatusChange, onError]); // Dependemos de los callbacks también
 
   return { disconnect };
 };

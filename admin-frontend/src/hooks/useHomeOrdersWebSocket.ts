@@ -15,10 +15,16 @@ interface HomeOrdersWebSocketMessage {
     numeroCotizacion?: string;
     estado?: string;
   };
+  quoteId?: string;
+  codigoOrden?: string;
+  estadoAnterior?: string;
+  estadoNuevo?: string;
+  clienteNombre?: string;
 }
 
 interface UseHomeOrdersWebSocketOptions {
   onNewOrder?: (order: HomeOrder) => void;
+  onStatusChange?: (quoteId: string, estadoAnterior: string, estadoNuevo: string) => void;
   onError?: (error: Error) => void;
 }
 
@@ -29,7 +35,7 @@ interface UseHomeOrdersWebSocketOptions {
  * @returns Estado de conexión
  */
 export const useHomeOrdersWebSocket = (options: UseHomeOrdersWebSocketOptions) => {
-  const { onNewOrder, onError } = options;
+  const { onNewOrder, onStatusChange, onError } = options;
   const { data: currentUser } = useCurrentUser();
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -85,9 +91,15 @@ export const useHomeOrdersWebSocket = (options: UseHomeOrdersWebSocketOptions) =
             console.log('🏠 [HOME WS] Orden convertida a HomeOrder:', homeOrder);
             onNewOrder?.(homeOrder);
           } else if (data.action === 'quote_status_changed') {
-            // Refrescar cuando cambia el estado de una quote
-            console.log('🔄 [HOME WS] Estado de quote cambiado, refrescando...');
-            // El hook useHomeOrders se encargará de refrescar automáticamente
+            // Cuando cambia el estado, notificar al callback
+            console.log('🔄 [HOME WS] Estado de quote cambiado:', {
+              quoteId: data.quoteId,
+              estadoAnterior: data.estadoAnterior,
+              estadoNuevo: data.estadoNuevo
+            });
+            if (data.quoteId && data.estadoAnterior && data.estadoNuevo) {
+              onStatusChange?.(data.quoteId, data.estadoAnterior, data.estadoNuevo);
+            }
           }
         } catch (error) {
           console.error('❌ [HOME WS] Error parseando mensaje:', error);
