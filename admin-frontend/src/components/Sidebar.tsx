@@ -110,7 +110,7 @@ export const Sidebar = () => {
     }
 
     return filtered;
-  }, [hasPermission, hasModuleAccess, isLoading, user]);
+  }, [hasPermission, hasModuleAccess, isLoading, user, isSuperAdmin]);
 
   /**
    * Filtra los submódulos según los permisos del usuario

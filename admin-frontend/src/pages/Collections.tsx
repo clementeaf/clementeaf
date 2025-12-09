@@ -226,7 +226,7 @@ export const Collections = () => {
         };
       });
     }
-  }, [deudasActivasData?.pages]);
+  }, [deudasActivasData?.pages, sortBy, sortOrder]);
 
   /**
    * Obtiene todos los documentos de todas las empresas (para compatibilidad con código existente)

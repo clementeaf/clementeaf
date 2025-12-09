@@ -43,7 +43,7 @@ export const usePermissions = () => {
     }
     
     return userPermissions;
-  }, [user?.permissions, user, isLoading]);
+  }, [user, isActuallyLoading, isPlaceholderData]);
 
   /**
    * Verifica si el usuario tiene un permiso específico

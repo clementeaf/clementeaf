@@ -128,7 +128,7 @@ export const useHomeOrdersWebSocket = (options: UseHomeOrdersWebSocketOptions) =
       logger.error('[HOME WS] Error creando WebSocket', error);
       onError?.(error instanceof Error ? error : new Error('Failed to create WebSocket'));
     }
-  }, [currentUser?.id, onNewOrder, onError]);
+  }, [currentUser?.id, onNewOrder, onError, onStatusChange]);
 
   /**
    * Desconecta del WebSocket
@@ -200,10 +200,7 @@ export const useHomeOrdersWebSocket = (options: UseHomeOrdersWebSocketOptions) =
       // No desconectar si userId cambió de null a un valor (primera conexión)
       // porque el WebSocket aún no se ha conectado y React Strict Mode ejecuta el cleanup inmediatamente
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    // Justificación: No incluir connect/disconnect en deps para evitar loops infinitos.
-    // Estos callbacks son estables (useCallback) y solo dependen de refs.
-  }, [currentUser?.id]);
+  }, [currentUser?.id, currentUser, connect, disconnect]);
 
   return { disconnect };
 };

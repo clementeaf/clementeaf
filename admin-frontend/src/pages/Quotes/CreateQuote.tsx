@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { logger } from '../../utils/logger';
@@ -155,9 +155,9 @@ export const CreateQuote = () => {
    * Maneja la actualización de datos del formulario
    * @param stepData - Datos del paso actual
    */
-  const handleDataChange = (stepData: Record<string, string>): void => {
+  const handleDataChange = useCallback((stepData: Record<string, string>): void => {
     setFormData(prev => ({ ...prev, ...stepData }));
-  };
+  }, []);
 
   /**
    * Mapeador de pasos a sus componentes correspondientes

@@ -189,10 +189,7 @@ export const useWebSocket = (options: UseWebSocketOptions) => {
       // No desconectar si userId cambió de null a un valor (primera conexión)
       // porque el WebSocket aún no se ha conectado y React Strict Mode ejecuta el cleanup inmediatamente
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    // Justificación: No incluir connect/disconnect en deps para evitar loops infinitos.
-    // Estos callbacks son estables (useCallback) y solo dependen de refs.
-  }, [userId]);
+  }, [userId, connect, disconnect]);
 
   return {
     isConnected,

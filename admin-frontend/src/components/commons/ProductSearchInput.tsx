@@ -115,7 +115,7 @@ export const ProductSearchInput = ({
       setSearchTerm(value);
       setDebouncedSearchTerm(value);
     }
-  }, [value]);
+  }, [value, searchTerm]);
 
   /**
    * Calcula la posición del dropdown cuando se abre
@@ -123,6 +123,10 @@ export const ProductSearchInput = ({
   useEffect(() => {
     if (!isOpen) {
       setDropdownPosition(null);
+      return;
+    }
+
+    if (!searchTerm) {
       return;
     }
 
@@ -210,7 +214,7 @@ export const ProductSearchInput = ({
       window.removeEventListener('scroll', handleScroll, true);
       window.removeEventListener('resize', handleResize);
     };
-  }, [isOpen, productsCount]);
+  }, [isOpen, productsCount, searchTerm]);
 
   /**
    * Cierra el dropdown cuando se hace click fuera

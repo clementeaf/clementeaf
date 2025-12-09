@@ -190,17 +190,16 @@ export const SearchProducts = (): React.ReactElement => {
     staleTime: 1000 * 60 * 2
   });
 
-  const products = productsData?.data || [];
-
   /**
    * Filtra productos por bodega si está seleccionada
    */
   const filteredProducts = useMemo(() => {
+    const products = productsData?.data || [];
     if (!selectedWarehouseId) {
       return products;
     }
     return products;
-  }, [products, selectedWarehouseId]);
+  }, [productsData?.data, selectedWarehouseId]);
 
   /**
    * Maneja la selección de un producto

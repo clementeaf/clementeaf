@@ -24,32 +24,7 @@ export const InvoiceUploader: React.FC<InvoiceUploaderProps> = ({ onFileUpload }
         setIsDragging(false);
     }, []);
 
-    const handleDrop = useCallback((e: React.DragEvent) => {
-        e.preventDefault();
-        setIsDragging(false);
-
-        const files = Array.from(e.dataTransfer.files);
-        const xmlFile = files.find(file => file.name.toLowerCase().endsWith('.xml'));
-
-        if (xmlFile) {
-            processFile(xmlFile);
-        } else {
-            setUploadState({
-                isUploading: false,
-                progress: 0,
-                error: 'Por favor, sube un archivo XML válido',
-            });
-        }
-    }, []);
-
-    const handleFileInput = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (file) {
-            processFile(file);
-        }
-    }, []);
-
-    const processFile = (file: File) => {
+    const processFile = useCallback((file: File) => {
         setUploadState({
             isUploading: true,
             progress: 0,
@@ -68,7 +43,32 @@ export const InvoiceUploader: React.FC<InvoiceUploaderProps> = ({ onFileUpload }
         }, 100);
 
         onFileUpload(file);
-    };
+    }, [onFileUpload]);
+
+    const handleDrop = useCallback((e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragging(false);
+
+        const files = Array.from(e.dataTransfer.files);
+        const xmlFile = files.find(file => file.name.toLowerCase().endsWith('.xml'));
+
+        if (xmlFile) {
+            processFile(xmlFile);
+        } else {
+            setUploadState({
+                isUploading: false,
+                progress: 0,
+                error: 'Por favor, sube un archivo XML válido',
+            });
+        }
+    }, [processFile]);
+
+    const handleFileInput = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            processFile(file);
+        }
+    }, [processFile]);
 
     return (
         <div className="w-full">

@@ -43,13 +43,13 @@ export const CollectionsFilters = ({
   /**
    * Estados de pago disponibles
    */
-  const statusOptions = [
+  const statusOptions = useMemo(() => [
     { id: 'por-vencer', label: 'Por vencer', min: undefined, max: -1 },
     { id: 'vence-hoy', label: 'Vence hoy', min: 0, max: 0 },
     { id: 'vencido-30', label: 'Vencido (1-30 días)', min: 1, max: 30 },
     { id: 'vencido-60', label: 'Vencido (31-60 días)', min: 31, max: 60 },
     { id: 'vencido-60-plus', label: 'Vencido (+60 días)', min: 61, max: undefined }
-  ] as const;
+  ] as const, []);
 
   /**
    * Formatea un monto a formato de moneda
@@ -106,7 +106,7 @@ export const CollectionsFilters = ({
     });
     
     return totals;
-  }, [deudas]);
+  }, [deudas, statusOptions]);
 
   /**
    * Determina qué estados están seleccionados basándose en los filtros actuales
@@ -162,7 +162,7 @@ export const CollectionsFilters = ({
     }
     
     return selected;
-  }, [filters.diasVencidosMin, filters.diasVencidosMax, filters.diasVencidosRanges]);
+  }, [filters.diasVencidosMin, filters.diasVencidosMax, filters.diasVencidosRanges, statusOptions]);
 
   /**
    * Actualiza un filtro específico

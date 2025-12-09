@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Input } from '../../components/commons';
 import { rolesService, permissionsService, type Permission, type CreateRoleDto } from '../../services/rolesService';
@@ -384,16 +384,9 @@ export const CreateRole = (): React.ReactElement => {
     });
 
   /**
-   * Carga permisos del backend en background
-   */
-  useEffect(() => {
-    loadPermissions();
-  }, []);
-
-  /**
    * Carga permisos del backend (opcional, para sincronizar después)
    */
-  const loadPermissions = async (): Promise<void> => {
+  const loadPermissions = useCallback(async (): Promise<void> => {
     try {
       const permissionsData = await permissionsService.getAllPermissions();
       setPermissions(permissionsData);
@@ -415,7 +408,14 @@ export const CreateRole = (): React.ReactElement => {
       // Silenciar errores, los módulos se muestran de todas formas
       console.error('Error loading permissions (non-blocking):', error);
     }
-  };
+  }, [selectedModuleCodes, selectedSubModuleCodes, selectedServiceCodes]);
+
+  /**
+   * Carga permisos del backend en background
+   */
+  useEffect(() => {
+    loadPermissions();
+  }, [loadPermissions]);
 
   /**
    * Maneja el cambio de checkbox de módulo

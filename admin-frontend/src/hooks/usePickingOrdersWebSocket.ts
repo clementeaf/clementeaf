@@ -117,7 +117,7 @@ export const usePickingOrdersWebSocket = (options: UsePickingOrdersWebSocketOpti
       logger.error('[PICKING WS] Error creando WebSocket', error);
       onError?.(error instanceof Error ? error : new Error('Failed to create WebSocket'));
     }
-  }, [currentUser?.id, onNewOrder, onError]);
+  }, [currentUser?.id, onNewOrder, onError, onStatusChange]);
 
   /**
    * Desconecta del WebSocket
@@ -189,11 +189,7 @@ export const usePickingOrdersWebSocket = (options: UsePickingOrdersWebSocketOpti
       // No desconectar si userId cambió de null a un valor (primera conexión)
       // porque el WebSocket aún no se ha conectado y React Strict Mode ejecuta el cleanup inmediatamente
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    // Justificación: No incluir connect/disconnect en deps para evitar loops infinitos.
-    // Estos callbacks son estables (useCallback) y solo dependen de refs.
-    // Incluir onNewOrder, onStatusChange, onError causaría reconexiones innecesarias.
-  }, [currentUser?.id, onNewOrder, onStatusChange, onError]);
+  }, [currentUser?.id, currentUser, onNewOrder, onStatusChange, onError, connect, disconnect]);
 
   return { disconnect };
 };
