@@ -162,12 +162,6 @@ export const QuoteConditionsForm = ({ onDataChange, initialData }: QuoteConditio
       isMounted = false;
       clearTimeout(timeoutId);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    // Justificación: Este efecto debe ejecutarse solo una vez al montar el componente.
-    // loadInitialData es una función interna que usa formData e initialData, pero incluir
-    // estas dependencias causaría que se ejecute múltiples veces innecesariamente.
-    // hasLoadedInitialData previene ejecuciones múltiples.
-    // onDataChange está envuelto en useCallback en el componente padre (CreateQuote.tsx).
   }, [hasLoadedInitialData, formData.fecha, formData.listaPrecios, formData.numeroCotizacion, formData.terminosPago, initialData?.clienteFormaPago, initialData?.clienteListaPrecios, onDataChange]);
 
   const handleCheckboxChange = (checked: boolean): void => {
