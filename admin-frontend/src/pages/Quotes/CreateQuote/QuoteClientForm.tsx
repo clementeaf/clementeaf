@@ -81,12 +81,7 @@ export const QuoteClientForm = ({ onDataChange, initialData }: QuoteClientFormPr
         setContactCountry(country);
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    // Justificación: Solo queremos ejecutar cuando initialDataString cambia.
-    // Incluir contactCountry, selectedCountry o initialData directamente causaría loops infinitos
-    // (setState dentro del efecto). initialDataString es una versión serializada que cambia
-    // solo cuando initialData realmente cambia.
-  }, [initialDataString]);
+  }, [initialDataString, contactCountry?.code, selectedCountry?.code, initialData]);
 
   /**
    * Maneja el cambio de un campo

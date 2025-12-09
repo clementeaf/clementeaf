@@ -89,10 +89,6 @@ export const QuoteConditionsForm = ({ onDataChange, initialData }: QuoteConditio
       
       return { ...prev, ...initialData };
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    // Justificación: Solo queremos ejecutar cuando initialDataString cambia.
-    // Incluir formData o initialData directamente causaría loops infinitos (setFormData dentro del efecto).
-    // initialDataString es una versión serializada que cambia solo cuando initialData realmente cambia.
   }, [initialDataString, initialData]);
 
   /**
@@ -171,7 +167,7 @@ export const QuoteConditionsForm = ({ onDataChange, initialData }: QuoteConditio
     // loadInitialData es una función interna que usa formData e initialData, pero incluir
     // estas dependencias causaría que se ejecute múltiples veces innecesariamente.
     // hasLoadedInitialData previene ejecuciones múltiples.
-    // onDataChange debe estar envuelto en useCallback en el componente padre para evitar warnings.
+    // onDataChange está envuelto en useCallback en el componente padre (CreateQuote.tsx).
   }, [hasLoadedInitialData, formData.fecha, formData.listaPrecios, formData.numeroCotizacion, formData.terminosPago, initialData?.clienteFormaPago, initialData?.clienteListaPrecios, onDataChange]);
 
   const handleCheckboxChange = (checked: boolean): void => {
