@@ -3,7 +3,7 @@ import type { PickingOrder } from '../pages/Picking/types';
 import { useCurrentUser } from './useAuth';
 import { logger } from '../utils/logger';
 
-const WSS_ENDPOINT = import.meta.env.VITE_WS_URL || 'wss://5msg0dgwyi.execute-api.us-east-1.amazonaws.com/dev';
+const WSS_ENDPOINT = import.meta.env.VITE_WS_URL || 'wss://ao9gv2kwll.execute-api.us-east-1.amazonaws.com/dev';
 
 interface PickingOrdersWebSocketMessage {
   action: string;
@@ -50,7 +50,8 @@ export const usePickingOrdersWebSocket = (options: UsePickingOrdersWebSocketOpti
       return;
     }
 
-    if (wsRef.current?.readyState === WebSocket.OPEN) {
+    // Evitar múltiples conexiones simultáneas
+    if (wsRef.current?.readyState === WebSocket.OPEN || wsRef.current?.readyState === WebSocket.CONNECTING) {
       return;
     }
 
@@ -159,7 +160,7 @@ export const usePickingOrdersWebSocket = (options: UsePickingOrdersWebSocketOpti
       lastUserIdRef.current = null;
       isManuallyDisconnected.current = true;
       disconnect();
-    } else if (currentUser?.id && currentUser.id === previousUserId && !isManuallyDisconnected.current && wsRef.current?.readyState !== WebSocket.OPEN) {
+    } else if (currentUser?.id && currentUser.id === previousUserId && !isManuallyDisconnected.current && wsRef.current?.readyState !== WebSocket.OPEN && wsRef.current?.readyState !== WebSocket.CONNECTING) {
       // Si userId es el mismo pero no hay conexión, conectar
       logger.debug(`[PICKING WS] userId es el mismo (${currentUser.id}) pero no hay conexión, conectando...`);
       connect();
@@ -189,7 +190,7 @@ export const usePickingOrdersWebSocket = (options: UsePickingOrdersWebSocketOpti
       // No desconectar si userId cambió de null a un valor (primera conexión)
       // porque el WebSocket aún no se ha conectado y React Strict Mode ejecuta el cleanup inmediatamente
     };
-  }, [currentUser?.id, currentUser, onNewOrder, onStatusChange, onError, connect, disconnect]);
+  }, [currentUser?.id, onNewOrder, onStatusChange, onError, connect, disconnect]);
 
   return { disconnect };
 };

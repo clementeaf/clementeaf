@@ -20,7 +20,8 @@ const getDatabaseConfig = (): DataSourceOptions => {
       'dist/modules/**/entities/*.entity.js'
     ],
     migrations: [
-      'dist/migrations/*.js'
+      'dist/migrations/1700000000000-CreateUsersTable.js',
+      'dist/migrations/1700000000001-CreateQuotesTable.js'
     ],
     connectTimeoutMS: 30000,
           ssl: {

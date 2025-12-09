@@ -5,7 +5,7 @@ import { useCurrentUser } from './useAuth';
 import { convertPickingOrderToHomeOrder } from '../services/homeOrdersService';
 import { logger } from '../utils/logger';
 
-const WSS_ENDPOINT = import.meta.env.VITE_WS_URL || 'wss://5msg0dgwyi.execute-api.us-east-1.amazonaws.com/dev';
+const WSS_ENDPOINT = import.meta.env.VITE_WS_URL || 'wss://ao9gv2kwll.execute-api.us-east-1.amazonaws.com/dev';
 
 interface HomeOrdersWebSocketMessage {
   action: string;
@@ -53,7 +53,8 @@ export const useHomeOrdersWebSocket = (options: UseHomeOrdersWebSocketOptions) =
       return;
     }
 
-    if (wsRef.current?.readyState === WebSocket.OPEN) {
+    // Evitar múltiples conexiones simultáneas
+    if (wsRef.current?.readyState === WebSocket.OPEN || wsRef.current?.readyState === WebSocket.CONNECTING) {
       return;
     }
 
@@ -170,7 +171,7 @@ export const useHomeOrdersWebSocket = (options: UseHomeOrdersWebSocketOptions) =
       lastUserIdRef.current = null;
       isManuallyDisconnected.current = true;
       disconnect();
-    } else if (currentUser?.id && currentUser.id === previousUserId && !isManuallyDisconnected.current && wsRef.current?.readyState !== WebSocket.OPEN) {
+    } else if (currentUser?.id && currentUser.id === previousUserId && !isManuallyDisconnected.current && wsRef.current?.readyState !== WebSocket.OPEN && wsRef.current?.readyState !== WebSocket.CONNECTING) {
       // Si userId es el mismo pero no hay conexión, conectar
       logger.debug(`[HOME WS] userId es el mismo (${currentUser.id}) pero no hay conexión, conectando...`);
       connect();
@@ -200,7 +201,7 @@ export const useHomeOrdersWebSocket = (options: UseHomeOrdersWebSocketOptions) =
       // No desconectar si userId cambió de null a un valor (primera conexión)
       // porque el WebSocket aún no se ha conectado y React Strict Mode ejecuta el cleanup inmediatamente
     };
-  }, [currentUser?.id, currentUser, connect, disconnect]);
+  }, [currentUser?.id, connect, disconnect]);
 
   return { disconnect };
 };

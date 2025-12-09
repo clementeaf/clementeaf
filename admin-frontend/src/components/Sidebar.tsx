@@ -92,22 +92,7 @@ export const Sidebar = () => {
       return hasPermission(moduleCode);
     });
 
-    // Log de módulos filtrados
-    if (isSuperAdmin) {
-      console.log('👑 [SIDEBAR] Super Admin - Todos los módulos visibles:', {
-        totalModules: navItems.length,
-        visibleModules: filtered.length,
-        moduleNames: filtered.map(m => m.name)
-      });
-    } else if (filtered.length !== navItems.length) {
-      console.log('🔒 [SIDEBAR] Módulos filtrados según permisos:', {
-        totalModules: navItems.length,
-        visibleModules: filtered.length,
-        hiddenModules: navItems.length - filtered.length,
-        visibleModuleNames: filtered.map(m => m.name),
-        hiddenModuleNames: navItems.filter(m => !filtered.includes(m)).map(m => m.name)
-      });
-    }
+    // No loguear aquí - se hará en useEffect cuando cambien los valores
 
     return filtered;
   }, [hasPermission, hasModuleAccess, isLoading, user, isSuperAdmin]);
@@ -121,6 +106,27 @@ export const Sidebar = () => {
       return hasPermission(subModuleCode);
     });
   };
+
+  // Log de módulos filtrados solo cuando cambian los valores (evita logs en cada render)
+  useEffect(() => {
+    if (isLoading) return; // No loguear mientras carga
+    
+    if (isSuperAdmin) {
+      console.log('👑 [SIDEBAR] Super Admin - Todos los módulos visibles:', {
+        totalModules: navItems.length,
+        visibleModules: filteredNavItems.length,
+        moduleNames: filteredNavItems.map(m => m.name)
+      });
+    } else if (filteredNavItems.length !== navItems.length) {
+      console.log('🔒 [SIDEBAR] Módulos filtrados según permisos:', {
+        totalModules: navItems.length,
+        visibleModules: filteredNavItems.length,
+        hiddenModules: navItems.length - filteredNavItems.length,
+        visibleModuleNames: filteredNavItems.map(m => m.name),
+        hiddenModuleNames: navItems.filter(m => !filteredNavItems.includes(m)).map(m => m.name)
+      });
+    }
+  }, [isSuperAdmin, filteredNavItems.length, isLoading]);
 
   useEffect(() => {
     if (!manualToggle) {

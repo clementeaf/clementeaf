@@ -1,4 +1,4 @@
-import { apiClient } from './api';
+import { apiClient } from '../api/client';
 import type { Notification } from '../types/notifications';
 
 export interface GetNotificationsResponse {

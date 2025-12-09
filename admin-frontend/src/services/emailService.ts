@@ -1,5 +1,5 @@
 import { sum } from 'radashi';
-import { apiClient } from './api';
+import { apiClient } from '../api/client';
 import { endpoints } from '../api/endpoints';
 import type { CtasPorCobrar } from '../types/analytics';
 

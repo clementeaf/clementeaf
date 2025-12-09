@@ -7,7 +7,7 @@ import { authService } from './auth';
  * Usa variable de entorno o valor por defecto de producción (AWS)
  * Para desarrollo local con serverless-offline, configurar: VITE_API_URL=http://localhost:9500/dev
  */
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://7ebampwqf4.execute-api.us-east-1.amazonaws.com/dev';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://zzv7qnwgz1.execute-api.us-east-1.amazonaws.com/dev';
 
 /**
  * Cliente HTTP configurado para el backend
