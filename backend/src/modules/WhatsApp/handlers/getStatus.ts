@@ -10,7 +10,8 @@ import { validatePermission } from '../../Users/utils/permissions';
  * @returns Estado de la conexión
  */
 const getStatusHandler = async (event: APIGatewayProxyEvent) => {
-  await validatePermission(event, 'view:whatsapp:status');
+  const permissionError = await validatePermission(event, 'view:whatsapp:status');
+  if (permissionError) return permissionError;
 
   const whatsappService = new WhatsAppApiService();
   const status = await whatsappService.getStatus();

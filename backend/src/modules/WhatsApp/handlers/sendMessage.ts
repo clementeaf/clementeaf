@@ -12,7 +12,8 @@ import { type SendMessageDto } from '../dto/SendMessageDto';
  * @returns Respuesta con ID del mensaje enviado
  */
 const sendMessageHandler = async (event: APIGatewayProxyEvent) => {
-  await validatePermission(event, 'send:whatsapp:messages');
+  const permissionError = await validatePermission(event, 'send:whatsapp:messages');
+  if (permissionError) return permissionError;
 
   const bodyError = validateBody(event);
   if (bodyError) return bodyError;

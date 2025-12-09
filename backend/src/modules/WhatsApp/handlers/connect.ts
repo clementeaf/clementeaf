@@ -10,7 +10,8 @@ import { validatePermission } from '../../Users/utils/permissions';
  * @returns Respuesta de conexión
  */
 const connectHandler = async (event: APIGatewayProxyEvent) => {
-  await validatePermission(event, 'manage:whatsapp:connection');
+  const permissionError = await validatePermission(event, 'manage:whatsapp:connection');
+  if (permissionError) return permissionError;
 
   const whatsappService = new WhatsAppApiService();
   const result = await whatsappService.connect();
