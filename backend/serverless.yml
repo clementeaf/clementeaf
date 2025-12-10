@@ -97,7 +97,7 @@ provider:
     WSS_ENDPOINT: ${env:WSS_ENDPOINT, ''}
     EVENT_BRIDGE_BUS_NAME: ${env:EVENT_BRIDGE_BUS_NAME, 'default'}
     EVENT_BRIDGE_SOURCE: ${env:EVENT_BRIDGE_SOURCE, 'banados.quotes'}
-    WHATSAPP_SERVICE_URL: ${env:WHATSAPP_SERVICE_URL, 'http://localhost:3001'}
+    WHATSAPP_SERVICE_URL: ${env:WHATSAPP_SERVICE_URL, 'https://80ff48d82b9e.ngrok-free.app'}
 
 package:
   patterns:

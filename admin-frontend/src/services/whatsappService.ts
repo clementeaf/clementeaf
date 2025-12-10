@@ -62,15 +62,14 @@ export const whatsappService = {
    */
   async sendMessage(to: string, message: string): Promise<SendMessageResponse> {
     const response = await apiClient.post<{
-      success: boolean;
-      data: { messageId: string };
       message: string;
+      data: { messageId: string };
     }>(endpoints.whatsapp.sendMessage, {
       to,
       message
     });
     return {
-      success: response.data.success,
+      success: !!response.data.data?.messageId,
       messageId: response.data.data?.messageId
     };
   },
@@ -80,16 +79,15 @@ export const whatsappService = {
    */
   async sendImage(to: string, imageUrl: string, caption?: string): Promise<SendMessageResponse> {
     const response = await apiClient.post<{
-      success: boolean;
-      data: { messageId: string };
       message: string;
+      data: { messageId: string };
     }>(endpoints.whatsapp.sendImage, {
       to,
       imageUrl,
       caption
     });
     return {
-      success: response.data.success,
+      success: !!response.data.data?.messageId,
       messageId: response.data.data?.messageId
     };
   }
