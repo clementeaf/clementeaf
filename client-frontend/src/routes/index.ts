@@ -4,8 +4,14 @@
 export const routes = {
   root: '/',
   home: '/',
-  reclamos: '/reclamos',
+  productos: '/productos',
+  carrito: '/carrito',
+  pedidos: '/pedidos',
+  facturas: '/facturas',
+  contacto: '/contacto',
+  metricas: '/metricas',
   capacitaciones: '/capacitaciones',
+  reclamos: '/reclamos',
   notFound: '/*'
 } as const;
 
