@@ -23,14 +23,44 @@ export const navItems: NavItem[] = [
     icon: homeIcon
   },
   {
-    name: 'Reclamos',
-    path: '/reclamos',
-    icon: reclamosIcon
+    name: 'Productos',
+    path: '/productos',
+    icon: homeIcon
+  },
+  {
+    name: 'Carrito',
+    path: '/carrito',
+    icon: homeIcon
+  },
+  {
+    name: 'Pedidos',
+    path: '/pedidos',
+    icon: homeIcon
+  },
+  {
+    name: 'Facturas',
+    path: '/facturas',
+    icon: homeIcon
+  },
+  {
+    name: 'Contacto',
+    path: '/contacto',
+    icon: homeIcon
+  },
+  {
+    name: 'Métricas',
+    path: '/metricas',
+    icon: homeIcon
   },
   {
     name: 'Capacitaciones',
     path: '/capacitaciones',
     icon: capacitacionesIcon
+  },
+  {
+    name: 'Reclamos',
+    path: '/reclamos',
+    icon: reclamosIcon
   }
 ];
 
