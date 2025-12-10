@@ -37,6 +37,8 @@ apiClient.interceptors.request.use(
     const token = localStorage.getItem('authToken');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+    } else {
+      console.warn('⚠️ [API] No hay token en localStorage para la petición:', config.url);
     }
     return config;
   },
@@ -53,6 +55,7 @@ apiClient.interceptors.response.use(
     // Excluir el endpoint de refresh para evitar loops infinitos
     const isRefreshEndpoint = originalRequest?.url?.includes('/auth/refresh');
     if (error.response?.status === 401 && originalRequest && !originalRequest._retry && !isRefreshEndpoint) {
+      console.log('🔄 [API] Token expirado, intentando refrescar...');
       if (isRefreshing) {
         // Si ya se está refrescando, agregar a la cola
         return new Promise((resolve, reject) => {
@@ -104,10 +107,17 @@ apiClient.interceptors.response.use(
         return apiClient(originalRequest);
       } catch (refreshError) {
         // Error al refrescar, limpiar y redirigir
+        console.error('❌ [API] Error al refrescar token:', refreshError);
         localStorage.removeItem('authToken');
         localStorage.removeItem('refreshToken');
         processQueue(refreshError as AxiosError, null);
         isRefreshing = false;
+        
+        // Si el error es 401 en el refresh, redirigir a login
+        if ((refreshError as AxiosError).response?.status === 401) {
+          window.location.href = '/';
+        }
+        
         return Promise.reject(refreshError);
       }
     }

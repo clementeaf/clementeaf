@@ -17,7 +17,7 @@ import { AuthService } from '../../Users/services/AuthService';
  */
 const createBranchHandler = async (event: APIGatewayProxyEvent) => {
   try {
-    const clientIdParam = event.pathParameters?.clientId;
+    const clientIdParam = event.pathParameters?.id;
 
     if (!clientIdParam) {
       return errorResponse(400, 'ID del cliente es requerido');

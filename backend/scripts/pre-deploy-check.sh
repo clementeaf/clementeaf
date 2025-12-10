@@ -266,14 +266,20 @@ STACK_NAME="backend-${STAGE}"
 if aws cloudformation describe-stacks --stack-name "$STACK_NAME" --region us-east-1 &> /dev/null; then
   STACK_STATUS=$(aws cloudformation describe-stacks --stack-name "$STACK_NAME" --region us-east-1 --query 'Stacks[0].StackStatus' --output text 2>/dev/null)
   
-  if [[ "$STACK_STATUS" == *"FAILED"* ]] || [[ "$STACK_STATUS" == *"ROLLBACK"* ]]; then
+  # Estados problemáticos que requieren acción
+  # UPDATE_ROLLBACK_COMPLETE y ROLLBACK_COMPLETE son estados válidos que permiten redesplegar
+  if [[ "$STACK_STATUS" == *"FAILED"* ]] || \
+     [[ "$STACK_STATUS" == "UPDATE_ROLLBACK_FAILED" ]] || \
+     [[ "$STACK_STATUS" == "ROLLBACK_FAILED" ]]; then
     report_error "El stack $STACK_NAME está en estado problemático: $STACK_STATUS"
     echo "   Acción requerida: Resolver el estado del stack antes de desplegar"
     echo "   Comandos útiles:"
     echo "     - Ver eventos: aws cloudformation describe-stack-events --stack-name $STACK_NAME"
     echo "     - Continuar rollback: aws cloudformation continue-update-rollback --stack-name $STACK_NAME"
-    echo "     - Eliminar stack: aws cloudformation delete-stack --stack-name $STACK_NAME"
+    echo "     - Usar script de recuperación: ./scripts/recover-rollback.sh $STAGE"
     ERRORS=$((ERRORS + 1))
+  elif [[ "$STACK_STATUS" == "UPDATE_ROLLBACK_COMPLETE" ]] || [[ "$STACK_STATUS" == "ROLLBACK_COMPLETE" ]]; then
+    report_success "Stack $STACK_NAME está en estado: $STACK_STATUS (puede redesplegarse)"
   else
     report_success "Stack $STACK_NAME está en estado: $STACK_STATUS"
   fi

@@ -11,8 +11,8 @@ import { initializeDatabase } from '../../../config/database';
  */
 const getBranchByIdHandler = async (event: APIGatewayProxyEvent) => {
   try {
-    const clientIdParam = event.pathParameters?.clientId;
-    const branchIdParam = event.pathParameters?.id;
+    const clientIdParam = event.pathParameters?.id;
+    const branchIdParam = event.pathParameters?.branchId;
 
     if (!clientIdParam || !branchIdParam) {
       return errorResponse(400, 'ID del cliente y de la sucursal son requeridos');

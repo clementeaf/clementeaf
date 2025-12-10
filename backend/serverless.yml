@@ -101,23 +101,14 @@ provider:
 
 package:
   patterns:
-    - '!node_modules/**'
     - '!node_modules/.bin/**'
     - '!node_modules/@types/**'
     - '!node_modules/typescript/**'
     - '!node_modules/eslint/**'
     - '!node_modules/@typescript-eslint/**'
-    - '!node_modules/ws/**'
     - '!node_modules/serverless/**'
     - '!node_modules/serverless-offline/**'
     - '!node_modules/serverless-plugin-typescript/**'
-    - 'node_modules/typeorm/**'
-    - 'node_modules/pg/**'
-    - 'node_modules/reflect-metadata/**'
-    - 'node_modules/@aws-sdk/client-s3/**'
-    - 'node_modules/@aws-sdk/client-ses/**'
-    - 'node_modules/@aws-sdk/s3-request-presigner/**'
-    - 'node_modules/@smithy/**'
     - 'node_modules/@aws-sdk/client-apigatewaymanagementapi/**'
     - 'node_modules/@aws-sdk/client-dynamodb/**'
     - 'node_modules/@aws-sdk/lib-dynamodb/**'
@@ -457,7 +448,7 @@ functions:
     memorySize: 512
     events:
       - http:
-          path: clients/{clientId}/branches
+          path: clients/{id}/branches
           method: get
           cors: true
 
@@ -467,7 +458,7 @@ functions:
     memorySize: 512
     events:
       - http:
-          path: clients/{clientId}/branches/{id}
+          path: clients/{id}/branches/{branchId}
           method: get
           cors: true
 
@@ -477,7 +468,7 @@ functions:
     memorySize: 512
     events:
       - http:
-          path: clients/{clientId}/branches
+          path: clients/{id}/branches
           method: post
           cors: true
 
@@ -487,7 +478,7 @@ functions:
     memorySize: 512
     events:
       - http:
-          path: clients/{clientId}/branches/{id}
+          path: clients/{id}/branches/{branchId}
           method: put
           cors: true
 
@@ -497,7 +488,7 @@ functions:
     memorySize: 512
     events:
       - http:
-          path: clients/{clientId}/branches/{id}
+          path: clients/{id}/branches/{branchId}
           method: delete
           cors: true
 
@@ -952,6 +943,7 @@ functions:
     handler: dist/modules/WhatsApp/handlers/getStatus.handler
     timeout: 30
     memorySize: 512
+    vpc: null
     events:
       - http:
           path: whatsapp/status
@@ -962,6 +954,7 @@ functions:
     handler: dist/modules/WhatsApp/handlers/connect.handler
     timeout: 30
     memorySize: 512
+    vpc: null
     events:
       - http:
           path: whatsapp/connect
@@ -972,6 +965,7 @@ functions:
     handler: dist/modules/WhatsApp/handlers/disconnect.handler
     timeout: 30
     memorySize: 512
+    vpc: null
     events:
       - http:
           path: whatsapp/disconnect
@@ -982,6 +976,7 @@ functions:
     handler: dist/modules/WhatsApp/handlers/sendMessage.handler
     timeout: 30
     memorySize: 512
+    vpc: null
     events:
       - http:
           path: whatsapp/send-message
@@ -992,6 +987,7 @@ functions:
     handler: dist/modules/WhatsApp/handlers/sendImage.handler
     timeout: 30
     memorySize: 512
+    vpc: null
     events:
       - http:
           path: whatsapp/send-image

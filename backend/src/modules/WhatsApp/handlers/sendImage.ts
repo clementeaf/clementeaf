@@ -27,18 +27,24 @@ const sendImageHandler = async (event: APIGatewayProxyEvent) => {
     return errorResponse(400, 'Los campos "to" e "imageUrl" son requeridos');
   }
 
-  const whatsappService = new WhatsAppApiService();
-  const result = await whatsappService.sendImage(
-    sendImageDto.to,
-    sendImageDto.imageUrl,
-    sendImageDto.caption
-  );
+  try {
+    const whatsappService = new WhatsAppApiService();
+    const result = await whatsappService.sendImage(
+      sendImageDto.to,
+      sendImageDto.imageUrl,
+      sendImageDto.caption
+    );
 
-  if (!result.success) {
-    return errorResponse(500, result.error || 'Error al enviar imagen');
+    if (!result.success) {
+      return errorResponse(500, result.error || 'Error al enviar imagen');
+    }
+
+    return successResponse(200, { messageId: result.messageId }, 'Imagen enviada exitosamente');
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error('Error al enviar imagen de WhatsApp:', errorMessage);
+    return errorResponse(503, 'Servicio de WhatsApp no disponible. Verifica que el servicio esté desplegado y configurado correctamente.');
   }
-
-  return successResponse(200, { messageId: result.messageId }, 'Imagen enviada exitosamente');
 };
 
 export const handler = handlerWrapper(sendImageHandler);

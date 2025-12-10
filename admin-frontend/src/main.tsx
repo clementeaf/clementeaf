@@ -7,6 +7,27 @@ import './index.css'
 import App from './App.tsx'
 
 /**
+ * Valida que un token sea un JWT válido
+ * @param token - Token a validar
+ * @returns true si el token es un JWT válido, false en caso contrario
+ */
+const isValidJWT = (token: string): boolean => {
+  const parts = token.split('.');
+  if (parts.length !== 3) {
+    return false;
+  }
+  
+  try {
+    // Intentar decodificar el header y payload para verificar que sean JSON válidos
+    JSON.parse(atob(parts[0].replace(/-/g, '+').replace(/_/g, '/')));
+    JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+    return true;
+  } catch (error) {
+    return false;
+  }
+};
+
+/**
  * Extrae el token y refresh token de la URL y los guarda en localStorage
  * Luego limpia la URL para evitar exponer los tokens
  */
@@ -16,15 +37,30 @@ const handleTokenFromUrl = (): void => {
   const refreshToken = urlParams.get('refreshToken');
   
   if (token) {
-    // Guardar el token en localStorage
-    localStorage.setItem('authToken', token);
-    
-    // Si hay refresh token, guardarlo también
-    if (refreshToken) {
-      localStorage.setItem('refreshToken', refreshToken);
+    // Validar que el token sea un JWT válido antes de guardarlo
+    if (!isValidJWT(token)) {
+      console.error('❌ [AUTH] Token recibido no es un JWT válido:', token.substring(0, 50) + '...');
+      console.error('❌ [AUTH] Token parts:', token.split('.').length, '(expected: 3)');
+      
+      // Limpiar localStorage y redirigir a login
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('refreshToken');
+      
+      // Redirigir a auth frontend
+      window.location.href = 'https://d1wdj9ggvinelv.cloudfront.net';
+      return;
     }
     
-    console.log('🔐 [AUTH] Token recibido desde URL y guardado en localStorage');
+    // Guardar el token en localStorage
+    localStorage.setItem('authToken', token);
+    console.log('✅ [AUTH] Token JWT válido guardado en localStorage');
+    
+    // El refresh token de Cognito NO es un JWT, es un token opaco
+    // Solo validamos que exista, no su estructura
+    if (refreshToken) {
+      localStorage.setItem('refreshToken', refreshToken);
+      console.log('✅ [AUTH] Refresh token guardado en localStorage');
+    }
     
     // Limpiar la URL removiendo los parámetros de token
     urlParams.delete('token');

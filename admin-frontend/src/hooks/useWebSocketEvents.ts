@@ -3,7 +3,7 @@ import { useCurrentUser } from './useAuth';
 import { useQueryClient, type QueryKey } from '@tanstack/react-query';
 import { logger } from '../utils/logger';
 
-const WSS_ENDPOINT = import.meta.env.VITE_WS_URL || 'wss://5msg0dgwyi.execute-api.us-east-1.amazonaws.com/dev';
+const WSS_ENDPOINT = import.meta.env.VITE_WS_URL || 'wss://ao9gv2kwll.execute-api.us-east-1.amazonaws.com/dev';
 
 /**
  * Configuración para un evento WebSocket

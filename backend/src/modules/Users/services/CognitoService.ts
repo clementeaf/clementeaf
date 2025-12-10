@@ -121,6 +121,14 @@ export class CognitoService {
         const idToken = response.AuthenticationResult?.IdToken;
         const refreshToken = response.AuthenticationResult?.RefreshToken;
         
+        // DEBUG: Log token structure
+        console.log('🔍 [COGNITO DEBUG] Token structure validation:');
+        console.log('  - idToken length:', idToken?.length || 0);
+        console.log('  - idToken parts:', idToken?.split('.').length || 0);
+        console.log('  - refreshToken length:', refreshToken?.length || 0);
+        console.log('  - refreshToken parts:', refreshToken?.split('.').length || 0);
+        console.log('  - refreshToken preview:', refreshToken?.substring(0, 50) + '...');
+        
         if (!idToken) {
             throw new Error('Invalid credentials');
         }
