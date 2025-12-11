@@ -31,6 +31,7 @@ const PermissionsManagement = lazy(() => import('./pages/Roles/PermissionsManage
 const UsersManagement = lazy(() => import('./pages/Roles/UsersManagement').then(module => ({ default: module.UsersManagement })));
 const CreateUser = lazy(() => import('./pages/Roles/CreateUser').then(module => ({ default: module.CreateUser })));
 const WhatsApp = lazy(() => import('./pages/WhatsApp').then(module => ({ default: module.WhatsApp })));
+const OCR = lazy(() => import('./pages/OCR/OCR').then(module => ({ default: module.default })));
 
 /**
  * Componente de carga para Suspense
@@ -215,6 +216,12 @@ function App(): React.ReactNode {
                   <WhatsApp />
                 </ProtectedRoute>
               } 
+            />
+            
+            {/* Rutas de OCR */}
+            <Route 
+              path={routes.ocr} 
+              element={<OCR />} 
             />
             
             {/* Rutas legacy (sin protección por ahora) */}
