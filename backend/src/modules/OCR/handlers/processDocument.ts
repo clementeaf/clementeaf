@@ -1,6 +1,6 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { AppDataSource } from '../../../config/database';
-import { OCRDocument } from '../entities/PurchaseOrder';
+import { OCRDocument } from '../entities/OCRDocument.entity';
 import { DocumentStatus } from '../types';
 import { TextractService } from '../services/TextractService';
 import { DocumentParser } from '../services/DocumentParser';

@@ -1,6 +1,6 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { AppDataSource } from '../../../config/database';
-import { OCRDocument } from '../entities/PurchaseOrder';
+import { OCRDocument } from '../entities/OCRDocument.entity';
 
 /**
  * Handler para obtener resultados de OCR

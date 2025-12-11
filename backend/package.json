@@ -38,7 +38,8 @@
     "reflect-metadata": "^0.1.13",
     "serverless": "^3.38.0",
     "sql-highlight": "^6.1.0",
-    "typeorm": "^0.3.17"
+    "typeorm": "^0.3.17",
+    "uuid": "^13.0.0"
   },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.130",

@@ -3,7 +3,7 @@ import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { v4 as uuidv4 } from 'uuid';
 import { AppDataSource } from '../../../config/database';
-import { OCRDocument } from '../entities/PurchaseOrder';
+import { OCRDocument } from '../entities/OCRDocument.entity';
 import { DocumentType, DocumentStatus } from '../types';
 
 const s3Client = new S3Client({ region: process.env.OCR_REGION || 'us-east-1' });
