@@ -54,6 +54,7 @@
     "@typescript-eslint/parser": "^6.19.0",
     "eslint": "^8.56.0",
     "serverless-offline": "^13.0.0",
+    "serverless-plugin-split-stacks": "^1.14.0",
     "serverless-plugin-typescript": "^2.1.0",
     "typescript": "^5.3.3",
     "ws": "^8.18.3"

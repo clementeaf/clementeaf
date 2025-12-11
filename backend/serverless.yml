@@ -8,6 +8,10 @@ provider:
   stage: ${opt:stage, 'dev'}
   region: ${opt:region, 'us-east-1'}
   versionFunctions: false
+  logs:
+    restApi: true
+  logRetentionInDays: 7
+  disableLogs: false
   # VPC: Configuración condicional (solo si están definidas las variables)
   vpc:
     securityGroupIds:
@@ -183,6 +187,7 @@ package:
 
 plugins:
   - serverless-offline
+  - serverless-plugin-split-stacks
 
 
 functions:
@@ -1099,6 +1104,10 @@ resources:
         Name: ${self:service}-${self:provider.stage}-ServiceEndpoint
 
 custom:
+  splitStacks:
+    perFunction: false
+    perType: true
+    perGroupFunction: false
   serverless-offline:
     httpPort: 9500
     host: 0.0.0.0
