@@ -1032,7 +1032,16 @@ functions:
       - http:
           path: ocr/upload
           method: post
-          cors: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - X-Amz-Date
+              - Authorization
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+            allowCredentials: false
 
   processDocument:
     handler: dist/modules/OCR/handlers/processDocument.handler
@@ -1043,7 +1052,16 @@ functions:
       - http:
           path: ocr/process/{id}
           method: post
-          cors: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - X-Amz-Date
+              - Authorization
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+            allowCredentials: false
 
   getOCRResults:
     handler: dist/modules/OCR/handlers/getOCRResults.handler
@@ -1054,7 +1072,16 @@ functions:
       - http:
           path: ocr/results/{id}
           method: get
-          cors: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - X-Amz-Date
+              - Authorization
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+            allowCredentials: false
 
 resources:
   Resources:
