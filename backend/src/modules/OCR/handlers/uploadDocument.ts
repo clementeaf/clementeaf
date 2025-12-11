@@ -1,7 +1,7 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto';
 import { AppDataSource } from '../../../config/database';
 import { OCRDocument } from '../entities/OCRDocument.entity';
 import { DocumentType, DocumentStatus } from '../types';
@@ -46,15 +46,18 @@ export const handler = async (
     }
 
     // Generar ID único para el documento
-    const documentId = uuidv4();
+    const documentId = randomUUID();
     const fileExtension = fileName.split('.').pop();
     const s3Key = `documents/${documentId}.${fileExtension}`;
 
     // Generar URL pre-firmada para upload
+    // Incluir ACL y metadata para permitir CORS desde el navegador
     const command = new PutObjectCommand({
       Bucket: BUCKET_NAME,
       Key: s3Key,
-      ContentType: fileType
+      ContentType: fileType,
+      // No incluir ACL si el bucket tiene BlockPublicAcls habilitado
+      // ACL: 'private'
     });
 
     const uploadUrl = await getSignedUrl(s3Client, command, { expiresIn: 3600 });

@@ -60,7 +60,7 @@ export const OCR = () => {
     setUploading(true);
     try {
       // 1. Obtener URL pre-firmada
-      const uploadResponse = await fetch(`${import.meta.env.VITE_API_URL}/dev/ocr/upload`, {
+      const uploadResponse = await fetch(`${import.meta.env.VITE_API_URL}/ocr/upload`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -107,7 +107,7 @@ export const OCR = () => {
 
     setProcessing(true);
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/dev/ocr/process/${currentDocument.id}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/ocr/process/${currentDocument.id}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -138,7 +138,7 @@ export const OCR = () => {
     if (!currentDocument) return;
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/dev/ocr/results/${currentDocument.id}`);
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/ocr/results/${currentDocument.id}`);
       const data = await response.json();
       
       if (data.data) {
