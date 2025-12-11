@@ -132,6 +132,9 @@ package:
     - 'node_modules/@aws-sdk/client-apigatewaymanagementapi/**'
     - 'node_modules/@aws-sdk/client-dynamodb/**'
     - 'node_modules/@aws-sdk/lib-dynamodb/**'
+    - 'node_modules/@aws-sdk/client-textract/**'
+    - 'node_modules/@aws-sdk/client-s3/**'
+    - 'node_modules/@aws-sdk/s3-request-presigner/**'
     - 'node_modules/@aws-sdk/util-*/**'
     - 'node_modules/@aws-sdk/middleware-*/**'
     - 'node_modules/@aws-sdk/protocol-http/**'
@@ -159,6 +162,7 @@ package:
     - 'node_modules/bcryptjs/**'
     - 'node_modules/jsonwebtoken/**'
     - 'node_modules/axios/**'
+    - 'node_modules/uuid/**'
     - 'node_modules/@aws-sdk/client-cognito-identity-provider/**'
     - 'node_modules/node-fetch/**'
     - 'node_modules/jwk-to-pem/**'
@@ -1012,6 +1016,40 @@ functions:
       - http:
           path: whatsapp/send-image
           method: post
+          cors: true
+
+  # OCR endpoints
+  uploadDocument:
+    handler: dist/modules/OCR/handlers/uploadDocument.handler
+    timeout: 30
+    memorySize: 512
+    vpc: null
+    events:
+      - http:
+          path: ocr/upload
+          method: post
+          cors: true
+
+  processDocument:
+    handler: dist/modules/OCR/handlers/processDocument.handler
+    timeout: 60
+    memorySize: 1024
+    vpc: null
+    events:
+      - http:
+          path: ocr/process/{id}
+          method: post
+          cors: true
+
+  getOCRResults:
+    handler: dist/modules/OCR/handlers/getOCRResults.handler
+    timeout: 30
+    memorySize: 512
+    vpc: null
+    events:
+      - http:
+          path: ocr/results/{id}
+          method: get
           cors: true
 
 resources:
