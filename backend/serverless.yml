@@ -11,7 +11,6 @@ provider:
   logs:
     restApi: true
   logRetentionInDays: 7
-  disableLogs: false
   # VPC: Configuración condicional (solo si están definidas las variables)
   vpc:
     securityGroupIds:
@@ -1105,9 +1104,10 @@ resources:
 
 custom:
   splitStacks:
-    perFunction: false
+    perFunction: true
     perType: true
-    perGroupFunction: false
+    perGroupFunction: true
+    nestedStackCount: 10
   serverless-offline:
     httpPort: 9500
     host: 0.0.0.0
