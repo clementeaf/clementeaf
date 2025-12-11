@@ -8,9 +8,9 @@ provider:
   stage: ${opt:stage, 'dev'}
   region: ${opt:region, 'us-east-1'}
   versionFunctions: false
-  logs:
-    restApi: true
-  logRetentionInDays: 7
+  # logs:
+  #   restApi: true
+  # logRetentionInDays: 7
   # VPC: Configuración condicional (solo si están definidas las variables)
   vpc:
     securityGroupIds:
@@ -123,32 +123,50 @@ provider:
     OCR_REGION: ${env:OCR_REGION, 'us-east-1'}
 
 package:
-  individually: true
+  individually: false
   patterns:
-    - '!node_modules/**'
     - '!.git/**'
     - '!.github/**'
     - '!.vscode/**'
+    - '!.serverless/**'
+    - '!.env*'
     - '!src/**'
     - '!test/**'
     - '!tests/**'
     - '!*.md'
-    - 'node_modules/typeorm/**'
-    - 'node_modules/pg/**'
-    - 'node_modules/bcryptjs/**'
-    - 'node_modules/jsonwebtoken/**'
-    - 'node_modules/axios/**'
-    - 'node_modules/uuid/**'
-    - 'node_modules/@aws-sdk/client-s3/**'
-    - 'node_modules/@aws-sdk/client-textract/**'
-    - 'node_modules/@aws-sdk/s3-request-presigner/**'
-    - 'node_modules/@aws-sdk/client-ses/**'
-    - 'node_modules/@aws-sdk/client-cognito-identity-provider/**'
-    - 'node_modules/@aws-sdk/client-apigatewaymanagementapi/**'
-    - 'node_modules/@smithy/**'
-    - 'node_modules/tslib/**'
+    - '!docker-compose.yml'
+    - '!Dockerfile'
+    - '!*.sh'
+    - '!localstack-data/**'
+    - '!postgres-data/**'
+    - '!scripts/**'
+    - '!node_modules/@types/**'
+    - '!node_modules/typescript/**'
+    - '!node_modules/eslint/**'
+    - '!node_modules/@typescript-eslint/**'
+    - '!node_modules/serverless/**'
+    - '!node_modules/serverless-offline/**'
+    - '!node_modules/serverless-plugin-typescript/**'
+    - '!node_modules/serverless-plugin-split-stacks/**'
+    - '!node_modules/@serverless/**'
+    - '!node_modules/ws/**'
+    - '!node_modules/aws-sdk/**'
+    - '!node_modules/java-invoke-local/**'
+    - '!node_modules/simple-git/**'
+    - '!node_modules/yaml-ast-parser/**'
+    - '!node_modules/**/test/**'
+    - '!node_modules/**/tests/**'
+    - '!node_modules/**/*.ts'
+    - '!node_modules/**/*.md'
+    - '!node_modules/**/README*'
+    - '!node_modules/**/LICENSE*'
+    - '!node_modules/**/*.map'
+    - '!node_modules/**/examples/**'
+    - '!node_modules/**/docs/**'
     - 'dist/**'
+    - 'node_modules/**'
     - 'package.json'
+  excludeDevDependencies: true
 
 plugins:
   - serverless-offline
@@ -162,7 +180,12 @@ functions:
       - http:
           path: hello
           method: get
-          cors: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
 
   runMigrations:
     handler: dist/handlers/runMigrations.handler
@@ -172,7 +195,12 @@ functions:
       - http:
           path: migrations/run
           method: post
-          cors: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
 
   seedWarehouses:
     handler: dist/handlers/seedWarehouses.handler
@@ -182,7 +210,12 @@ functions:
       - http:
           path: migrations/seed-warehouses
           method: post
-          cors: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
 
   register:
     handler: dist/modules/Users/handlers/register.handler
@@ -193,7 +226,12 @@ functions:
       - http:
           path: auth/register
           method: post
-          cors: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
   login:
     handler: dist/modules/Users/handlers/login.handler
     timeout: 30
@@ -203,7 +241,17 @@ functions:
       - http:
           path: auth/login
           method: post
-          cors: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Requested-With
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: false
+            maxAge: 86400
   me:
     handler: dist/modules/Users/handlers/me.handler
     timeout: 30
@@ -213,16 +261,25 @@ functions:
       - http:
           path: auth/me
           method: get
-          cors: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
 
   logout:
     handler: dist/modules/Users/handlers/logout.handler
-    vpc: null
     events:
       - http:
           path: auth/logout
           method: post
-          cors: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
   refreshToken:
     handler: dist/modules/Users/handlers/refreshToken.handler
     timeout: 30
@@ -232,7 +289,12 @@ functions:
       - http:
           path: auth/refresh
           method: post
-          cors: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
   # Users endpoints
   getAllUsers:
     handler: dist/modules/Users/handlers/getAllUsers.handler
@@ -242,7 +304,12 @@ functions:
       - http:
           path: users
           method: get
-          cors: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
 
   getUserById:
     handler: dist/modules/Users/handlers/getUserById.handler
@@ -252,7 +319,12 @@ functions:
       - http:
           path: users/{id}
           method: get
-          cors: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
 
   updateUserRole:
     handler: dist/modules/Users/handlers/updateUserRole.handler
@@ -262,7 +334,12 @@ functions:
       - http:
           path: users/{id}/role
           method: put
-          cors: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
 
   # Notifications endpoints
   getNotifications:
@@ -274,7 +351,12 @@ functions:
       - http:
           path: notifications
           method: get
-          cors: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
 
   markNotificationAsRead:
     handler: dist/modules/Notifications/handlers/markAsRead.handler
@@ -285,7 +367,12 @@ functions:
       - http:
           path: notifications/{id}/read
           method: put
-          cors: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
 
   markAllNotificationsAsRead:
     handler: dist/modules/Notifications/handlers/markAllAsRead.handler
@@ -296,7 +383,12 @@ functions:
       - http:
           path: notifications/read-all
           method: put
-          cors: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
 
   # Analytics endpoints
   getCtasPorCobrar:
@@ -305,7 +397,12 @@ functions:
       - http:
           path: analytics/ctas-por-cobrar
           method: get
-          cors: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
 
   getDeudasActivas:
     handler: dist/modules/Analytics/handlers/getDeudasActivas.handler
@@ -313,7 +410,12 @@ functions:
       - http:
           path: analytics/deudas-activas
           method: get
-          cors: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
 
   getResumenClientes:
     handler: dist/modules/Analytics/handlers/getResumenClientes.handler
@@ -321,7 +423,12 @@ functions:
       - http:
           path: analytics/resumen/clientes
           method: get
-          cors: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
 
   getResumenVendedores:
     handler: dist/modules/Analytics/handlers/getResumenVendedores.handler
@@ -329,7 +436,12 @@ functions:
       - http:
           path: analytics/resumen/vendedores
           method: get
-          cors: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
 
   getEstadisticas:
     handler: dist/modules/Analytics/handlers/getEstadisticas.handler
@@ -337,7 +449,12 @@ functions:
       - http:
           path: analytics/estadisticas
           method: get
-          cors: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
 
   syncData:
     handler: dist/modules/Analytics/handlers/syncData.handler
@@ -347,7 +464,12 @@ functions:
       - http:
           path: analytics/sync
           method: post
-          cors: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
 
   # CheckAuditor endpoints
   authenticateSession:
@@ -356,7 +478,12 @@ functions:
       - http:
           path: checkauditor/sessions
           method: post
-          cors: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
 
   getCompanyData:
     handler: dist/modules/CheckAuditor/handlers/getCompanyData.handler
@@ -364,7 +491,12 @@ functions:
       - http:
           path: checkauditor/company-data
           method: get
-          cors: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
 
   getCheckAuditorNotifications:
     handler: dist/modules/CheckAuditor/handlers/getNotifications.handler
@@ -372,7 +504,12 @@ functions:
       - http:
           path: checkauditor/notifications
           method: get
-          cors: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
 
   # Clients endpoints
   createClient:
@@ -383,7 +520,12 @@ functions:
       - http:
           path: clients
           method: post
-          cors: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
 
   getAllClients:
     handler: dist/modules/Clients/handlers/getAllClients.handler
@@ -393,7 +535,12 @@ functions:
       - http:
           path: clients
           method: get
-          cors: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
 
   searchClients:
     handler: dist/modules/Clients/handlers/searchClients.handler
@@ -403,7 +550,12 @@ functions:
       - http:
           path: clients/search/query
           method: get
-          cors: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
 
   getClientById:
     handler: dist/modules/Clients/handlers/getClientById.handler
@@ -413,7 +565,12 @@ functions:
       - http:
           path: clients/{id}
           method: get
-          cors: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
 
   updateClient:
     handler: dist/modules/Clients/handlers/updateClient.handler
@@ -423,7 +580,12 @@ functions:
       - http:
           path: clients/{id}
           method: put
-          cors: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
 
   deleteClient:
     handler: dist/modules/Clients/handlers/deleteClient.handler
@@ -433,7 +595,12 @@ functions:
       - http:
           path: clients/{id}
           method: delete
-          cors: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
 
   # Branches endpoints
   getBranchesByClientId:
@@ -444,7 +611,12 @@ functions:
       - http:
           path: clients/{id}/branches
           method: get
-          cors: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
 
   getBranchById:
     handler: dist/modules/Clients/handlers/getBranchById.handler
@@ -454,7 +626,12 @@ functions:
       - http:
           path: clients/{id}/branches/{branchId}
           method: get
-          cors: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
 
   createBranch:
     handler: dist/modules/Clients/handlers/createBranch.handler
@@ -464,7 +641,12 @@ functions:
       - http:
           path: clients/{id}/branches
           method: post
-          cors: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
 
   updateBranch:
     handler: dist/modules/Clients/handlers/updateBranch.handler
@@ -474,7 +656,12 @@ functions:
       - http:
           path: clients/{id}/branches/{branchId}
           method: put
-          cors: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
 
   deleteBranch:
     handler: dist/modules/Clients/handlers/deleteBranch.handler
@@ -484,7 +671,12 @@ functions:
       - http:
           path: clients/{id}/branches/{branchId}
           method: delete
-          cors: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
 
   # Quotes endpoints
   createQuote:
@@ -495,7 +687,12 @@ functions:
       - http:
           path: quotes
           method: post
-          cors: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
 
   getNextQuoteNumber:
     handler: dist/modules/Quotes/handlers/getNextQuoteNumber.handler
@@ -505,7 +702,12 @@ functions:
       - http:
           path: quotes/next-number/query
           method: get
-          cors: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
 
   getQuoteById:
     handler: dist/modules/Quotes/handlers/getQuoteById.handler
@@ -515,7 +717,12 @@ functions:
       - http:
           path: quotes/{id}
           method: get
-          cors: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
 
   getAllQuotes:
     handler: dist/modules/Quotes/handlers/getAllQuotes.handler
@@ -525,7 +732,12 @@ functions:
       - http:
           path: quotes
           method: get
-          cors: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
 
   updateQuote:
     handler: dist/modules/Quotes/handlers/updateQuote.handler
@@ -535,7 +747,12 @@ functions:
       - http:
           path: quotes/{id}
           method: put
-          cors: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
 
   deleteQuote:
     handler: dist/modules/Quotes/handlers/deleteQuote.handler
@@ -545,7 +762,12 @@ functions:
       - http:
           path: quotes/{id}
           method: delete
-          cors: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
 
   getPickingOrders:
     handler: dist/modules/Quotes/handlers/getPickingOrders.handler
@@ -555,7 +777,12 @@ functions:
       - http:
           path: quotes/picking-orders
           method: get
-          cors: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
 
   # Picking Metrics endpoints
   getPickingMetrics:
@@ -566,7 +793,12 @@ functions:
       - http:
           path: picking/metrics
           method: get
-          cors: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
 
   # Quotes Event Handlers
   quoteCreatedEventHandler:
@@ -606,7 +838,12 @@ functions:
       - http:
           path: products/search/query
           method: get
-          cors: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
 
   getWarehouses:
     handler: dist/modules/Products/handlers/getWarehouses.handler
@@ -616,7 +853,12 @@ functions:
       - http:
           path: products/warehouses
           method: get
-          cors: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
 
   getProductHistory:
     handler: dist/modules/Products/handlers/getProductHistory.handler
@@ -626,7 +868,12 @@ functions:
       - http:
           path: products/{productId}/history
           method: get
-          cors: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
 
   createMovement:
     handler: dist/modules/Products/handlers/createMovement.handler
@@ -636,7 +883,12 @@ functions:
       - http:
           path: products/movements
           method: post
-          cors: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
 
   # Chat endpoints
   createConversation:
@@ -647,7 +899,12 @@ functions:
       - http:
           path: chat/conversations
           method: post
-          cors: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
 
   getConversationById:
     handler: dist/modules/Chat/handlers/getConversationById.handler
@@ -657,7 +914,12 @@ functions:
       - http:
           path: chat/conversations/{conversationId}
           method: get
-          cors: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
 
   getConversationsByUserId:
     handler: dist/modules/Chat/handlers/getConversationsByUserId.handler
@@ -667,7 +929,12 @@ functions:
       - http:
           path: chat/conversations/user/{userId}
           method: get
-          cors: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
 
   createMessage:
     handler: dist/modules/Chat/handlers/createMessage.handler
@@ -677,7 +944,12 @@ functions:
       - http:
           path: chat/messages
           method: post
-          cors: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
 
   getMessagesByConversationId:
     handler: dist/modules/Chat/handlers/getMessagesByConversationId.handler
@@ -687,7 +959,12 @@ functions:
       - http:
           path: chat/conversations/{conversationId}/messages
           method: get
-          cors: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
 
   markMessageAsRead:
     handler: dist/modules/Chat/handlers/markMessageAsRead.handler
@@ -697,7 +974,12 @@ functions:
       - http:
           path: chat/messages/{messageId}/read
           method: put
-          cors: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
 
   markConversationMessagesAsRead:
     handler: dist/modules/Chat/handlers/markConversationMessagesAsRead.handler
@@ -707,7 +989,12 @@ functions:
       - http:
           path: chat/conversations/{conversationId}/messages/read
           method: put
-          cors: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
 
   startTyping:
     handler: dist/modules/Chat/handlers/startTyping.handler
@@ -717,7 +1004,12 @@ functions:
       - http:
           path: chat/typing/start
           method: post
-          cors: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
 
   stopTyping:
     handler: dist/modules/Chat/handlers/stopTyping.handler
@@ -727,7 +1019,12 @@ functions:
       - http:
           path: chat/typing/stop
           method: post
-          cors: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
 
   # Tickets endpoints
   createTicket:
@@ -738,7 +1035,12 @@ functions:
       - http:
           path: tickets
           method: post
-          cors: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
 
   getTicketById:
     handler: dist/modules/Tickets/handlers/getTicketById.handler
@@ -748,7 +1050,12 @@ functions:
       - http:
           path: tickets/{id}
           method: get
-          cors: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
 
   getAllTickets:
     handler: dist/modules/Tickets/handlers/getAllTickets.handler
@@ -758,7 +1065,12 @@ functions:
       - http:
           path: tickets
           method: get
-          cors: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
 
   getTicketsByReporterId:
     handler: dist/modules/Tickets/handlers/getTicketsByReporterId.handler
@@ -768,7 +1080,12 @@ functions:
       - http:
           path: tickets/reporter
           method: get
-          cors: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
 
   getTicketsByAssigneeId:
     handler: dist/modules/Tickets/handlers/getTicketsByAssigneeId.handler
@@ -778,7 +1095,12 @@ functions:
       - http:
           path: tickets/assignee
           method: get
-          cors: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
 
   updateTicket:
     handler: dist/modules/Tickets/handlers/updateTicket.handler
@@ -788,7 +1110,12 @@ functions:
       - http:
           path: tickets/{id}
           method: put
-          cors: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
 
   deleteTicket:
     handler: dist/modules/Tickets/handlers/deleteTicket.handler
@@ -798,7 +1125,12 @@ functions:
       - http:
           path: tickets/{id}
           method: delete
-          cors: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
 
   getPresignedUrl:
     handler: dist/modules/Tickets/handlers/getPresignedUrl.handler
@@ -808,7 +1140,12 @@ functions:
       - http:
           path: tickets/presigned-url
           method: post
-          cors: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
 
   # Email endpoints
   sendEmail:
@@ -820,7 +1157,12 @@ functions:
       - http:
           path: email/send
           method: post
-          cors: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
 
   # Roles endpoints
   getAllRoles:
@@ -831,7 +1173,12 @@ functions:
       - http:
           path: roles
           method: get
-          cors: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
 
   getRoleById:
     handler: dist/modules/Roles/handlers/getRoleById.handler
@@ -841,7 +1188,12 @@ functions:
       - http:
           path: roles/{id}
           method: get
-          cors: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
 
   createRole:
     handler: dist/modules/Roles/handlers/createRole.handler
@@ -851,7 +1203,12 @@ functions:
       - http:
           path: roles
           method: post
-          cors: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
 
   updateRole:
     handler: dist/modules/Roles/handlers/updateRole.handler
@@ -861,7 +1218,12 @@ functions:
       - http:
           path: roles/{id}
           method: put
-          cors: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
 
   deleteRole:
     handler: dist/modules/Roles/handlers/deleteRole.handler
@@ -871,7 +1233,12 @@ functions:
       - http:
           path: roles/{id}
           method: delete
-          cors: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
 
   # Permissions endpoints
   getAllPermissions:
@@ -882,7 +1249,12 @@ functions:
       - http:
           path: permissions
           method: get
-          cors: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
 
   getAvailableCapabilities:
     handler: dist/modules/Roles/handlers/getAvailableCapabilities.handler
@@ -892,7 +1264,12 @@ functions:
       - http:
           path: permissions/capabilities
           method: get
-          cors: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
 
   syncPermissions:
     handler: dist/modules/Roles/handlers/syncPermissions.handler
@@ -902,14 +1279,18 @@ functions:
       - http:
           path: permissions/sync
           method: post
-          cors: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
 
   # WebSocket handlers
   websocketConnect:
     handler: dist/modules/Chat/handlers/websocket/connect.handler
     timeout: 30
     memorySize: 512
-    vpc: null
     events:
       - websocket:
           route: $connect
@@ -918,7 +1299,6 @@ functions:
     handler: dist/modules/Chat/handlers/websocket/disconnect.handler
     timeout: 30
     memorySize: 512
-    vpc: null
     events:
       - websocket:
           route: $disconnect
@@ -927,7 +1307,6 @@ functions:
     handler: dist/modules/Chat/handlers/websocket/sendMessage.handler
     timeout: 30
     memorySize: 512
-    vpc: null
     events:
       - websocket:
           route: $default
@@ -942,7 +1321,12 @@ functions:
       - http:
           path: whatsapp/status
           method: get
-          cors: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
 
   connectWhatsApp:
     handler: dist/modules/WhatsApp/handlers/connect.handler
@@ -953,7 +1337,12 @@ functions:
       - http:
           path: whatsapp/connect
           method: post
-          cors: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
 
   disconnectWhatsApp:
     handler: dist/modules/WhatsApp/handlers/disconnect.handler
@@ -964,7 +1353,12 @@ functions:
       - http:
           path: whatsapp/disconnect
           method: post
-          cors: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
 
   sendWhatsAppMessage:
     handler: dist/modules/WhatsApp/handlers/sendMessage.handler
@@ -975,7 +1369,12 @@ functions:
       - http:
           path: whatsapp/send-message
           method: post
-          cors: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
 
   sendWhatsAppImage:
     handler: dist/modules/WhatsApp/handlers/sendImage.handler
@@ -986,7 +1385,12 @@ functions:
       - http:
           path: whatsapp/send-image
           method: post
-          cors: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
 
   # OCR endpoints
   uploadDocument:
