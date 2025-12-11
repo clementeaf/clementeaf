@@ -27,6 +27,24 @@ provider:
           Resource:
             - arn:aws:s3:::banados-analytics-data
             - arn:aws:s3:::banados-analytics-data/*
+        # S3 acceso para documentos OCR
+        - Effect: Allow
+          Action:
+            - s3:GetObject
+            - s3:PutObject
+            - s3:DeleteObject
+            - s3:ListBucket
+          Resource:
+            - arn:aws:s3:::banados-ocr-documents
+            - arn:aws:s3:::banados-ocr-documents/*
+        # Amazon Textract permisos
+        - Effect: Allow
+          Action:
+            - textract:DetectDocumentText
+            - textract:AnalyzeDocument
+            - textract:StartDocumentAnalysis
+            - textract:GetDocumentAnalysis
+          Resource: '*'
         # WebSocket connections
         - Effect: Allow
           Action:
@@ -98,6 +116,8 @@ provider:
     EVENT_BRIDGE_BUS_NAME: ${env:EVENT_BRIDGE_BUS_NAME, 'default'}
     EVENT_BRIDGE_SOURCE: ${env:EVENT_BRIDGE_SOURCE, 'banados.quotes'}
     WHATSAPP_SERVICE_URL: ${env:WHATSAPP_SERVICE_URL, 'http://44.200.30.66:3001'}
+    OCR_BUCKET_NAME: ${env:OCR_BUCKET_NAME, 'banados-ocr-documents'}
+    OCR_REGION: ${env:OCR_REGION, 'us-east-1'}
 
 package:
   patterns:
