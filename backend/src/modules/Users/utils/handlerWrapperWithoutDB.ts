@@ -1,5 +1,4 @@
 import { type APIGatewayProxyEvent, type APIGatewayProxyResult } from 'aws-lambda';
-import { initializeDatabase } from '../../../config/database';
 import { errorResponse, getErrorStatusCode } from './response';
 
 /**
@@ -16,15 +15,14 @@ const getCorsHeaders = (): Record<string, string> => {
 };
 
 /**
- * Wrapper para handlers que maneja inicialización de DB y errores
+ * Wrapper para handlers que NO necesitan base de datos (solo Cognito/servicios externos)
  * @param handler - Función handler a ejecutar
  * @returns Handler envuelto con manejo de errores
  */
-export const handlerWrapper = (
+export const handlerWrapperWithoutDB = (
   handler: (event: APIGatewayProxyEvent) => Promise<APIGatewayProxyResult>
-) => {
+): ((event: APIGatewayProxyEvent) => Promise<APIGatewayProxyResult>) => {
   return async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
-    // Manejar requests OPTIONS (preflight CORS)
     if (event.httpMethod === 'OPTIONS') {
       return {
         statusCode: 200,
@@ -37,12 +35,8 @@ export const handlerWrapper = (
     }
 
     try {
-      // Inicializar DB solo si no está ya inicializada (reutilizar entre invocaciones)
-      await initializeDatabase();
-      
       const result = await handler(event);
       
-      // Asegurar que todas las respuestas tengan headers CORS
       return {
         ...result,
         headers: {
@@ -51,12 +45,10 @@ export const handlerWrapper = (
         }
       };
     } catch (error) {
-      // Asegurar que incluso los errores tengan headers CORS
       const errorMessage = error instanceof Error ? error.message : 'Internal server error';
       const statusCode = getErrorStatusCode(errorMessage);
       const errorResp = errorResponse(statusCode, errorMessage);
       
-      // Garantizar que los headers CORS estén presentes incluso en errores
       return {
         ...errorResp,
         headers: {
@@ -67,4 +59,3 @@ export const handlerWrapper = (
     }
   };
 };
-

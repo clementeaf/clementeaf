@@ -1,7 +1,7 @@
-import { type APIGatewayProxyEvent } from 'aws-lambda';
+import { type APIGatewayProxyEvent, type APIGatewayProxyResult } from 'aws-lambda';
 import { AuthService } from '../services/AuthService';
+import { handlerWrapperWithoutDB } from '../utils/handlerWrapperWithoutDB';
 import { type RefreshTokenDto } from '../dto/RefreshTokenDto';
-import { handlerWrapper } from '../utils/handlerWrapper';
 import { validateBody, parseBody } from '../utils/validation';
 import { successResponse, errorResponse } from '../utils/response';
 
@@ -10,7 +10,7 @@ import { successResponse, errorResponse } from '../utils/response';
  * @param event - Evento de API Gateway
  * @returns Respuesta con nuevo token JWT y refresh token
  */
-const refreshTokenHandler = async (event: APIGatewayProxyEvent) => {
+const refreshTokenHandler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   const bodyError = validateBody(event);
   if (bodyError) return bodyError;
 
@@ -54,5 +54,5 @@ const refreshTokenHandler = async (event: APIGatewayProxyEvent) => {
   }
 };
 
-export const handler = handlerWrapper(refreshTokenHandler);
+export const handler = handlerWrapperWithoutDB(refreshTokenHandler);
 

@@ -1,7 +1,7 @@
 import { type APIGatewayProxyEvent } from 'aws-lambda';
 import { AuthService } from '../services/AuthService';
 import { type RegisterDto } from '../dto/RegisterDto';
-import { handlerWrapper } from '../utils/handlerWrapper';
+import { handlerWrapperWithoutDB } from '../utils/handlerWrapperWithoutDB';
 import { validateBody, parseBody } from '../utils/validation';
 import { validateRegisterDto } from '../utils/validators';
 import { successResponse, errorResponse } from '../utils/response';
@@ -41,5 +41,5 @@ const registerHandler = async (event: APIGatewayProxyEvent) => {
   );
 };
 
-export const handler = handlerWrapper(registerHandler);
+export const handler = handlerWrapperWithoutDB(registerHandler);
 
