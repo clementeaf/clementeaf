@@ -16,5 +16,6 @@ export interface CreateMovementDto {
   lote?: string;
   observaciones?: string;
   createdBy?: number;
+  quoteId?: number;
 }
 

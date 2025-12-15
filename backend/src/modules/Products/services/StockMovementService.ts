@@ -47,6 +47,7 @@ export interface CreateMovementDto {
   lote?: string;
   observaciones?: string;
   createdBy?: number;
+  quoteId?: number;
 }
 
 /**
@@ -177,6 +178,8 @@ export class StockMovementService {
       stockNuevo = stockAnterior + Number(dto.cantidad);
     } else if (dto.type === MovementType.SALIDA) {
       stockNuevo = stockAnterior - Number(dto.cantidad); // Ya validamos que hay stock suficiente
+    } else if (dto.type === MovementType.RESERVA) {
+      stockNuevo = stockAnterior; // Las reservas no modifican el stock físico
     } else {
       // TRANSFERENCIA: se manejará en Fase 4
       stockNuevo = stockAnterior;
@@ -197,7 +200,8 @@ export class StockMovementService {
       fechaDocumento: dto.fechaDocumento || null,
       lote: dto.lote || null,
       observaciones: dto.observaciones || null,
-      createdBy: dto.createdBy || null
+      createdBy: dto.createdBy || null,
+      quoteId: dto.quoteId || null
     });
 
     return await this.movementRepository.save(movement);

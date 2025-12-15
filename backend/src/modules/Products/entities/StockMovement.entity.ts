@@ -8,7 +8,8 @@ export enum MovementType {
   ENTRADA = 'entrada',
   SALIDA = 'salida',
   AJUSTE = 'ajuste',
-  TRANSFERENCIA = 'transferencia'
+  TRANSFERENCIA = 'transferencia',
+  RESERVA = 'reserva'
 }
 
 /**
@@ -71,6 +72,9 @@ export class StockMovement {
 
   @Column({ type: 'int', nullable: true })
   createdBy?: number | null;
+
+  @Column({ type: 'int', nullable: true })
+  quoteId?: number | null;
 
   @CreateDateColumn({ type: 'timestamp with time zone' })
   createdAt!: Date;

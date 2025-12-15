@@ -771,14 +771,74 @@ functions:
               - Authorization
             allowCredentials: false
 
-  deleteQuote:
-    handler: dist/modules/Quotes/handlers/deleteQuote.handler
+  # deleteQuote:
+  #   handler: dist/modules/Quotes/handlers/deleteQuote.handler
+  #   timeout: 30
+  #   memorySize: 512
+  #   events:
+  #     - http:
+  #         path: quotes/{id}
+  #         method: delete
+  #         cors:
+  #           origin: '*'
+  #           headers:
+  #             - Content-Type
+  #             - Authorization
+  #           allowCredentials: false
+
+  approveQuote:
+    handler: dist/modules/Quotes/handlers/approveQuote.handler
     timeout: 30
     memorySize: 512
     events:
       - http:
-          path: quotes/{id}
-          method: delete
+          path: quotes/{id}/approve
+          method: post
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
+
+  updatePickingStatus:
+    handler: dist/modules/Quotes/handlers/updatePickingStatus.handler
+    timeout: 30
+    memorySize: 512
+    events:
+      - http:
+          path: quotes/{id}/picking-status
+          method: put
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
+
+  cancelQuote:
+    handler: dist/modules/Quotes/handlers/cancelQuote.handler
+    timeout: 30
+    memorySize: 512
+    events:
+      - http:
+          path: quotes/{id}/cancel
+          method: post
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
+
+  confirmPicking:
+    handler: dist/modules/Quotes/handlers/confirmPicking.handler
+    timeout: 30
+    memorySize: 512
+    events:
+      - http:
+          path: quotes/{id}/confirm-picking
+          method: post
           cors:
             origin: '*'
             headers:
@@ -846,6 +906,19 @@ functions:
             detail-type:
               - quote.status_changed
 
+  quoteApprovedEventHandler:
+    handler: dist/modules/Quotes/handlers/events/quoteApprovedHandler.handler
+    timeout: 60
+    memorySize: 512
+    vpc: null
+    events:
+      - eventBridge:
+          pattern:
+            source:
+              - banados.quotes
+            detail-type:
+              - quote.approved
+
   # Products endpoints
   searchProducts:
     handler: dist/modules/Products/handlers/searchProducts.handler
@@ -906,6 +979,21 @@ functions:
               - Content-Type
               - Authorization
             allowCredentials: false
+
+  # getAvailableStock:
+  #   handler: dist/modules/Products/handlers/getAvailableStock.handler
+  #   timeout: 30
+  #   memorySize: 512
+  #   events:
+  #     - http:
+  #         path: products/{productId}/available-stock
+  #         method: get
+  #         cors:
+  #           origin: '*'
+  #           headers:
+  #             - Content-Type
+  #             - Authorization
+  #           allowCredentials: false
 
   # Chat endpoints
   createConversation:

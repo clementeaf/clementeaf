@@ -30,6 +30,9 @@ export interface CreateQuoteDto {
 
   // Estado
   estado?: string;
+  
+  // Estado de picking
+  estadoPicking?: string;
 }
 
 /**

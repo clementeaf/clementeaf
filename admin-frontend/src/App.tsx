@@ -33,6 +33,7 @@ const CreateUser = lazy(() => import('./pages/Roles/CreateUser').then(module => 
 const WhatsApp = lazy(() => import('./pages/WhatsApp').then(module => ({ default: module.WhatsApp })));
 const OCR = lazy(() => import('./pages/OCR/OCR').then(module => ({ default: module.default })));
 const Activity = lazy(() => import('./pages/Activity').then(module => ({ default: module.Activity })));
+const Finanzas = lazy(() => import('./pages/Finanzas').then(module => ({ default: module.Finanzas })));
 
 /**
  * Componente de carga para Suspense
@@ -229,6 +230,12 @@ function App(): React.ReactNode {
             <Route 
               path={routes.activity} 
               element={<Activity />} 
+            />
+            
+            {/* Rutas de Finanzas */}
+            <Route 
+              path={routes.finanzas} 
+              element={<Finanzas />} 
             />
             
             {/* Rutas legacy (sin protección por ahora) */}

@@ -34,6 +34,7 @@ export const routes = {
   whatsapp: '/whatsapp',
   ocr: '/ocr',
   activity: '/activity',
+  finanzas: '/finanzas',
   notFound: '/*'
 } as const;
 

@@ -74,7 +74,11 @@ export class Quote {
 
   // Estado de la orden de compra
   @Column({ type: 'varchar', length: 50, default: 'borrador' })
-  estado!: string; // 'borrador', 'enviada', 'aceptada', 'rechazada', 'cancelada'
+  estado!: string; // 'borrador', 'enviada', 'aprobada', 'rechazada', 'cancelada'
+
+  // Estado de picking (cuando la nota es aprobada)
+  @Column({ type: 'varchar', length: 50, nullable: true })
+  estadoPicking!: string | null; // 'iniciado', 'recolectado', 'confirmado', 'en_ruta'
 
   @CreateDateColumn()
   createdAt!: Date;
