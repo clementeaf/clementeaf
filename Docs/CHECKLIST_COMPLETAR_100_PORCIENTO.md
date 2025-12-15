@@ -301,7 +301,7 @@
 
 - [ ] **Caché más agresivo**
   - [ ] Aumentar staleTime para datos estáticos
-  - [ ] Caché persistente en localStorage
+  - [ ] Caché persistente en sessionStorage
   - [ ] Prefetch de datos comunes
   - [ ] Invalidación inteligente de caché
 

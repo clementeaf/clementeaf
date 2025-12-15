@@ -4,6 +4,7 @@ import { apiClient } from '../api/client';
 import { endpoints } from '../api/endpoints';
 import type { MeResponse } from '../api/types';
 import { getAuthUrl } from '../config/frontendUrls';
+import { getCookie } from '../utils/cookies';
 
 /**
  * Hook para manejar la autenticación
@@ -24,8 +25,8 @@ export const useAuth = () => {
    * Verifica si el usuario está autenticado
    */
   const verifyAuth = async (): Promise<void> => {
-    const token = localStorage.getItem('authToken');
-    const refreshToken = localStorage.getItem('refreshToken');
+    const token = getCookie('authToken');
+    const refreshToken = getCookie('refreshToken');
 
     if (!token || !refreshToken) {
       setLoading(false);

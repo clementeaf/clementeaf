@@ -4,6 +4,9 @@ import { OCRDocument } from '../entities/OCRDocument.entity';
 import { DocumentStatus } from '../types';
 import { TextractService } from '../services/TextractService';
 import { DocumentParser } from '../services/DocumentParser';
+import { WebSocketConnectionService } from '../../Chat/services/WebSocketConnectionService';
+import { AwsWebSocketClient } from '../../Chat/services/aws/AwsWebSocketClient';
+import { IWebSocketClient } from '../../Chat/interfaces/IWebSocketClient';
 
 /**
  * Handler para procesar documento con Textract
@@ -57,6 +60,12 @@ export const handler = async (
     document.status = DocumentStatus.PROCESSING;
     await ocrRepository.save(document);
 
+    // Notificar vía WebSocket que el procesamiento ha iniciado
+    await notifyOCRStatus(document.id, 'PROCESSING', {
+      fileName: document.fileName,
+      documentType: document.documentType
+    });
+
     try {
       // Procesar con Textract
       const textractService = new TextractService();
@@ -96,6 +105,19 @@ export const handler = async (
 
       await ocrRepository.save(document);
 
+      // Notificar vía WebSocket que el procesamiento ha completado
+      await notifyOCRStatus(document.id, 'COMPLETED', {
+        fileName: document.fileName,
+        documentType: document.documentType,
+        extractedData: {
+          orderNumber: extractedData.orderNumber,
+          companyName: extractedData.companyName,
+          companyRut: extractedData.companyRut,
+          total: extractedData.total,
+          itemsCount: extractedData.items.length
+        }
+      });
+
       return {
         statusCode: 200,
         headers: {
@@ -119,6 +141,12 @@ export const handler = async (
         : 'Error desconocido';
       await ocrRepository.save(document);
 
+      // Notificar vía WebSocket que el procesamiento ha fallado
+      await notifyOCRStatus(document.id, 'FAILED', {
+        fileName: document.fileName,
+        errorMessage: document.errorMessage
+      });
+
       throw processingError;
     }
   } catch (error) {
@@ -134,6 +162,53 @@ export const handler = async (
         message: 'Error al procesar documento',
         error: error instanceof Error ? error.message : 'Unknown error'
       })
-    };
+    }
   }
 };
+
+/**
+ * Notifica el estado del documento OCR vía WebSocket a todos los clientes conectados
+ */
+async function notifyOCRStatus(
+  documentId: string,
+  status: string,
+  additionalData?: Record<string, any>
+): Promise<void> {
+  try {
+    const isLocal = process.env.IS_OFFLINE === 'true' || 
+                    process.env.NODE_ENV === 'development' || 
+                    !process.env.AWS_LAMBDA_FUNCTION_NAME;
+    
+    let webSocketClient: IWebSocketClient;
+    if (isLocal) {
+      const { LocalWebSocketClient } = await import('../../Chat/services/LocalWebSocketClient');
+      webSocketClient = new LocalWebSocketClient();
+      console.log('🔧 [LOCAL] Usando LocalWebSocketClient para OCR');
+    } else {
+      const endpoint = process.env.WEBSOCKET_API_ENDPOINT || 
+                      (process.env.WSS_ENDPOINT ? process.env.WSS_ENDPOINT.replace('wss://', 'https://') : 
+                       'https://4hple5xva0.execute-api.us-east-1.amazonaws.com/dev');
+      
+      webSocketClient = new AwsWebSocketClient(
+        endpoint,
+        process.env.AWS_REGION || 'us-east-1'
+      );
+    }
+    
+    const connectionService = new WebSocketConnectionService(webSocketClient);
+
+    const message = {
+      action: 'ocr_document_update',
+      documentId,
+      status,
+      timestamp: new Date().toISOString(),
+      ...additionalData
+    };
+
+    const sentCount = await connectionService.broadcast(message);
+    console.log(`📡 OCR status (${status}) enviado vía WebSocket a ${sentCount} conexión(es) - Doc: ${documentId}`);
+  } catch (error) {
+    console.error('❌ Error enviando notificación WebSocket para OCR:', error);
+    // No lanzar error para no interrumpir el flujo principal
+  }
+}

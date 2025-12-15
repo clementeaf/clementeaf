@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import type { User } from '../api/types';
+import { deleteCookie, getCookie } from '../utils/cookies';
 
 interface AuthState {
   user: User | null;
@@ -33,14 +34,14 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   logout: () => {
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('refreshToken');
+    deleteCookie('authToken');
+    deleteCookie('refreshToken');
     set({ user: null, isAuthenticated: false });
   },
 
   checkAuth: () => {
-    const token = localStorage.getItem('authToken');
-    const refreshToken = localStorage.getItem('refreshToken');
+    const token = getCookie('authToken');
+    const refreshToken = getCookie('refreshToken');
     
     if (token && refreshToken) {
       set({ isAuthenticated: true, isLoading: false });

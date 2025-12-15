@@ -1,5 +1,6 @@
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from 'axios';
 import { authService } from '../services/authService';
+import { deleteCookie, getCookie, setCookie } from '../utils/cookies';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://zzv7qnwgz1.execute-api.us-east-1.amazonaws.com/dev';
 
@@ -34,11 +35,9 @@ const processQueue = (error: AxiosError | null, token: string | null = null): vo
 // Interceptor para agregar token si es necesario
 apiClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('authToken');
+    const token = getCookie('authToken');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
-    } else {
-      console.warn('⚠️ [API] No hay token en localStorage para la petición:', config.url);
     }
     return config;
   },
@@ -75,12 +74,12 @@ apiClient.interceptors.response.use(
       originalRequest._retry = true;
       isRefreshing = true;
 
-      const refreshToken = localStorage.getItem('refreshToken');
+      const refreshToken = getCookie('refreshToken');
       
       if (!refreshToken) {
         // No hay refresh token, limpiar y redirigir
-        localStorage.removeItem('authToken');
-        localStorage.removeItem('refreshToken');
+        deleteCookie('authToken');
+        deleteCookie('refreshToken');
         processQueue(error, null);
         isRefreshing = false;
         return Promise.reject(error);
@@ -91,8 +90,8 @@ apiClient.interceptors.response.use(
         const { token: newToken, refreshToken: newRefreshToken } = response.data;
 
         // Guardar nuevos tokens
-        localStorage.setItem('authToken', newToken);
-        localStorage.setItem('refreshToken', newRefreshToken);
+        setCookie('authToken', newToken);
+        setCookie('refreshToken', newRefreshToken, { maxAgeSeconds: 60 * 60 * 24 * 30 });
 
         // Actualizar el header de la petición original
         if (originalRequest.headers) {
@@ -108,8 +107,8 @@ apiClient.interceptors.response.use(
       } catch (refreshError) {
         // Error al refrescar, limpiar y redirigir
         console.error('❌ [API] Error al refrescar token:', refreshError);
-        localStorage.removeItem('authToken');
-        localStorage.removeItem('refreshToken');
+        deleteCookie('authToken');
+        deleteCookie('refreshToken');
         processQueue(refreshError as AxiosError, null);
         isRefreshing = false;
         

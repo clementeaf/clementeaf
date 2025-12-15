@@ -4,6 +4,7 @@ import type { HomeOrder } from '../pages/Home/types';
 import { useCurrentUser } from './useAuth';
 import { convertPickingOrderToHomeOrder } from '../services/homeOrdersService';
 import { logger } from '../utils/logger';
+import { getCookie } from '../utils/cookies';
 
 const WSS_ENDPOINT = import.meta.env.VITE_WS_URL || 'wss://ao9gv2kwll.execute-api.us-east-1.amazonaws.com/dev';
 
@@ -64,7 +65,7 @@ export const useHomeOrdersWebSocket = (options: UseHomeOrdersWebSocketOptions) =
 
     try {
       // Obtener token de autenticación
-      const token = localStorage.getItem('authToken');
+      const token = getCookie('authToken');
       const wsUrl = token 
         ? `${WSS_ENDPOINT}?token=${encodeURIComponent(token)}&userId=${currentUser.id}`
         : `${WSS_ENDPOINT}?userId=${currentUser.id}`;

@@ -1,14 +1,15 @@
 import { Wrapper, FormHeader } from '../components/ui';
 import { Button } from '../components/ui/Button';
 import { getFrontendUrls } from '../config/frontendUrls';
+import { getCookie } from '../utils/cookies';
 
 /**
  * Redirige a la aplicación seleccionada con el token y refresh token en la URL
  * @param url - URL de la aplicación a la que redirigir
  */
 const redirectToApp = (url: string): void => {
-  const token = localStorage.getItem('authToken');
-  const refreshToken = localStorage.getItem('refreshToken');
+  const token = getCookie('authToken');
+  const refreshToken = getCookie('refreshToken');
   
   if (token) {
     const separator = url.includes('?') ? '&' : '?';

@@ -18,11 +18,11 @@ export const Invoices = (): React.ReactElement => {
     const [error, setError] = useState<string | null>(null);
 
     /**
-     * Carga facturas persistidas desde localStorage al montar
+     * Carga facturas persistidas desde sessionStorage al montar
      */
     useEffect(() => {
         try {
-            const stored = localStorage.getItem(INVOICES_STORAGE_KEY);
+            const stored = sessionStorage.getItem(INVOICES_STORAGE_KEY);
             if (stored) {
                 const parsed = JSON.parse(stored);
                 // Convertir uploadDate de string a Date
@@ -31,26 +31,26 @@ export const Invoices = (): React.ReactElement => {
                     uploadDate: new Date(inv.uploadDate)
                 }));
                 setInvoices(invoicesWithDates);
-                logger.debug('Facturas cargadas desde localStorage', { count: invoicesWithDates.length });
+                logger.debug('Facturas cargadas desde sessionStorage', { count: invoicesWithDates.length });
             }
         } catch (error) {
-            logger.error('Error cargando facturas desde localStorage', error);
+            logger.error('Error cargando facturas desde sessionStorage', error);
         }
     }, []);
 
     /**
-     * Persiste facturas en localStorage cuando cambian
+     * Persiste facturas en sessionStorage cuando cambian
      */
     useEffect(() => {
         try {
             if (invoices.length > 0) {
-                localStorage.setItem(INVOICES_STORAGE_KEY, JSON.stringify(invoices));
-                logger.debug('Facturas guardadas en localStorage', { count: invoices.length });
+                sessionStorage.setItem(INVOICES_STORAGE_KEY, JSON.stringify(invoices));
+                logger.debug('Facturas guardadas en sessionStorage', { count: invoices.length });
             } else {
-                localStorage.removeItem(INVOICES_STORAGE_KEY);
+                sessionStorage.removeItem(INVOICES_STORAGE_KEY);
             }
         } catch (error) {
-            logger.error('Error guardando facturas en localStorage', error);
+            logger.error('Error guardando facturas en sessionStorage', error);
         }
     }, [invoices]);
 

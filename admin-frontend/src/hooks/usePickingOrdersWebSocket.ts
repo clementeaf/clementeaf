@@ -2,6 +2,7 @@ import { useEffect, useRef, useCallback } from 'react';
 import type { PickingOrder } from '../pages/Picking/types';
 import { useCurrentUser } from './useAuth';
 import { logger } from '../utils/logger';
+import { getCookie } from '../utils/cookies';
 
 const WSS_ENDPOINT = import.meta.env.VITE_WS_URL || 'wss://ao9gv2kwll.execute-api.us-east-1.amazonaws.com/dev';
 
@@ -61,7 +62,7 @@ export const usePickingOrdersWebSocket = (options: UsePickingOrdersWebSocketOpti
 
     try {
       // Obtener token de autenticación
-      const token = localStorage.getItem('authToken');
+      const token = getCookie('authToken');
       const wsUrl = token 
         ? `${WSS_ENDPOINT}?token=${encodeURIComponent(token)}&userId=${currentUser.id}`
         : `${WSS_ENDPOINT}?userId=${currentUser.id}`;

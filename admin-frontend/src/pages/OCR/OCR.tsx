@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '../../components/commons';
+import { useOCRWebSocket } from '../../hooks/useOCRWebSocket';
 
 interface OCRDocument {
   id: string;
@@ -44,6 +45,126 @@ export const OCR = () => {
   const [processing, setProcessing] = useState(false);
   const [currentDocument, setCurrentDocument] = useState<OCRDocument | null>(null);
   const [extractedData, setExtractedData] = useState<ExtractedData | null>(null);
+  const [notification, setNotification] = useState<string | null>(null);
+  const [documentsList, setDocumentsList] = useState<OCRDocument[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // WebSocket para actualizaciones en tiempo real
+  const { isConnected } = useOCRWebSocket({
+    onDocumentProcessing: (documentId, fileName) => {
+      console.log(`🔄 Documento ${documentId} en procesamiento...`);
+      if (currentDocument && currentDocument.id === documentId) {
+        setCurrentDocument(prev => prev ? { ...prev, status: 'PROCESSING' } : null);
+        setNotification(`🔄 Procesando ${fileName}...`);
+        setTimeout(() => setNotification(null), 3000);
+      }
+    },
+    onDocumentCompleted: async (documentId, extractedDataPreview) => {
+      console.log(`✅ Documento ${documentId} completado:`, extractedDataPreview);
+      if (currentDocument && currentDocument.id === documentId) {
+        // Obtener datos completos del backend
+        try {
+          const response = await fetch(`${import.meta.env.VITE_API_URL}/ocr/results/${documentId}`);
+          const data = await response.json();
+          
+          if (data.data) {
+            setCurrentDocument(data.data);
+            setExtractedData({
+              orderNumber: data.data.orderNumber,
+              issueDate: data.data.issueDate,
+              deliveryDate: data.data.deliveryDate,
+              companyName: data.data.companyName,
+              companyRut: data.data.companyRut,
+              items: data.data.items || [],
+              subtotal: data.data.subtotal,
+              tax: data.data.tax,
+              total: data.data.total,
+              paymentTerms: data.data.paymentTerms,
+              notes: data.data.notes
+            });
+            setProcessing(false);
+            setNotification(`✅ Documento procesado exitosamente`);
+            setTimeout(() => setNotification(null), 5000);
+            
+            // Recargar lista de documentos
+            await loadDocuments();
+          }
+        } catch (error) {
+          console.error('Error obteniendo resultados completos:', error);
+        }
+      }
+    },
+    onDocumentFailed: (documentId, errorMessage) => {
+      console.error(`❌ Documento ${documentId} falló:`, errorMessage);
+      if (currentDocument && currentDocument.id === documentId) {
+        setCurrentDocument(prev => prev ? { 
+          ...prev, 
+          status: 'FAILED', 
+          errorMessage 
+        } : null);
+        setProcessing(false);
+        setNotification(`❌ Error: ${errorMessage}`);
+        setTimeout(() => setNotification(null), 5000);
+      }
+    }
+  });
+
+  // Cargar documentos al iniciar
+  useEffect(() => {
+    loadDocuments();
+  }, []);
+
+  const loadDocuments = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/ocr/documents?limit=10`);
+      const data = await response.json();
+      
+      if (data.data && data.data.documents) {
+        setDocumentsList(data.data.documents);
+        
+        // Si hay un documento reciente, cargarlo
+        if (data.data.documents.length > 0) {
+          const latestDoc = data.data.documents[0];
+          setCurrentDocument(latestDoc);
+          
+          // Si está completado, cargar los datos extraídos
+          if (latestDoc.status === 'COMPLETED') {
+            await loadDocumentData(latestDoc.id);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error cargando documentos:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadDocumentData = async (documentId: string) => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/ocr/results/${documentId}`);
+      const data = await response.json();
+      
+      if (data.data) {
+        setExtractedData({
+          orderNumber: data.data.orderNumber,
+          issueDate: data.data.issueDate,
+          deliveryDate: data.data.deliveryDate,
+          companyName: data.data.companyName,
+          companyRut: data.data.companyRut,
+          items: data.data.items || [],
+          subtotal: data.data.subtotal,
+          tax: data.data.tax,
+          total: data.data.total,
+          paymentTerms: data.data.paymentTerms,
+          notes: data.data.notes
+        });
+      }
+    } catch (error) {
+      console.error('Error cargando datos del documento:', error);
+    }
+  };
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -84,7 +205,7 @@ export const OCR = () => {
         body: selectedFile
       });
 
-      // 3. Actualizar estado
+      // 3. Actualizar estado y recargar lista
       setCurrentDocument({
         id: documentId,
         fileName: selectedFile.name,
@@ -92,6 +213,8 @@ export const OCR = () => {
         status: 'PENDING',
         createdAt: new Date().toISOString()
       });
+
+      await loadDocuments(); // Recargar lista
 
       console.log('Documento subido exitosamente:', documentId);
     } catch (error) {
@@ -188,10 +311,34 @@ export const OCR = () => {
 
   return (
     <div className="w-full h-full p-6 overflow-auto">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-800 mb-2">OCR - Órdenes de Compra</h1>
-        <p className="text-gray-600">Sube y procesa documentos de órdenes de compra con AWS Textract</p>
+      {/* Indicador de conexión WebSocket */}
+      <div className="mb-4 flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-800 mb-2">OCR - Órdenes de Compra</h1>
+          <p className="text-gray-600">Sube y procesa documentos de órdenes de compra con AWS Textract</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className={`h-2 w-2 rounded-full ${
+            isConnected ? 'bg-green-500 animate-pulse' : 'bg-gray-400'
+          }`} />
+          <span className="text-sm text-gray-600">
+            {isConnected ? 'Conectado' : 'Desconectado'}
+          </span>
+        </div>
       </div>
+
+      {/* Notificaciones */}
+      {notification && (
+        <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-between">
+          <span className="text-sm text-blue-800">{notification}</span>
+          <button 
+            onClick={() => setNotification(null)}
+            className="text-blue-600 hover:text-blue-800"
+          >
+            ✕
+          </button>
+        </div>
+      )}
 
       <div className="mt-6 space-y-6">
         {/* Upload Section */}

@@ -1,14 +1,14 @@
 /**
- * Utilidad para limpiar el caché de clientes del localStorage
+ * Utilidad para limpiar el caché de clientes del sessionStorage
  * Útil cuando hay inconsistencias entre datos persistidos y la API
  */
 export const clearClientsCache = (): void => {
   try {
     // Limpiar todas las claves relacionadas con clientes
-    const keys = Object.keys(localStorage);
+    const keys = Object.keys(sessionStorage);
     keys.forEach(key => {
       if (key.startsWith('clients_data_')) {
-        localStorage.removeItem(key);
+        sessionStorage.removeItem(key);
         console.log('Eliminado del caché:', key);
       }
     });

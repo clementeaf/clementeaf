@@ -137,17 +137,46 @@
             }
         }
 
+        function getCookie(name) {
+            const encodedName = encodeURIComponent(name) + '=';
+            const cookies = document.cookie ? document.cookie.split('; ') : [];
+            for (const cookie of cookies) {
+                if (cookie.startsWith(encodedName)) {
+                    return decodeURIComponent(cookie.substring(encodedName.length));
+                }
+            }
+            return null;
+        }
+
+        function setCookie(name, value, maxAgeSeconds) {
+            const parts = [];
+            parts.push(`${encodeURIComponent(name)}=${encodeURIComponent(value)}`);
+            parts.push('Path=/');
+            parts.push('SameSite=Lax');
+            if (typeof maxAgeSeconds === 'number') {
+                parts.push(`Max-Age=${Math.floor(maxAgeSeconds)}`);
+            }
+            if (window.location.protocol === 'https:') {
+                parts.push('Secure');
+            }
+            document.cookie = parts.join('; ');
+        }
+
+        function deleteCookie(name) {
+            setCookie(name, '', 0);
+        }
+
         function checkToken() {
             const statusDiv = document.getElementById('status');
             statusDiv.innerHTML = '';
             
-            const authToken = localStorage.getItem('authToken');
-            const refreshToken = localStorage.getItem('refreshToken');
+            const authToken = getCookie('authToken');
+            const refreshToken = getCookie('refreshToken');
             
             if (!authToken) {
                 statusDiv.innerHTML = `
                     <div class="section warning">
-                        <h2>⚠️ No hay token en localStorage</h2>
+                        <h2>⚠️ No hay token en cookies</h2>
                         <p>No se encontró ningún token de autenticación. Necesitas iniciar sesión.</p>
                     </div>
                 `;
@@ -209,32 +238,21 @@
             
             // Validar refreshToken si existe
             if (refreshToken) {
-                const refreshTokenValidation = isValidJWT(refreshToken);
-                
-                if (!refreshTokenValidation.valid) {
-                    statusDiv.innerHTML += `
-                        <div class="section error">
-                            <h2>❌ Refresh Token INVÁLIDO</h2>
-                            <p><strong>Razón:</strong> ${refreshTokenValidation.reason}</p>
+                statusDiv.innerHTML += `
+                    <div class="section success">
+                        <h2>✅ Refresh Token presente</h2>
+                        <div class="token-info">
+                            <strong>Nota:</strong> El refresh token de Cognito no es un JWT, es un token opaco.
                         </div>
-                    `;
-                } else {
-                    statusDiv.innerHTML += `
-                        <div class="section success">
-                            <h2>✅ Refresh Token VÁLIDO</h2>
-                            <div class="token-info">
-                                <strong>Expira:</strong> ${refreshTokenValidation.payload.exp ? new Date(refreshTokenValidation.payload.exp * 1000).toLocaleString() : 'N/A'}
-                            </div>
-                        </div>
-                    `;
-                }
+                    </div>
+                `;
             }
         }
 
         function clearTokens() {
             if (confirm('¿Estás seguro de que quieres limpiar todos los tokens? Deberás volver a iniciar sesión.')) {
-                localStorage.removeItem('authToken');
-                localStorage.removeItem('refreshToken');
+                deleteCookie('authToken');
+                deleteCookie('refreshToken');
                 alert('✅ Tokens eliminados. Recarga la página para verificar.');
                 location.reload();
             }

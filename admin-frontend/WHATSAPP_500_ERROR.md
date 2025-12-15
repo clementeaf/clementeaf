@@ -32,7 +32,7 @@ JsonWebTokenError: jwt malformed
 
 ## 🔍 Por Qué Sucede
 
-El token JWT almacenado en `localStorage.authToken` está malformado o corrupto. Un JWT válido debe:
+El token JWT almacenado en la cookie `authToken` está malformado o corrupto. Un JWT válido debe:
 
 1. ✅ Tener exactamente 3 partes separadas por puntos: `header.payload.signature`
 2. ✅ Cada parte debe ser base64url encoded
@@ -40,7 +40,7 @@ El token JWT almacenado en `localStorage.authToken` está malformado o corrupto.
 
 ## 🛠️ Soluciones Implementadas
 
-### 1. Validación de JWT antes de guardar en localStorage
+### 1. Validación de JWT antes de guardar en cookies
 
 **Archivo modificado:** `admin-frontend/src/main.tsx`
 
@@ -56,7 +56,7 @@ Se agregó la función `isValidJWT()` que valida:
 Acceder vía: `https://d38b47o2shfk09.cloudfront.net/debug-token.html`
 
 Esta página:
-- ✅ Verifica si hay un token en localStorage
+- ✅ Verifica si hay un token en cookies
 - ✅ Valida si el token es un JWT válido
 - ✅ Muestra el contenido decodificado del token
 - ✅ Verifica si el token ha expirado
@@ -67,7 +67,8 @@ Esta página:
 ### Opción 1: Limpiar y Re-Login
 ```javascript
 // En la consola del navegador:
-localStorage.clear();
+document.cookie = 'authToken=; Path=/; Max-Age=0; SameSite=Lax';
+document.cookie = 'refreshToken=; Path=/; Max-Age=0; SameSite=Lax';
 window.location.href = 'https://d1wdj9ggvinelv.cloudfront.net';
 ```
 
@@ -79,7 +80,7 @@ window.location.href = 'https://d1wdj9ggvinelv.cloudfront.net';
 
 ### Opción 3: Manual desde la app
 1. Abrir DevTools (F12)
-2. Ir a Application → Local Storage
+2. Ir a Application → Cookies
 3. Eliminar `authToken` y `refreshToken`
 4. Recargar la página
 5. El sistema redirigirá automáticamente al login
@@ -88,7 +89,7 @@ window.location.href = 'https://d1wdj9ggvinelv.cloudfront.net';
 
 ```javascript
 // En consola del navegador:
-const token = localStorage.getItem('authToken');
+const token = document.cookie.split('; ').find(c => c.startsWith('authToken='))?.split('=')[1];
 const parts = token?.split('.');
 
 console.log('Token parts:', parts?.length, '(should be 3)');
@@ -122,7 +123,7 @@ if (parts?.length === 3) {
    - Navegadores tienen límites de longitud de URL
 
 4. **Tokens antiguos en caché**
-   - localStorage persiste entre sesiones
+   - Las cookies persisten entre sesiones (según expiración)
    - Si el formato del token cambió, tokens viejos pueden ser inválidos
 
 ## ✅ Siguiente Paso
@@ -145,7 +146,7 @@ npm run build
 ./deploy.sh
 
 # 3. Probar el flujo completo:
-# - Limpiar localStorage
+# - Limpiar cookies
 # - Login desde auth-frontend
 # - Verificar que el token se valide correctamente
 ```
@@ -154,5 +155,5 @@ npm run build
 
 El error 500 en `/whatsapp/status` es un **síntoma** de un problema de autenticación, no un problema del endpoint WhatsApp en sí. El endpoint de WhatsApp funciona correctamente, pero la validación de permisos falla debido a un JWT malformado en el token de autenticación.
 
-**Fix inmediato:** Limpiar localStorage y volver a hacer login
+**Fix inmediato:** Limpiar cookies y volver a hacer login
 **Fix permanente:** Validación de JWT implementada en `main.tsx`

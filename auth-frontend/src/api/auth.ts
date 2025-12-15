@@ -21,6 +21,15 @@ export interface RefreshTokenResponse {
 }
 
 /**
+ * Request para completar login OAuth (Google) vía backend
+ */
+export interface OAuthCallbackRequest {
+  code: string;
+  redirectUri: string;
+  codeVerifier: string;
+}
+
+/**
  * Servicio de autenticación
  */
 export const authService = {
@@ -59,6 +68,19 @@ export const authService = {
     const response = await apiClient.post<RefreshTokenResponse>(
       endpoints.auth.refresh,
       { refreshToken }
+    );
+    return response.data;
+  },
+
+  /**
+   * Completa login OAuth intercambiando authorization code por tokens
+   * @param data - Datos del callback OAuth
+   * @returns Tokens y usuario normalizados
+   */
+  async oauthCallback(data: OAuthCallbackRequest): Promise<LoginResponse> {
+    const response = await apiClient.post<LoginResponse>(
+      endpoints.auth.oauthCallback,
+      data
     );
     return response.data;
   }

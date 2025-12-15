@@ -34,7 +34,8 @@ export const endpoints = {
     login: 'login',
     me: 'me',
     logout: 'logout',
-    refresh: 'refresh'
+    refresh: 'refresh',
+    oauthCallback: 'oauth/callback'
   })
 } as const;
 

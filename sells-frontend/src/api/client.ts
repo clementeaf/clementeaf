@@ -1,7 +1,8 @@
 import axios, { type AxiosInstance, type AxiosError, type InternalAxiosRequestConfig } from 'axios';
-import type { ApiErrorResponse, RefreshTokenResponse } from './types';
+import type { RefreshTokenResponse } from './types';
 import { endpoints } from './endpoints';
 import { getAuthUrl } from '../config/frontendUrls';
+import { deleteCookie, getCookie, setCookie } from '../utils/cookies';
 
 /**
  * Base URL del backend
@@ -46,7 +47,7 @@ const processQueue = (error: AxiosError | null, token: string | null): void => {
  */
 apiClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('authToken');
+    const token = getCookie('authToken');
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -88,12 +89,12 @@ apiClient.interceptors.response.use(
       originalRequest._retry = true;
       isRefreshing = true;
 
-      const refreshToken = localStorage.getItem('refreshToken');
+      const refreshToken = getCookie('refreshToken');
       
       if (!refreshToken) {
         // No hay refresh token, limpiar y redirigir a login
-        localStorage.removeItem('authToken');
-        localStorage.removeItem('refreshToken');
+        deleteCookie('authToken');
+        deleteCookie('refreshToken');
         processQueue(error, null);
         isRefreshing = false;
         window.location.href = getAuthUrl();
@@ -109,10 +110,10 @@ apiClient.interceptors.response.use(
         const { token: newToken, refreshToken: newRefreshToken } = response.data.data;
 
         if (newToken) {
-          localStorage.setItem('authToken', newToken);
+          setCookie('authToken', newToken);
         }
         if (newRefreshToken) {
-          localStorage.setItem('refreshToken', newRefreshToken);
+          setCookie('refreshToken', newRefreshToken, { maxAgeSeconds: 60 * 60 * 24 * 30 });
         }
 
         processQueue(null, newToken);
@@ -125,8 +126,8 @@ apiClient.interceptors.response.use(
         return apiClient(originalRequest);
       } catch (refreshError) {
         // Error al refrescar, limpiar y redirigir a login
-        localStorage.removeItem('authToken');
-        localStorage.removeItem('refreshToken');
+        deleteCookie('authToken');
+        deleteCookie('refreshToken');
         processQueue(refreshError as AxiosError, null);
         isRefreshing = false;
         window.location.href = getAuthUrl();

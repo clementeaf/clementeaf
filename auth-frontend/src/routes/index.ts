@@ -6,7 +6,8 @@ export const routes = {
   auth: {
     login: '/',
     register: '/register',
-    selectApp: '/select-app'
+    selectApp: '/select-app',
+    oauthCallback: '/oauth/callback'
   },
   notFound: '/*'
 } as const;

@@ -376,7 +376,7 @@ curl -X GET "https://[api-url]/dev/products/search/query?search=PROD&limit=10" \
 
 **Resultado esperado:**
 - Redirige a auth-frontend
-- Limpia tokens del localStorage
+- Limpia tokens de cookies
 
 ---
 

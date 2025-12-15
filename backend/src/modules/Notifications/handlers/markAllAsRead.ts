@@ -23,12 +23,7 @@ const markAllAsReadHandler = async (event: APIGatewayProxyEvent) => {
 
     // Obtener usuario completo desde la base de datos para obtener el ID
     const usersService = new UsersService();
-    let user;
-    try {
-      user = await usersService.getUserByEmail(verifiedUser.email, false);
-    } catch (error) {
-      return errorResponse(401, 'Usuario no encontrado');
-    }
+    const user = await usersService.getOrCreateUserByEmail(verifiedUser.email, false, verifiedUser.name ?? null);
 
     const userId = user.id;
 

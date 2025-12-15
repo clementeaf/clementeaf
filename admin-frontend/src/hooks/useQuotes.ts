@@ -91,16 +91,16 @@ export const useQuoteById = (id: number | null) => {
 };
 
 /**
- * Clave para persistir datos de órdenes de compra en localStorage
+ * Clave para persistir datos de órdenes de compra en sessionStorage
  */
 const QUOTES_STORAGE_KEY = 'quotes_data';
 
 /**
- * Obtiene los datos persistidos de órdenes de compra desde localStorage
+ * Obtiene los datos persistidos de órdenes de compra desde sessionStorage
  */
 const getPersistedQuotes = (page: number, limit: number): PaginatedQuotesResponse | null => {
   try {
-    const stored = localStorage.getItem(`${QUOTES_STORAGE_KEY}_${page}_${limit}`);
+    const stored = sessionStorage.getItem(`${QUOTES_STORAGE_KEY}_${page}_${limit}`);
     if (stored) {
       const parsed = JSON.parse(stored);
       if (parsed && Array.isArray(parsed.data) && typeof parsed.total === 'number') {
@@ -114,11 +114,11 @@ const getPersistedQuotes = (page: number, limit: number): PaginatedQuotesRespons
 };
 
 /**
- * Persiste los datos de órdenes de compra en localStorage
+ * Persiste los datos de órdenes de compra en sessionStorage
  */
 const persistQuotes = (data: PaginatedQuotesResponse, page: number, limit: number): void => {
   try {
-    localStorage.setItem(`${QUOTES_STORAGE_KEY}_${page}_${limit}`, JSON.stringify(data));
+    sessionStorage.setItem(`${QUOTES_STORAGE_KEY}_${page}_${limit}`, JSON.stringify(data));
   } catch (error) {
     console.error('Error al persistir datos de órdenes de compra:', error);
   }

@@ -4,10 +4,10 @@
 
 /**
  * URLs de desarrollo (localhost)
- * Nota: auth-frontend usa el puerto por defecto de Vite (5173)
+ * Nota: auth-frontend corre en el puerto 8050
  */
 const DEV_URLS = {
-  auth: import.meta.env.VITE_AUTH_FRONTEND_URL || 'http://localhost:5173',
+  auth: import.meta.env.VITE_AUTH_FRONTEND_URL || 'http://localhost:8050',
   client: 'http://localhost:8500'
 } as const;
 

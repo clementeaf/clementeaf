@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import 'react-toastify/dist/ReactToastify.css'
 import './index.css'
 import App from './App.tsx'
+import { deleteCookie, setCookie } from './utils/cookies'
 
 /**
  * Valida que un token sea un JWT válido
@@ -28,7 +29,7 @@ const isValidJWT = (token: string): boolean => {
 };
 
 /**
- * Extrae el token y refresh token de la URL y los guarda en localStorage
+ * Extrae el token y refresh token de la URL y los guarda en cookies
  * Luego limpia la URL para evitar exponer los tokens
  */
 const handleTokenFromUrl = (): void => {
@@ -42,24 +43,22 @@ const handleTokenFromUrl = (): void => {
       console.error('❌ [AUTH] Token recibido no es un JWT válido:', token.substring(0, 50) + '...');
       console.error('❌ [AUTH] Token parts:', token.split('.').length, '(expected: 3)');
       
-      // Limpiar localStorage y redirigir a login
-      localStorage.removeItem('authToken');
-      localStorage.removeItem('refreshToken');
+      deleteCookie('authToken');
+      deleteCookie('refreshToken');
       
       // Redirigir a auth frontend
       window.location.href = 'https://d1wdj9ggvinelv.cloudfront.net';
       return;
     }
     
-    // Guardar el token en localStorage
-    localStorage.setItem('authToken', token);
-    console.log('✅ [AUTH] Token JWT válido guardado en localStorage');
+    setCookie('authToken', token);
+    console.log('✅ [AUTH] Token JWT válido guardado en cookie');
     
     // El refresh token de Cognito NO es un JWT, es un token opaco
     // Solo validamos que exista, no su estructura
     if (refreshToken) {
-      localStorage.setItem('refreshToken', refreshToken);
-      console.log('✅ [AUTH] Refresh token guardado en localStorage');
+      setCookie('refreshToken', refreshToken, { maxAgeSeconds: 60 * 60 * 24 * 30 });
+      console.log('✅ [AUTH] Refresh token guardado en cookie');
     }
     
     // Limpiar la URL removiendo los parámetros de token

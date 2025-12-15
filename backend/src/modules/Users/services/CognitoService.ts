@@ -29,6 +29,70 @@ import fetch from 'node-fetch';
 const jwkToPem = require('jwk-to-pem');
 
 /**
+ * Determina si un valor es un objeto (Record) no nulo.
+ * @param value - Valor a validar
+ * @returns true si es un objeto no nulo
+ */
+const isRecord = (value: unknown): value is Record<string, unknown> => {
+    return typeof value === 'object' && value !== null;
+};
+
+/**
+ * Obtiene el nombre del error (si existe) desde un error desconocido.
+ * @param error - Error capturado
+ * @returns Nombre del error o null
+ */
+const getErrorName = (error: unknown): string | null => {
+    if (error instanceof Error && typeof error.name === 'string') {
+        return error.name;
+    }
+    if (isRecord(error) && typeof error.name === 'string') {
+        return error.name;
+    }
+    return null;
+};
+
+/**
+ * Obtiene un mensaje seguro y legible desde un error desconocido.
+ * @param error - Error capturado
+ * @returns Mensaje del error
+ */
+const getErrorMessage = (error: unknown): string => {
+    if (error instanceof Error && typeof error.message === 'string' && error.message.length > 0) {
+        return error.message;
+    }
+    if (isRecord(error) && typeof error.message === 'string' && error.message.length > 0) {
+        return error.message;
+    }
+    return 'Internal server error';
+};
+
+/**
+ * Mapea errores típicos de Cognito a mensajes estándar de la API.
+ * @param error - Error capturado desde el SDK de Cognito
+ * @returns Mensaje normalizado
+ */
+const mapCognitoAuthError = (error: unknown): string => {
+    const name = getErrorName(error);
+    const message = getErrorMessage(error);
+
+    if (name === 'NotAuthorizedException' || name === 'UserNotFoundException') {
+        return 'Invalid credentials';
+    }
+    if (name === 'UserNotConfirmedException') {
+        return 'User not confirmed';
+    }
+    if (name === 'PasswordResetRequiredException') {
+        return 'Password reset required';
+    }
+    if (name === 'InvalidParameterException' && message.includes('USER_PASSWORD_AUTH')) {
+        return 'Auth flow not enabled';
+    }
+
+    return message;
+};
+
+/**
  * Interfaz para JWK (JSON Web Key)
  */
 interface JWK {
@@ -109,40 +173,36 @@ export class CognitoService {
      */
     async signIn(loginDto: LoginDto): Promise<{ token: string; refreshToken: string; user: { sub: string; email: string } }> {
         this.validateConfig();
-        const command = new InitiateAuthCommand({
-            AuthFlow: 'USER_PASSWORD_AUTH',
-            ClientId: COGNITO_CLIENT_ID,
-            AuthParameters: {
-                USERNAME: loginDto.email,
-                PASSWORD: loginDto.password,
-            },
-        });
-        const response = await cognitoClient.send(command);
-        const idToken = response.AuthenticationResult?.IdToken;
-        const refreshToken = response.AuthenticationResult?.RefreshToken;
-        
-        // DEBUG: Log token structure
-        console.log('🔍 [COGNITO DEBUG] Token structure validation:');
-        console.log('  - idToken length:', idToken?.length || 0);
-        console.log('  - idToken parts:', idToken?.split('.').length || 0);
-        console.log('  - refreshToken length:', refreshToken?.length || 0);
-        console.log('  - refreshToken parts:', refreshToken?.split('.').length || 0);
-        console.log('  - refreshToken preview:', refreshToken?.substring(0, 50) + '...');
-        
-        if (!idToken) {
-            throw new Error('Invalid credentials');
+        try {
+            const command = new InitiateAuthCommand({
+                AuthFlow: 'USER_PASSWORD_AUTH',
+                ClientId: COGNITO_CLIENT_ID,
+                AuthParameters: {
+                    USERNAME: loginDto.email,
+                    PASSWORD: loginDto.password,
+                },
+            });
+            const response = await cognitoClient.send(command);
+            const idToken = response.AuthenticationResult?.IdToken;
+            const refreshToken = response.AuthenticationResult?.RefreshToken;
+
+            if (!idToken) {
+                throw new Error('Invalid credentials');
+            }
+            if (!refreshToken) {
+                throw new Error('Refresh token not provided');
+            }
+
+            // Decodificar sin verificar para extraer sub y email (verificación se hará en verifyToken)
+            const decoded = jwt.decode(idToken) as { sub?: string; email?: string } | null;
+            return {
+                token: idToken,
+                refreshToken,
+                user: { sub: decoded?.sub ?? '', email: decoded?.email ?? '' },
+            };
+        } catch (error: unknown) {
+            throw new Error(mapCognitoAuthError(error));
         }
-        if (!refreshToken) {
-            throw new Error('Refresh token not provided');
-        }
-        
-        // Decodificar sin verificar para extraer sub y email (verificación se hará en verifyToken)
-        const decoded = jwt.decode(idToken) as { sub?: string; email?: string } | null;
-        return {
-            token: idToken,
-            refreshToken,
-            user: { sub: decoded?.sub ?? '', email: decoded?.email ?? '' },
-        };
     }
 
     /**
@@ -152,28 +212,36 @@ export class CognitoService {
      */
     async refreshToken(refreshTokenDto: RefreshTokenDto): Promise<{ token: string; refreshToken: string; user: { sub: string; email: string } }> {
         this.validateConfig();
-        const command = new InitiateAuthCommand({
-            AuthFlow: 'REFRESH_TOKEN_AUTH',
-            ClientId: COGNITO_CLIENT_ID,
-            AuthParameters: {
-                REFRESH_TOKEN: refreshTokenDto.refreshToken,
-            },
-        });
-        const response = await cognitoClient.send(command);
-        const idToken = response.AuthenticationResult?.IdToken;
-        const refreshToken = response.AuthenticationResult?.RefreshToken || refreshTokenDto.refreshToken;
-        
-        if (!idToken) {
-            throw new Error('Invalid refresh token');
+        try {
+            const command = new InitiateAuthCommand({
+                AuthFlow: 'REFRESH_TOKEN_AUTH',
+                ClientId: COGNITO_CLIENT_ID,
+                AuthParameters: {
+                    REFRESH_TOKEN: refreshTokenDto.refreshToken,
+                },
+            });
+            const response = await cognitoClient.send(command);
+            const idToken = response.AuthenticationResult?.IdToken;
+            const refreshToken = response.AuthenticationResult?.RefreshToken || refreshTokenDto.refreshToken;
+
+            if (!idToken) {
+                throw new Error('Invalid refresh token');
+            }
+
+            // Decodificar sin verificar para extraer sub y email
+            const decoded = jwt.decode(idToken) as { sub?: string; email?: string } | null;
+            return {
+                token: idToken,
+                refreshToken,
+                user: { sub: decoded?.sub ?? '', email: decoded?.email ?? '' },
+            };
+        } catch (error: unknown) {
+            const mappedMessage = mapCognitoAuthError(error);
+            if (mappedMessage === 'Invalid credentials') {
+                throw new Error('Invalid refresh token');
+            }
+            throw new Error(mappedMessage);
         }
-        
-        // Decodificar sin verificar para extraer sub y email
-        const decoded = jwt.decode(idToken) as { sub?: string; email?: string } | null;
-        return {
-            token: idToken,
-            refreshToken,
-            user: { sub: decoded?.sub ?? '', email: decoded?.email ?? '' },
-        };
     }
 
     /**

@@ -23,7 +23,7 @@ import { EmptyChat } from './Chat/EmptyChat';
 export const Chat = () => {
   const { data: currentUser, error: currentUserError } = useCurrentUser();
   const [manualUserId, setManualUserId] = useState<number | null>(() => {
-    const stored = localStorage.getItem('manualUserId');
+    const stored = sessionStorage.getItem('manualUserId');
     return stored ? parseInt(stored, 10) : null;
   });
   const currentUserId = currentUser?.id || manualUserId;
@@ -260,7 +260,7 @@ export const Chat = () => {
 
       if (!currentUserId && participant1Id) {
         setManualUserId(participant1Id);
-        localStorage.setItem('manualUserId', participant1Id.toString());
+        sessionStorage.setItem('manualUserId', participant1Id.toString());
       }
 
       setSelectedConversation(newConversation);

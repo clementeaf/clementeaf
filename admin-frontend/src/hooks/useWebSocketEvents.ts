@@ -2,6 +2,7 @@ import { useEffect, useRef, useCallback } from 'react';
 import { useCurrentUser } from './useAuth';
 import { useQueryClient, type QueryKey } from '@tanstack/react-query';
 import { logger } from '../utils/logger';
+import { getCookie } from '../utils/cookies';
 
 const WSS_ENDPOINT = import.meta.env.VITE_WS_URL || 'wss://ao9gv2kwll.execute-api.us-east-1.amazonaws.com/dev';
 
@@ -73,7 +74,7 @@ export const useWebSocketEvents = (options: UseWebSocketEventsOptions) => {
     if (isManuallyDisconnected.current) return;
 
     try {
-      const token = localStorage.getItem('authToken');
+      const token = getCookie('authToken');
       const wsUrl = token 
         ? `${WSS_ENDPOINT}?token=${encodeURIComponent(token)}&userId=${currentUser.id}`
         : `${WSS_ENDPOINT}?userId=${currentUser.id}`;

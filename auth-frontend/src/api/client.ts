@@ -1,6 +1,7 @@
 import axios, { type AxiosInstance, type AxiosError, type InternalAxiosRequestConfig } from 'axios';
 import type { ApiErrorResponse } from './types';
 import { authService } from './auth';
+import { deleteCookie, getCookie, setCookie } from '../utils/cookies';
 
 /**
  * Base URL del backend
@@ -26,6 +27,26 @@ let failedQueue: Array<{
 }> = [];
 
 /**
+ * Determina si una URL debe excluirse del flujo de refresh automático.
+ * @param url - URL relativa de axios (puede ser undefined)
+ * @returns true si debe excluirse
+ */
+const isExcludedFromAutoRefresh = (url: string | undefined): boolean => {
+  if (!url) {
+    return false;
+  }
+
+  const excludedPaths: string[] = [
+    '/auth/login',
+    '/auth/register',
+    '/auth/refresh',
+    '/auth/oauth/callback'
+  ];
+
+  return excludedPaths.some((path) => url.includes(path));
+};
+
+/**
  * Procesa la cola de peticiones fallidas después de refrescar el token
  */
 const processQueue = (error: AxiosError | null, token: string | null = null): void => {
@@ -44,7 +65,7 @@ const processQueue = (error: AxiosError | null, token: string | null = null): vo
  * Interceptor para agregar token JWT a las peticiones
  */
 apiClient.interceptors.request.use((config) => {
-  const token = localStorage.getItem('authToken');
+  const token = getCookie('authToken');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -60,8 +81,8 @@ apiClient.interceptors.response.use(
     const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
 
     // Si el error es 401 y no es una petición de refresh, intentar refrescar el token
-    const isRefreshEndpoint = originalRequest?.url?.includes('/auth/refresh');
-    if (error.response?.status === 401 && originalRequest && !originalRequest._retry && !isRefreshEndpoint) {
+    const shouldExclude = isExcludedFromAutoRefresh(originalRequest?.url);
+    if (error.response?.status === 401 && originalRequest && !originalRequest._retry && !shouldExclude) {
       if (isRefreshing) {
         // Si ya se está refrescando, agregar a la cola
         return new Promise((resolve, reject) => {
@@ -81,12 +102,11 @@ apiClient.interceptors.response.use(
       originalRequest._retry = true;
       isRefreshing = true;
 
-      const refreshToken = localStorage.getItem('refreshToken');
+      const refreshToken = getCookie('refreshToken');
       
       if (!refreshToken) {
-        // No hay refresh token, limpiar y redirigir a login
-        localStorage.removeItem('authToken');
-        localStorage.removeItem('refreshToken');
+        deleteCookie('authToken');
+        deleteCookie('refreshToken');
         processQueue(error, null);
         isRefreshing = false;
         window.location.href = '/';
@@ -97,9 +117,8 @@ apiClient.interceptors.response.use(
         const response = await authService.refreshToken(refreshToken);
         const { token: newToken, refreshToken: newRefreshToken } = response.data;
 
-        // Guardar nuevos tokens
-        localStorage.setItem('authToken', newToken);
-        localStorage.setItem('refreshToken', newRefreshToken);
+        setCookie('authToken', newToken);
+        setCookie('refreshToken', newRefreshToken, { maxAgeSeconds: 60 * 60 * 24 * 30 });
 
         // Actualizar el header de la petición original
         if (originalRequest.headers) {
@@ -113,9 +132,8 @@ apiClient.interceptors.response.use(
         // Reintentar la petición original
         return apiClient(originalRequest);
       } catch (refreshError) {
-        // Error al refrescar, limpiar y redirigir a login
-        localStorage.removeItem('authToken');
-        localStorage.removeItem('refreshToken');
+        deleteCookie('authToken');
+        deleteCookie('refreshToken');
         processQueue(refreshError as AxiosError, null);
         isRefreshing = false;
         window.location.href = '/';

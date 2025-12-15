@@ -2,6 +2,7 @@ import { useMutation } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { authService } from '../api/auth';
 import type { RegisterRequest, LoginRequest, RegisterResponse, LoginResponse } from '../api/types';
+import { setCookie } from '../utils/cookies';
 
 /**
  * Hook para registro de usuarios
@@ -19,10 +20,10 @@ export const useRegister = () => {
         password: variables.password
       }).then((loginResponse) => {
         if (loginResponse.data.token) {
-          localStorage.setItem('authToken', loginResponse.data.token);
+          setCookie('authToken', loginResponse.data.token);
         }
         if (loginResponse.data.refreshToken) {
-          localStorage.setItem('refreshToken', loginResponse.data.refreshToken);
+          setCookie('refreshToken', loginResponse.data.refreshToken, { maxAgeSeconds: 60 * 60 * 24 * 30 });
         }
         // Redirigir a la página de selección de aplicación
         navigate('/select-app');
@@ -50,10 +51,10 @@ export const useLogin = () => {
     mutationFn: authService.login,
     onSuccess: (data) => {
       if (data.data.token) {
-        localStorage.setItem('authToken', data.data.token);
+        setCookie('authToken', data.data.token);
       }
       if (data.data.refreshToken) {
-        localStorage.setItem('refreshToken', data.data.refreshToken);
+        setCookie('refreshToken', data.data.refreshToken, { maxAgeSeconds: 60 * 60 * 24 * 30 });
       }
       // Redirigir a la página de selección de aplicación después del login exitoso
       navigate('/select-app');

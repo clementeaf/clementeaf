@@ -310,7 +310,7 @@ const mappedClients: ClientRow[] = clientsData?.data.map((client) => ({
 - No hay historial de facturas procesadas
 
 **Solución:**
-1. Agregar persistencia en localStorage o IndexedDB
+1. Agregar persistencia en sessionStorage o IndexedDB
 2. O integrar con backend para guardar facturas procesadas
 
 **Esfuerzo:** Medio (2-3 horas)

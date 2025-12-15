@@ -114,6 +114,7 @@ provider:
     COGNITO_CLIENT_ID: ${env:COGNITO_CLIENT_ID, '3ido9jo5thqnl5c05vlna3c0no'}
     COGNITO_REGION: ${env:COGNITO_REGION, 'us-east-1'}
     COGNITO_AUTO_CONFIRM: ${env:COGNITO_AUTO_CONFIRM, 'true'}
+    COGNITO_DOMAIN: ${env:COGNITO_DOMAIN, 'banados-auth-041238861016-dev.auth.us-east-1.amazoncognito.com'}
     WEBSOCKET_API_ENDPOINT: ${env:WEBSOCKET_API_ENDPOINT, ''}
     WSS_ENDPOINT: ${env:WSS_ENDPOINT, ''}
     EVENT_BRIDGE_BUS_NAME: ${env:EVENT_BRIDGE_BUS_NAME, 'default'}
@@ -288,6 +289,22 @@ functions:
     events:
       - http:
           path: auth/refresh
+          method: post
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
+
+  oauthCallback:
+    handler: dist/modules/Users/handlers/oauthCallback.handler
+    timeout: 30
+    memorySize: 512
+    vpc: null
+    events:
+      - http:
+          path: auth/oauth/callback
           method: post
           cors:
             origin: '*'
@@ -1291,6 +1308,7 @@ functions:
     handler: dist/modules/Chat/handlers/websocket/connect.handler
     timeout: 30
     memorySize: 512
+    vpc: null  # Fuera de VPC para acceder a Cognito
     events:
       - websocket:
           route: $connect
@@ -1299,6 +1317,7 @@ functions:
     handler: dist/modules/Chat/handlers/websocket/disconnect.handler
     timeout: 30
     memorySize: 512
+    vpc: null  # Fuera de VPC
     events:
       - websocket:
           route: $disconnect
@@ -1307,6 +1326,7 @@ functions:
     handler: dist/modules/Chat/handlers/websocket/sendMessage.handler
     timeout: 30
     memorySize: 512
+    vpc: null  # Fuera de VPC
     events:
       - websocket:
           route: $default
@@ -1397,7 +1417,6 @@ functions:
     handler: dist/modules/OCR/handlers/uploadDocument.handler
     timeout: 30
     memorySize: 512
-    vpc: null
     events:
       - http:
           path: ocr/upload
@@ -1415,7 +1434,7 @@ functions:
 
   processDocument:
     handler: dist/modules/OCR/handlers/processDocument.handler
-    timeout: 60
+    timeout: 300
     memorySize: 1024
     vpc: null
     events:
@@ -1437,10 +1456,28 @@ functions:
     handler: dist/modules/OCR/handlers/getOCRResults.handler
     timeout: 30
     memorySize: 512
-    vpc: null
     events:
       - http:
           path: ocr/results/{id}
+          method: get
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - X-Amz-Date
+              - Authorization
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+            allowCredentials: false
+
+  listOCRDocuments:
+    handler: dist/modules/OCR/handlers/listDocuments.handler
+    timeout: 30
+    memorySize: 512
+    events:
+      - http:
+          path: ocr/documents
           method: get
           cors:
             origin: '*'

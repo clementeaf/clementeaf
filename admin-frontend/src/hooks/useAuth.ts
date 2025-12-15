@@ -2,6 +2,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { authService, type AuthUser } from '../services/authService';
 import { getFrontendUrls } from '../config/frontendUrls';
 import { logger } from '../utils/logger';
+import { deleteCookie, getCookie } from '../utils/cookies';
 
 /**
  * Decodifica un JWT y extrae el payload
@@ -32,7 +33,7 @@ const decodeJWT = (token: string): { userId?: number; email?: string } | null =>
  * Obtiene el userId desde el token JWT
  */
 const getUserIdFromToken = (): number | null => {
-  const token = localStorage.getItem('authToken');
+  const token = getCookie('authToken');
   if (!token) {
     return null;
   }
@@ -51,7 +52,7 @@ const getUserIdFromToken = (): number | null => {
  * @returns Usuario básico desde token o null
  */
 const getOptimisticUserFromToken = (): AuthUser | null => {
-  const token = localStorage.getItem('authToken');
+  const token = getCookie('authToken');
   if (!token) return null;
 
   const decoded = decodeJWT(token);
@@ -73,7 +74,7 @@ const getOptimisticUserFromToken = (): AuthUser | null => {
  * Luego actualiza con datos del servidor en background
  */
 export const useCurrentUser = () => {
-  const token = localStorage.getItem('authToken');
+  const token = getCookie('authToken');
   const userIdFromToken = getUserIdFromToken();
   const optimisticUser = getOptimisticUserFromToken();
 
@@ -103,8 +104,8 @@ export const useCurrentUser = () => {
         const axiosError = error as { response?: { status?: number } };
         if (axiosError.response?.status === 401) {
           logger.warn('[AUTH] Token inválido o expirado. Limpiando sesión...');
-          localStorage.removeItem('authToken');
-          localStorage.removeItem('refreshToken');
+          deleteCookie('authToken');
+          deleteCookie('refreshToken');
           
           // Redirigir a auth-frontend solo si no hay token en la URL
           const urlParams = new URLSearchParams(window.location.search);
@@ -158,25 +159,18 @@ export const useLogout = () => {
    * Cierra la sesión del usuario
    * Limpia los tokens, invalida las queries y redirige a auth-frontend
    */
-  const logout = async (): Promise<void> => {
-    try {
-      // Intentar cerrar sesión en el servidor
-      await authService.logout();
-    } catch (error) {
-      // Si falla, continuar con la limpieza local
+  const logout = (): void => {
+    deleteCookie('authToken');
+    deleteCookie('refreshToken');
+    queryClient.clear();
+
+    const { auth: authUrl } = getFrontendUrls();
+
+    void authService.logout().catch((error: unknown) => {
       logger.error('Error al cerrar sesión', error);
-    } finally {
-      // Limpiar tokens del localStorage
-      localStorage.removeItem('authToken');
-      localStorage.removeItem('refreshToken');
+    });
 
-      // Invalidar todas las queries de React Query
-      queryClient.clear();
-
-      // Redirigir a auth-frontend
-      const { auth: authUrl } = getFrontendUrls();
-      window.location.href = authUrl;
-    }
+    window.location.assign(authUrl);
   };
 
   return { logout };

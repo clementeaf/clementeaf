@@ -121,16 +121,16 @@ export const useClientById = (id: number | null) => {
 };
 
 /**
- * Clave para persistir datos de clientes en localStorage
+ * Clave para persistir datos de clientes en sessionStorage
  */
 const CLIENTS_STORAGE_KEY = 'clients_data';
 
 /**
- * Obtiene los datos persistidos de clientes desde localStorage
+ * Obtiene los datos persistidos de clientes desde sessionStorage
  */
 const getPersistedClients = (page: number, limit: number): PaginatedClientsResponse | null => {
   try {
-    const stored = localStorage.getItem(`${CLIENTS_STORAGE_KEY}_${page}_${limit}`);
+    const stored = sessionStorage.getItem(`${CLIENTS_STORAGE_KEY}_${page}_${limit}`);
     if (stored) {
       const parsed = JSON.parse(stored);
       // Verificar que tenga la estructura correcta
@@ -145,11 +145,11 @@ const getPersistedClients = (page: number, limit: number): PaginatedClientsRespo
 };
 
 /**
- * Persiste los datos de clientes en localStorage
+ * Persiste los datos de clientes en sessionStorage
  */
 const persistClients = (data: PaginatedClientsResponse, page: number, limit: number): void => {
   try {
-    localStorage.setItem(`${CLIENTS_STORAGE_KEY}_${page}_${limit}`, JSON.stringify(data));
+    sessionStorage.setItem(`${CLIENTS_STORAGE_KEY}_${page}_${limit}`, JSON.stringify(data));
   } catch (error) {
     logger.error('Error al persistir datos de clientes', error);
   }

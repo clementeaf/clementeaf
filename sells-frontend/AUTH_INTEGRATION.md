@@ -5,13 +5,13 @@ Este documento describe cómo `sells-frontend` se integra con `auth-frontend` pa
 ## Flujo de Autenticación
 
 ### 1. Verificación Inicial
-- Al cargar la aplicación, se verifica si existen tokens en `localStorage`
+- Al cargar la aplicación, se verifica si existen tokens en cookies (`authToken` y `refreshToken`)
 - Si no hay tokens, se redirige automáticamente a `auth-frontend`
 - Si hay tokens, se verifica su validez con el endpoint `/auth/me`
 
 ### 2. Login
 - El usuario inicia sesión en `auth-frontend` (puerto 8050)
-- Después del login exitoso, los tokens se guardan en `localStorage`:
+- Después del login exitoso, los tokens se guardan en cookies:
   - `authToken`: Token de acceso JWT
   - `refreshToken`: Token para refrescar el access token
 - El usuario puede ser redirigido a `sells-frontend` desde `auth-frontend`
@@ -149,7 +149,7 @@ logout(); // Limpia tokens y redirige a auth-frontend
 - Verificar que las URLs en `frontendUrls.ts` sean correctas
 
 ### Tokens no se guardan
-- Verificar que `auth-frontend` esté guardando tokens en `localStorage`
+- Verificar que `auth-frontend` esté guardando tokens en cookies
 - Verificar que los nombres de las keys sean `authToken` y `refreshToken`
 
 ### Error 401 persistente

@@ -22,6 +22,45 @@ export class UsersService {
   }
 
   /**
+   * Obtiene o crea un usuario por su email (útil para usuarios que existen en Cognito pero no en la BD).
+   * @param email - Email del usuario
+   * @param includePermissions - Si debe incluir permisos del rol
+   * @param name - Nombre opcional del usuario
+   * @returns Usuario sin contraseña
+   */
+  async getOrCreateUserByEmail(
+    email: string,
+    includePermissions: boolean = false,
+    name: string | null = null
+  ): Promise<Omit<User, 'password'>> {
+    const relations = includePermissions
+      ? ['role', 'role.rolePermissions', 'role.rolePermissions.permission']
+      : ['role'];
+
+    const existing = await this.userRepository.findOne({
+      where: { email },
+      relations
+    });
+
+    if (existing) {
+      const { password, ...userWithoutPassword } = existing;
+      return userWithoutPassword;
+    }
+
+    const created = this.userRepository.create({
+      email,
+      password: '',
+      name,
+      roleId: null
+    });
+
+    await this.userRepository.save(created);
+
+    const { password, ...userWithoutPassword } = created;
+    return userWithoutPassword;
+  }
+
+  /**
    * Obtiene todos los usuarios con paginación
    * @param page - Número de página
    * @param limit - Límite de resultados por página

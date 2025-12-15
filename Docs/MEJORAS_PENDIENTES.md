@@ -173,7 +173,7 @@
 
 **Solución:**
 - Aumentar staleTime para datos estáticos
-- Caché persistente en localStorage
+- Caché persistente en sessionStorage
 - Prefetch de datos comunes
 
 #### 13. Optimistic Updates
