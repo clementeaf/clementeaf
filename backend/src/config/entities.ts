@@ -6,6 +6,9 @@
 // Analytics
 export { CtasPorCobrar } from '../modules/Analytics/entities/CtasPorCobrar.entity';
 
+// Activity
+export { UserActivity } from '../modules/Activity/entities/UserActivity.entity';
+
 // Chat
 export { Conversation } from '../modules/Chat/entities/Conversation.entity';
 export { Message } from '../modules/Chat/entities/Message.entity';
@@ -42,6 +45,7 @@ export { User } from '../modules/Users/entities/User.entity';
 
 // Array con todas las entidades para TypeORM
 import { CtasPorCobrar } from '../modules/Analytics/entities/CtasPorCobrar.entity';
+import { UserActivity } from '../modules/Activity/entities/UserActivity.entity';
 import { Conversation } from '../modules/Chat/entities/Conversation.entity';
 import { Message } from '../modules/Chat/entities/Message.entity';
 import { TypingIndicator } from '../modules/Chat/entities/TypingIndicator.entity';
@@ -61,6 +65,7 @@ import { User } from '../modules/Users/entities/User.entity';
 
 export const allEntities = [
   CtasPorCobrar,
+  UserActivity,
   Conversation,
   Message,
   TypingIndicator,

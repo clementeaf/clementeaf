@@ -33,6 +33,7 @@ export const routes = {
   createUser: '/roles/users/create',
   whatsapp: '/whatsapp',
   ocr: '/ocr',
+  activity: '/activity',
   notFound: '/*'
 } as const;
 

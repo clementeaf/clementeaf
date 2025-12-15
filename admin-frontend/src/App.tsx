@@ -32,6 +32,7 @@ const UsersManagement = lazy(() => import('./pages/Roles/UsersManagement').then(
 const CreateUser = lazy(() => import('./pages/Roles/CreateUser').then(module => ({ default: module.CreateUser })));
 const WhatsApp = lazy(() => import('./pages/WhatsApp').then(module => ({ default: module.WhatsApp })));
 const OCR = lazy(() => import('./pages/OCR/OCR').then(module => ({ default: module.default })));
+const Activity = lazy(() => import('./pages/Activity').then(module => ({ default: module.Activity })));
 
 /**
  * Componente de carga para Suspense
@@ -222,6 +223,12 @@ function App(): React.ReactNode {
             <Route 
               path={routes.ocr} 
               element={<OCR />} 
+            />
+            
+            {/* Rutas de Trazabilidad */}
+            <Route 
+              path={routes.activity} 
+              element={<Activity />} 
             />
             
             {/* Rutas legacy (sin protección por ahora) */}

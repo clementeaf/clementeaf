@@ -1490,6 +1490,87 @@ functions:
               - X-Amz-User-Agent
             allowCredentials: false
 
+  # Activity tracking endpoints
+  recordActivity:
+    handler: dist/modules/Activity/handlers/recordActivity.handler
+    timeout: 30
+    memorySize: 512
+    vpc: null
+    events:
+      - http:
+          path: activity
+          method: post
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - X-Amz-Date
+              - Authorization
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+            allowCredentials: false
+
+  getActivities:
+    handler: dist/modules/Activity/handlers/getActivities.handler
+    timeout: 30
+    memorySize: 512
+    vpc: null
+    events:
+      - http:
+          path: activity
+          method: get
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - X-Amz-Date
+              - Authorization
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+            allowCredentials: false
+
+  getUserActivities:
+    handler: dist/modules/Activity/handlers/getUserActivities.handler
+    timeout: 30
+    memorySize: 512
+    vpc: null
+    events:
+      - http:
+          path: activity/user/{userId}
+          method: get
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - X-Amz-Date
+              - Authorization
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+            allowCredentials: false
+
+  getActivityStats:
+    handler: dist/modules/Activity/handlers/getActivityStats.handler
+    timeout: 30
+    memorySize: 512
+    vpc: null
+    events:
+      - http:
+          path: activity/stats
+          method: get
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - X-Amz-Date
+              - Authorization
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+            allowCredentials: false
+
 resources:
   Resources:
     # Dead Letter Queues para eventos de EventBridge
