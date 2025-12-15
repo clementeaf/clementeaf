@@ -31,6 +31,20 @@ export const handler = async (
       };
     }
 
+    // Parsear body si existe (datos ya procesados desde frontend)
+    let extractedText: string | undefined;
+    let parsedData: any;
+    
+    if (event.body) {
+      try {
+        const body = JSON.parse(event.body);
+        extractedText = body.extractedText;
+        parsedData = body.parsedData;
+      } catch (e) {
+        console.log('No se pudo parsear el body, procesando con Textract');
+      }
+    }
+
     // Inicializar conexión a base de datos
     if (!AppDataSource.isInitialized) {
       await AppDataSource.initialize();
@@ -67,25 +81,34 @@ export const handler = async (
     });
 
     try {
-      // Procesar con Textract
-      const textractService = new TextractService();
-      const textractResponse = await textractService.analyzeDocument(
-        document.s3Bucket,
-        document.s3Key
-      );
+      let extractedData: any;
 
-      // Extraer datos estructurados
-      const blocks = textractResponse.Blocks;
-      const keyValuePairs = textractService.extractKeyValuePairs(blocks);
-      const tables = textractService.extractTables(blocks);
+      // Si vienen datos del frontend (Tesseract.js), usarlos directamente
+      if (parsedData) {
+        console.log('🌐 Usando datos procesados desde el frontend (Tesseract.js)');
+        extractedData = parsedData;
+      } else {
+        // Si no, intentar con Textract (requiere suscripción AWS)
+        console.log('☁️ Procesando con AWS Textract...');
+        const textractService = new TextractService();
+        const textractResponse = await textractService.analyzeDocument(
+          document.s3Bucket,
+          document.s3Key
+        );
 
-      // Parsear a orden de compra
-      const documentParser = new DocumentParser();
-      const extractedData = documentParser.parsePurchaseOrder(
-        blocks,
-        keyValuePairs,
-        tables
-      );
+        // Extraer datos estructurados
+        const blocks = textractResponse.Blocks;
+        const keyValuePairs = textractService.extractKeyValuePairs(blocks);
+        const tables = textractService.extractTables(blocks);
+
+        // Parsear a orden de compra
+        const documentParser = new DocumentParser();
+        extractedData = documentParser.parsePurchaseOrder(
+          blocks,
+          keyValuePairs,
+          tables
+        );
+      }
 
       // Actualizar documento con datos extraídos
       document.status = DocumentStatus.COMPLETED;
@@ -100,7 +123,7 @@ export const handler = async (
       document.total = extractedData.total || null;
       document.paymentTerms = extractedData.paymentTerms || null;
       document.notes = extractedData.notes || null;
-      document.rawTextractResponse = textractResponse as any;
+      document.rawTextractResponse = extractedText ? { extractedText, source: 'tesseract' } as any : null;
       document.processedAt = new Date();
 
       await ocrRepository.save(document);

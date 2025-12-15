@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Button } from '../../components/commons';
 import { useOCRWebSocket } from '../../hooks/useOCRWebSocket';
+import { createWorker } from 'tesseract.js';
+import * as pdfjsLib from 'pdfjs-dist';
 
 interface OCRDocument {
   id: string;
@@ -39,6 +41,54 @@ interface ExtractedData {
  * Página de gestión de OCR
  * @returns Componente OCR
  */
+
+// Función para parsear el texto extraído
+const parseDocumentText = (text: string): ExtractedData => {
+  const lines = text.split('\n').map(l => l.trim()).filter(l => l);
+  
+  // Buscar patrones comunes
+  const orderNumberMatch = text.match(/(?:n[úu]mero|n[°º]|#)\s*(?:orden|pedido)?\s*:?\s*([A-Z0-9-]+)/i);
+  const rutMatch = text.match(/RUT\s*:?\s*([0-9.-]+K?)/i);
+  const totalMatch = text.match(/total\s*:?\s*\$?\s*([0-9.,]+)/i);
+  
+  // Buscar nombre de empresa (generalmente en las primeras líneas)
+  let companyName = '';
+  for (let i = 0; i < Math.min(5, lines.length); i++) {
+    if (lines[i].length > 3 && !lines[i].match(/^[0-9]/)) {
+      companyName = lines[i];
+      break;
+    }
+  }
+
+  // Buscar ítems en tabla (líneas con números y $)
+  const items: Array<{
+    description: string;
+    quantity: number;
+    unitPrice: number;
+    totalPrice: number;
+  }> = [];
+
+  for (const line of lines) {
+    const itemMatch = line.match(/(.+?)\s+(\d+)\s+\$?([0-9.,]+)\s+\$?([0-9.,]+)/);
+    if (itemMatch) {
+      items.push({
+        description: itemMatch[1].trim(),
+        quantity: parseInt(itemMatch[2]),
+        unitPrice: parseFloat(itemMatch[3].replace(/,/g, '')),
+        totalPrice: parseFloat(itemMatch[4].replace(/,/g, ''))
+      });
+    }
+  }
+
+  return {
+    orderNumber: orderNumberMatch?.[1],
+    companyName: companyName || undefined,
+    companyRut: rutMatch?.[1],
+    total: totalMatch ? parseFloat(totalMatch[1].replace(/,/g, '')) : undefined,
+    items
+  };
+};
+
 export const OCR = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -226,15 +276,66 @@ export const OCR = () => {
   };
 
   const handleProcess = async () => {
-    if (!currentDocument) return;
+    if (!currentDocument || !selectedFile) return;
 
     setProcessing(true);
+    setNotification('🔄 Procesando documento con OCR...');
+    
     try {
+      let fileToProcess: File | Blob = selectedFile;
+
+      // Si es PDF, convertir primera página a imagen
+      if (selectedFile.type === 'application/pdf') {
+        setNotification('📄 Convirtiendo PDF a imagen...');
+        
+        // Configurar worker de PDF.js con versión estable
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        
+        const arrayBuffer = await selectedFile.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        const page = await pdf.getPage(1); // Primera página
+        
+        const viewport = page.getViewport({ scale: 2.0 }); // Escala 2x para mejor calidad
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d')!;
+        canvas.height = viewport.height;
+        canvas.width = viewport.width;
+        
+        await page.render({ 
+          canvasContext: context, 
+          viewport,
+          intent: 'display'
+        } as any).promise;
+        
+        // Convertir canvas a blob
+        fileToProcess = await new Promise<Blob>((resolve) => {
+          canvas.toBlob((blob) => resolve(blob!), 'image/png');
+        });
+        
+        setNotification('🔄 Extrayendo texto de la imagen...');
+      }
+      
+      // Procesar con Tesseract.js
+      const worker = await createWorker('spa'); // Español
+      
+      const { data: { text } } = await worker.recognize(fileToProcess);
+      await worker.terminate();
+
+      console.log('📄 Texto extraído:', text);
+
+      // Parsear texto extraído
+      const extractedData = parseDocumentText(text);
+
+      // Enviar datos extraídos al backend
       const response = await fetch(`${import.meta.env.VITE_API_URL}/ocr/process/${currentDocument.id}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-        }
+        },
+        body: JSON.stringify({
+          extractedText: text,
+          parsedData: extractedData
+        })
       });
 
       const data = await response.json();
@@ -242,10 +343,12 @@ export const OCR = () => {
       if (data.data) {
         setCurrentDocument({
           ...currentDocument,
-          status: data.data.status,
+          status: 'COMPLETED',
           processedAt: new Date().toISOString()
         });
-        setExtractedData(data.data.extractedData);
+        setExtractedData(extractedData);
+        setNotification('✅ Documento procesado exitosamente');
+        setTimeout(() => setNotification(null), 3000);
       }
 
       console.log('Documento procesado:', data);

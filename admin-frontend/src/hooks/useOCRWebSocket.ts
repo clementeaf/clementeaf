@@ -49,7 +49,7 @@ export const useOCRWebSocket = ({
 }: UseOCRWebSocketProps = {}) => {
   const wsRef = useRef<WebSocket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
-  const WSS_ENDPOINT = import.meta.env.VITE_WS_URL || 'wss://ao9gv2kwll.execute-api.us-east-1.amazonaws.com/dev';
+  const WSS_ENDPOINT = import.meta.env.VITE_WS_URL || 'wss://4hple5xva0.execute-api.us-east-1.amazonaws.com/dev';
 
   // Handler central de mensajes OCR
   const handleOCRMessage = useCallback((data: OCRDocumentUpdate) => {
