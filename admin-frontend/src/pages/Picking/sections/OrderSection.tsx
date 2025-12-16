@@ -157,14 +157,13 @@ export const OrderSection = ({ filters = {} }: OrderSectionProps): React.ReactEl
       // Si el usuario mueve desde "Nota de venta emitida" a "Picking",
       // primero se debe aprobar para disparar reservas y habilitar picking.
       if (newStatus === 'Picking') {
-        try {
+        // Evitar 400 "ya está aprobada": primero consultamos estado real.
+        const quote = await quotesService.getQuoteById(quoteId, { includeInvoice: false, includeInvoiceXml: false });
+        const estado = quote?.estado ?? null;
+        const isApproved =
+          estado === 'aprobada' || estado === 'Picking' || estado === 'Confirmación' || estado === 'Despachado';
+        if (!isApproved) {
           await quotesService.approveQuote(quoteId);
-        } catch (approveError: unknown) {
-          // Si ya está aprobada, el backend devuelve 400; no es un error bloqueante
-          const msg = getReadableErrorMessage(approveError);
-          if (!msg.toLowerCase().includes('ya está aprobada')) {
-            throw approveError;
-          }
         }
       }
 
