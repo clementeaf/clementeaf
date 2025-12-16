@@ -27,7 +27,6 @@ const Support = lazy(() => import('./pages/Support').then(module => ({ default: 
 const Invoices = lazy(() => import('./pages/Invoices').then(module => ({ default: module.Invoices })));
 const RolesManagement = lazy(() => import('./pages/Roles/RolesManagement').then(module => ({ default: module.RolesManagement })));
 const CreateRole = lazy(() => import('./pages/Roles/CreateRole').then(module => ({ default: module.CreateRole })));
-const DynamicRoleManagement = lazy(() => import('./pages/Roles/DynamicRoleManagement').then(module => ({ default: module.DynamicRoleManagement })));
 const PermissionsManagement = lazy(() => import('./pages/Roles/PermissionsManagement').then(module => ({ default: module.PermissionsManagement })));
 const UsersManagement = lazy(() => import('./pages/Roles/UsersManagement').then(module => ({ default: module.UsersManagement })));
 const CreateUser = lazy(() => import('./pages/Roles/CreateUser').then(module => ({ default: module.CreateUser })));
@@ -193,14 +192,6 @@ function App(): React.ReactNode {
               element={
                 <ProtectedRoute requiredPermission="view:roles:users">
                   <CreateUser />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path={routes.dynamicRoles} 
-              element={
-                <ProtectedRoute requiredPermission="view:roles:roles">
-                  <DynamicRoleManagement />
                 </ProtectedRoute>
               } 
             />
