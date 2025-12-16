@@ -95,6 +95,31 @@ export const productsService = {
   ,
 
   /**
+   * Lista productos del catálogo (sin término de búsqueda).
+   * @param limit - Límite de resultados (default: 10)
+   * @param warehouseId - ID de bodega para incluir stock (opcional)
+   * @returns Lista de productos
+   */
+  async listCatalogProducts(limit: number = 10, warehouseId?: number): Promise<Product[]> {
+    try {
+      const { data } = await apiClient.get<{ data: SearchProductsResponse }>(
+        endpoints.products.catalogSearch,
+        {
+          params: {
+            search: '',
+            limit,
+            ...(typeof warehouseId === 'number' ? { warehouseId } : {})
+          }
+        }
+      );
+      return data.data.data;
+    } catch (error) {
+      console.error('Error listing catalog products:', error);
+      return [];
+    }
+  },
+
+  /**
    * Crea un producto en el catálogo WMS
    * @param dto - Datos del producto
    * @returns Resultado de creación

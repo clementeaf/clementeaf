@@ -193,17 +193,28 @@ export const SearchProducts = (): React.ReactElement => {
   const { data: productsData, isLoading } = useQuery({
     queryKey: ['products', 'search', searchTerm, selectedWarehouseId],
     queryFn: async () => {
-      if (!searchTerm || searchTerm.trim().length < 2) {
+      const normalized = searchTerm.trim();
+
+      // Si el usuario no escribe nada, mostrar 10 productos por defecto.
+      if (normalized.length === 0) {
+        const products = await productsService.listCatalogProducts(10, selectedWarehouseId ?? undefined);
+        return { data: products, total: products.length };
+      }
+
+      // Mantener regla: con 1 caracter no buscar (evita ruido/costos).
+      if (normalized.length < 2) {
         return { data: [], total: 0 };
       }
+
       const products = await productsService.searchProducts(
-        searchTerm.trim(),
+        normalized,
         50,
         selectedWarehouseId ?? undefined
       );
       return { data: products, total: products.length };
     },
-    enabled: searchTerm.trim().length >= 2,
+    // Habilitado siempre: el queryFn maneja vacío / 1 char / 2+ chars.
+    enabled: true,
     staleTime: 1000 * 60 * 2
   });
 

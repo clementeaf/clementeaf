@@ -171,6 +171,79 @@ export class ProductsService {
   }
 
   /**
+   * Lista productos desde la API externa (sin filtro de búsqueda).
+   * Útil para poblar un catálogo inicial con los primeros N productos.
+   * @param limit - Límite de productos a retornar
+   * @returns Lista de productos
+   */
+  async listProducts(limit: number): Promise<ExternalProduct[]> {
+    const safeLimit = Math.min(Math.max(limit, 1), 500);
+    const perPage = 50;
+    const pages = Math.ceil(safeLimit / perPage);
+
+    const startTime = Date.now();
+    const results: ExternalProduct[] = [];
+
+    for (let page = 1; page <= pages; page++) {
+      const pageItems = await this.fetchProductsPageWithRetry(page, perPage);
+      if (pageItems.length === 0) {
+        break;
+      }
+
+      results.push(...pageItems);
+      if (results.length >= safeLimit) {
+        break;
+      }
+    }
+
+    const totalTime = Date.now() - startTime;
+    console.log(`[ProductsService] listProducts: retornando ${Math.min(results.length, safeLimit)} en ${totalTime}ms`);
+
+    return results.slice(0, safeLimit);
+  }
+
+  /**
+   * Obtiene una página de productos con un retry corto para tolerar latencias intermitentes.
+   * @param page - Página a solicitar (1-based)
+   * @param perPage - Registros por página
+   * @returns Lista de productos en esa página
+   */
+  private async fetchProductsPageWithRetry(page: number, perPage: number): Promise<ExternalProduct[]> {
+    const params: Record<string, string> = {
+      token: this.token,
+      base: this.base,
+      tabla: this.tabla,
+      page: String(page),
+      per_page: String(perPage)
+    };
+
+    const maxAttempts = 2;
+    let lastError: Error | null = null;
+
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        const response = await this.apiClient.get<ExternalApiResponse>('', {
+          params,
+          timeout: 20000
+        });
+
+        if (!response.data.success || !response.data.data?.registros) {
+          return [];
+        }
+
+        return response.data.data.registros;
+      } catch (error) {
+        lastError = error instanceof Error ? error : new Error('Error desconocido');
+        if (attempt < maxAttempts) {
+          await new Promise<void>(resolve => setTimeout(resolve, 400 * attempt));
+        }
+      }
+    }
+
+    throw new Error(`Error listando productos en la API externa: ${lastError?.message ?? 'Error desconocido'}`);
+  }
+
+  /**
    * Verifica si un producto coincide con el término de búsqueda
    * @param product - Producto a verificar
    * @param searchTerm - Término de búsqueda en minúsculas

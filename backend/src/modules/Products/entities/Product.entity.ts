@@ -4,7 +4,7 @@ import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateCol
  * Entidad de Producto (catálogo operativo WMS)
  * Mantiene un subconjunto de productos relevantes, basado en el formato de Zoho.
  */
-@Entity('products')
+@Entity('wms_products')
 @Index(['codigo'], { unique: true })
 export class Product {
   @PrimaryGeneratedColumn()

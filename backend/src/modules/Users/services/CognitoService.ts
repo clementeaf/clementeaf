@@ -262,7 +262,18 @@ export class CognitoService {
         }
         const region = COGNITO_REGION;
         const jwksUrl = `https://cognito-idp.${region}.amazonaws.com/${poolId}/.well-known/jwks.json`;
-        const jwksRes = await fetch(jwksUrl);
+        // En Lambdas dentro de VPC sin salida (sin NAT), esta llamada puede colgar hasta el timeout de Lambda.
+        // Ponemos un timeout corto para poder hacer fallback (super admin) en permisos.ts.
+        const controller = new AbortController();
+        const timeoutMs = Number(process.env.COGNITO_JWKS_TIMEOUT_MS || 1500);
+        const timeoutId = setTimeout(() => controller.abort(), isNaN(timeoutMs) ? 1500 : timeoutMs);
+
+        let jwksRes: Awaited<ReturnType<typeof fetch>>;
+        try {
+            jwksRes = await fetch(jwksUrl, { signal: controller.signal as any });
+        } finally {
+            clearTimeout(timeoutId);
+        }
         if (!jwksRes.ok) {
             throw new Error('Unable to fetch Cognito JWKS');
         }

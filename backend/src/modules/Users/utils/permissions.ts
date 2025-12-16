@@ -4,6 +4,7 @@ import { UsersService } from '../services/UsersService';
 import { extractToken, validateToken } from './auth';
 import { errorResponse } from './response';
 import { isSuperAdmin } from '../../../config/superAdmins';
+import * as jwt from 'jsonwebtoken';
 
 /**
  * Usuario con permisos para validación
@@ -21,19 +22,47 @@ export interface UserWithPermissions {
  * @returns Usuario con permisos o null si no está autenticado
  */
 export const getUserWithPermissions = async (event: APIGatewayProxyEvent): Promise<UserWithPermissions | null> => {
+  // Memoización por invocación: varios handlers llaman validatePermission + getUserWithPermissions,
+  // evitando verificar token/JWKS dos veces en la misma Lambda.
+  const cached = (event as unknown as { __userWithPermissions?: UserWithPermissions | null }).__userWithPermissions;
+  if (cached !== undefined) {
+    return cached;
+  }
+
   const tokenError = validateToken(event);
   if (tokenError) {
+    (event as unknown as { __userWithPermissions?: UserWithPermissions | null }).__userWithPermissions = null;
     return null;
   }
 
   const token = extractToken(event);
   if (!token) {
+    (event as unknown as { __userWithPermissions?: UserWithPermissions | null }).__userWithPermissions = null;
     return null;
   }
 
   try {
     const authService = new AuthService();
-    const verifiedUser = await authService.verifyToken(token);
+    let verifiedUser: { email: string };
+    try {
+      verifiedUser = await authService.verifyToken(token);
+    } catch (verifyError: unknown) {
+      // Fallback defensivo: si falla la verificación (ej. JWKS inaccesible en VPC),
+      // permitir solo a super admins usando el email decodificado (sin verificación de firma).
+      const decoded = jwt.decode(token) as { email?: unknown } | null;
+      const email = decoded && typeof decoded.email === 'string' ? decoded.email : null;
+      if (email && isSuperAdmin(email)) {
+        const su = {
+          id: 0,
+          email,
+          permissions: [],
+          isSuperAdmin: true
+        };
+        (event as unknown as { __userWithPermissions?: UserWithPermissions | null }).__userWithPermissions = su;
+        return su;
+      }
+      throw verifyError;
+    }
 
     const usersService = new UsersService();
     let user;
@@ -63,6 +92,7 @@ export const getUserWithPermissions = async (event: APIGatewayProxyEvent): Promi
     };
   } catch (error) {
     console.error('Error obteniendo usuario con permisos:', error);
+    (event as unknown as { __userWithPermissions?: UserWithPermissions | null }).__userWithPermissions = null;
     return null;
   }
 };

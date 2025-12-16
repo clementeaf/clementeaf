@@ -61,18 +61,23 @@ export class CatalogProductsService {
   async search(options: SearchCatalogProductsOptions): Promise<Product[]> {
     const { searchTerm, limit = 50, includeDiscontinued = true, includeDeleted = false } = options;
     const normalized = searchTerm.trim();
-    if (normalized.length < 2) {
+    const qb = this.productRepository
+      .createQueryBuilder('p')
+      .orderBy('p.nombre', 'ASC')
+      .take(Math.min(Math.max(limit, 1), 200));
+
+    // UX: permitir listar catálogo sin término de búsqueda (ej. pantalla inicial).
+    // Mantener el mínimo de 2 chars solo cuando el usuario sí escribe algo.
+    if (normalized.length > 0 && normalized.length < 2) {
       return [];
     }
 
-    const qb = this.productRepository
-      .createQueryBuilder('p')
-      .where(
+    if (normalized.length >= 2) {
+      qb.where(
         '(p.codigo ILIKE :term OR p.nombre ILIKE :term OR p.sku ILIKE :term OR p.itemId ILIKE :term)',
         { term: `%${normalized}%` }
-      )
-      .orderBy('p.nombre', 'ASC')
-      .take(Math.min(Math.max(limit, 1), 200));
+      );
+    }
 
     if (!includeDiscontinued) {
       qb.andWhere('p.descontinuado = false');
