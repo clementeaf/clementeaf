@@ -8,6 +8,27 @@ import { quotesService, type PickingStatus } from '../../../services/quotesServi
 import { toast } from 'react-toastify';
 import { logger } from '../../../utils/logger';
 
+/**
+ * Extrae un mensaje de error legible desde errores de Axios u objetos genéricos.
+ * @param error - Error capturado
+ * @returns Mensaje para UI
+ */
+const getReadableErrorMessage = (error: unknown): string => {
+  if (error && typeof error === 'object') {
+    const maybeAxios = error as { response?: { data?: unknown; status?: number } };
+    const data = maybeAxios.response?.data;
+    if (data && typeof data === 'object') {
+      const d = data as { message?: unknown; error?: unknown };
+      if (typeof d.message === 'string' && d.message.trim().length > 0) return d.message;
+      if (typeof d.error === 'string' && d.error.trim().length > 0) return d.error;
+    }
+    if (typeof (error as { message?: unknown }).message === 'string') {
+      return (error as { message: string }).message;
+    }
+  }
+  return 'Error al actualizar el estado';
+};
+
 interface OrderSectionProps {
   filters?: PickingFilters;
 }
@@ -146,7 +167,7 @@ export const OrderSection = ({ filters = {} }: OrderSectionProps): React.ReactEl
       toast.success(`Estado actualizado a: ${newStatus}`);
     } catch (error) {
       logger.error('[PICKING] Error actualizando estado', error);
-      toast.error('Error al actualizar el estado (requiere nota aprobada)');
+      toast.error(getReadableErrorMessage(error));
       // Revertir cambio optimista
       refetch();
     }

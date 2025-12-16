@@ -117,8 +117,10 @@ export class QuoteToPickingOrderService {
       }
     };
 
-    // Si la nota está aprobada, el Kanban debe reflejar estadoPicking (no sobrescribir "estado")
-    const estadoPorPicking = quote.estado === 'aprobada' ? pickingFromEstadoPicking(quote.estadoPicking) : null;
+    // Prioridad:
+    // 1) Si existe estadoPicking -> refleja Kanban desde estadoPicking (compatibilidad y estado real)
+    // 2) Si no existe estadoPicking -> cae a mapeo por quote.estado (legacy)
+    const estadoPorPicking = pickingFromEstadoPicking(quote.estadoPicking);
     const pickingEstado = estadoPorPicking ?? estadoMap[quote.estado] ?? 'Nota de venta emitida';
 
     return {

@@ -11,6 +11,7 @@ import { AwsWebSocketClient } from '../../Chat/services/aws/AwsWebSocketClient';
 import { AppDataSource } from '../../../config/database';
 import { StockMovement } from '../../Products/entities/StockMovement.entity';
 import { InvoicesService } from '../../Accounting/services/InvoicesService';
+import { isApprovedForPicking } from '../utils/pickingApproval';
 
 interface SalidaCreada {
   productId: string;
@@ -45,7 +46,7 @@ const confirmPickingHandler = async (event: APIGatewayProxyEvent) => {
     const quote = await quotesService.getQuoteById(parseInt(quoteId));
 
     // Validar que esté aprobada
-    if (quote.estado !== 'aprobada') {
+    if (!isApprovedForPicking(quote.estado)) {
       return errorResponse(400, 'Solo se puede confirmar picking de notas de venta aprobadas');
     }
 

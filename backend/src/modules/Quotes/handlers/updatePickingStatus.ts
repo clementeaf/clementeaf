@@ -6,6 +6,7 @@ import { QuotesService } from '../services/QuotesService';
 import { getUserWithPermissions } from '../../../modules/Users/utils/permissions';
 import { WebSocketConnectionService } from '../../Chat/services/WebSocketConnectionService';
 import { AwsWebSocketClient } from '../../Chat/services/aws/AwsWebSocketClient';
+import { isApprovedForPicking } from '../utils/pickingApproval';
 
 interface UpdatePickingStatusBody {
   estadoPicking: 'iniciado' | 'recolectado' | 'confirmado' | 'en_ruta';
@@ -44,7 +45,7 @@ const updatePickingStatusHandler = async (event: APIGatewayProxyEvent) => {
     const quote = await quotesService.getQuoteById(parseInt(quoteId));
 
     // Validar que esté aprobada
-    if (quote.estado !== 'aprobada') {
+    if (!isApprovedForPicking(quote.estado)) {
       return errorResponse(400, 'Solo se puede actualizar el estado de picking de notas de venta aprobadas');
     }
 
