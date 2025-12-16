@@ -178,12 +178,16 @@ export const SearchProducts = (): React.ReactElement => {
    * Busca productos cuando hay un término de búsqueda
    */
   const { data: productsData, isLoading } = useQuery({
-    queryKey: ['products', 'search', searchTerm],
+    queryKey: ['products', 'search', searchTerm, selectedWarehouseId],
     queryFn: async () => {
       if (!searchTerm || searchTerm.trim().length < 2) {
         return { data: [], total: 0 };
       }
-      const products = await productsService.searchProducts(searchTerm.trim(), 50);
+      const products = await productsService.searchProducts(
+        searchTerm.trim(),
+        50,
+        selectedWarehouseId ?? undefined
+      );
       return { data: products, total: products.length };
     },
     enabled: searchTerm.trim().length >= 2,

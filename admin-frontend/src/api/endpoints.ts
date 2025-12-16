@@ -89,6 +89,11 @@ export const endpoints = {
   }),
   products: buildEndpoints('products', {
     search: 'search/query',
+    catalogSearch: 'catalog/search/query',
+    catalogCreate: 'catalog',
+    catalogUpdate: 'catalog/{id}',
+    catalogDelete: 'catalog/{id}',
+    catalogSeedTopSold: 'catalog/seed-top-sold',
     warehouses: 'warehouses',
     getHistory: '{productId}/history',
     createMovement: 'movements'

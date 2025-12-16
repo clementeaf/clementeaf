@@ -21,6 +21,7 @@ export interface Product {
   categoryId?: string;
   purchaseRate?: string;
   taxPercentage?: number;
+  descontinuado?: boolean;
 }
 
 /**
@@ -39,20 +40,22 @@ export const productsService = {
    * Busca productos por código, nombre o SKU
    * @param searchTerm - Término de búsqueda
    * @param limit - Límite de resultados (default: 50)
+   * @param warehouseId - ID de bodega para incluir stock (opcional)
    * @returns Lista de productos encontrados
    */
-  async searchProducts(searchTerm: string, limit: number = 50): Promise<Product[]> {
+  async searchProducts(searchTerm: string, limit: number = 50, warehouseId?: number): Promise<Product[]> {
     if (!searchTerm || searchTerm.trim().length < 2) {
       return [];
     }
 
     try {
       const { data } = await apiClient.get<{ data: SearchProductsResponse }>(
-        endpoints.products.search,
+        endpoints.products.catalogSearch,
         {
           params: {
             search: searchTerm.trim(),
-            limit
+            limit,
+            ...(typeof warehouseId === 'number' ? { warehouseId } : {})
           }
         }
       );

@@ -28,6 +28,7 @@ export { OCRDocument } from '../modules/OCR/entities/OCRDocument.entity';
 // Products
 export { StockMovement } from '../modules/Products/entities/StockMovement.entity';
 export { Warehouse } from '../modules/Products/entities/Warehouse.entity';
+export { Product } from '../modules/Products/entities/Product.entity';
 
 // Quotes
 export { Quote } from '../modules/Quotes/entities/Quote.entity';
@@ -58,6 +59,7 @@ import { Notification } from '../modules/Notifications/entities/Notification.ent
 import { OCRDocument } from '../modules/OCR/entities/OCRDocument.entity';
 import { StockMovement } from '../modules/Products/entities/StockMovement.entity';
 import { Warehouse } from '../modules/Products/entities/Warehouse.entity';
+import { Product } from '../modules/Products/entities/Product.entity';
 import { Quote } from '../modules/Quotes/entities/Quote.entity';
 import { Permission } from '../modules/Roles/entities/Permission.entity';
 import { Role } from '../modules/Roles/entities/Role.entity';
@@ -80,6 +82,7 @@ export const allEntities = [
   OCRDocument,
   StockMovement,
   Warehouse,
+  Product,
   Quote,
   Permission,
   Role,

@@ -15,7 +15,7 @@ interface UserActivity {
   targetElement: string | null;
   targetId: string | null;
   targetText: string | null;
-  metadata: Record<string, any> | null;
+  metadata: Record<string, unknown> | null;
   ipAddress: string | null;
   userAgent: string | null;
   sessionId: string | null;
@@ -50,12 +50,12 @@ export const Activity = () => {
   // Pagination
   const [page, setPage] = useState(1);
   const [limit] = useState(50);
-  const [totalActivities, setTotalActivities] = useState(0);
+  const [totalActivities, setTotalActivities] = useState<number>(0);
 
   const API_URL = import.meta.env.VITE_API_URL;
 
   // Fetch activities
-  const fetchActivities = async () => {
+  const fetchActivities = async (): Promise<void> => {
     setLoading(true);
     setError(null);
     
@@ -74,18 +74,22 @@ export const Activity = () => {
         throw new Error('Error al cargar actividades');
       }
 
-      const data = await response.json();
-      setActivities(data.activities);
-      setTotalActivities(data.pagination.total);
-    } catch (err: any) {
-      setError(err.message);
+      const data: unknown = await response.json();
+      if (typeof data !== 'object' || data === null) {
+        throw new Error('Respuesta inválida del servidor');
+      }
+      const parsed = data as { activities?: UserActivity[]; pagination?: { total?: number } };
+      setActivities(Array.isArray(parsed.activities) ? parsed.activities : []);
+      setTotalActivities(typeof parsed.pagination?.total === 'number' ? parsed.pagination.total : 0);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Error al cargar actividades');
     } finally {
       setLoading(false);
     }
   };
 
   // Fetch stats
-  const fetchStats = async () => {
+  const fetchStats = async (): Promise<void> => {
     try {
       const response = await fetch(`${API_URL}/activity/stats`);
       
@@ -93,9 +97,9 @@ export const Activity = () => {
         throw new Error('Error al cargar estadísticas');
       }
 
-      const data = await response.json();
-      setStats(data);
-    } catch (err: any) {
+      const data: unknown = await response.json();
+      setStats(data as ActivityStats);
+    } catch (err: unknown) {
       console.error('Error fetching stats:', err);
     }
   };
@@ -139,6 +143,10 @@ export const Activity = () => {
           }
         ]}
       />
+
+      <div className="mb-4 text-sm text-gray-600">
+        Total: <span className="font-semibold text-gray-900">{totalActivities.toLocaleString('es-CL')}</span>
+      </div>
 
       {/* Statistics Cards */}
       {stats && (

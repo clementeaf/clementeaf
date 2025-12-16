@@ -52,6 +52,46 @@ export class CapabilitiesDiscoveryService {
         action: 'view'
       },
       {
+        code: 'view:products:catalog',
+        name: 'Ver Catálogo de Productos',
+        description: 'Permite buscar y ver el catálogo operativo de productos',
+        category: 'Productos',
+        resource: 'products',
+        action: 'view:catalog'
+      },
+      {
+        code: 'create:products:catalog',
+        name: 'Crear Producto en Catálogo',
+        description: 'Permite crear productos en el catálogo operativo',
+        category: 'Productos',
+        resource: 'products',
+        action: 'create:catalog'
+      },
+      {
+        code: 'update:products:catalog',
+        name: 'Editar Producto en Catálogo',
+        description: 'Permite editar productos del catálogo operativo',
+        category: 'Productos',
+        resource: 'products',
+        action: 'update:catalog'
+      },
+      {
+        code: 'delete:products:catalog',
+        name: 'Eliminar Producto en Catálogo',
+        description: 'Permite eliminar (soft delete) productos del catálogo operativo',
+        category: 'Productos',
+        resource: 'products',
+        action: 'delete:catalog'
+      },
+      {
+        code: 'seed:products:catalog',
+        name: 'Poblar Catálogo (Seed)',
+        description: 'Permite poblar el catálogo con top vendidos e inicializar stock',
+        category: 'Productos',
+        resource: 'products',
+        action: 'seed:catalog'
+      },
+      {
         code: 'create:products:movements',
         name: 'Crear Movimientos de Stock',
         description: 'Permite crear movimientos de stock (entradas, salidas, ajustes)',

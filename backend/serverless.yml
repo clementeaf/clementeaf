@@ -935,6 +935,82 @@ functions:
               - Authorization
             allowCredentials: false
 
+  # Products Catalog (Postgres) endpoints
+  searchCatalogProducts:
+    handler: dist/modules/Products/handlers/searchCatalogProducts.handler
+    timeout: 30
+    memorySize: 512
+    events:
+      - http:
+          path: products/catalog/search/query
+          method: get
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
+
+  createCatalogProduct:
+    handler: dist/modules/Products/handlers/createCatalogProduct.handler
+    timeout: 30
+    memorySize: 512
+    events:
+      - http:
+          path: products/catalog
+          method: post
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
+
+  updateCatalogProduct:
+    handler: dist/modules/Products/handlers/updateCatalogProduct.handler
+    timeout: 30
+    memorySize: 512
+    events:
+      - http:
+          path: products/catalog/{id}
+          method: put
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
+
+  deleteCatalogProduct:
+    handler: dist/modules/Products/handlers/deleteCatalogProduct.handler
+    timeout: 30
+    memorySize: 512
+    events:
+      - http:
+          path: products/catalog/{id}
+          method: delete
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
+
+  seedTopSoldCatalogProducts:
+    handler: dist/modules/Products/handlers/seedTopSoldCatalogProducts.handler
+    timeout: 60
+    memorySize: 1024
+    events:
+      - http:
+          path: products/catalog/seed-top-sold
+          method: post
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
+
   getWarehouses:
     handler: dist/modules/Products/handlers/getWarehouses.handler
     timeout: 30

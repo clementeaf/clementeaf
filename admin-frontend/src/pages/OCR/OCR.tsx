@@ -96,8 +96,8 @@ export const OCR = () => {
   const [currentDocument, setCurrentDocument] = useState<OCRDocument | null>(null);
   const [extractedData, setExtractedData] = useState<ExtractedData | null>(null);
   const [notification, setNotification] = useState<string | null>(null);
-  const [documentsList, setDocumentsList] = useState<OCRDocument[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [, setDocumentsList] = useState<OCRDocument[]>([]);
+  const [, setLoading] = useState(true);
 
   // WebSocket para actualizaciones en tiempo real
   const { isConnected } = useOCRWebSocket({
