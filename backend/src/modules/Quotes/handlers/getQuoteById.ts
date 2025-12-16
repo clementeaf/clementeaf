@@ -2,6 +2,9 @@ import { type APIGatewayProxyEvent } from 'aws-lambda';
 import { QuotesService } from '../services/QuotesService';
 import { handlerWrapper } from '../../Users/utils/handlerWrapper';
 import { successResponse } from '../../Users/utils/response';
+import { AppDataSource } from '../../../config/database';
+import { Invoice } from '../../Accounting/entities/Invoice.entity';
+import { InvoiceItem } from '../../Accounting/entities/InvoiceItem.entity';
 
 /**
  * Handler para obtener una orden de compra por su ID
@@ -23,6 +26,18 @@ const getQuoteByIdHandler = async (event: APIGatewayProxyEvent) => {
 
     const quotesService = new QuotesService();
     const quote = await quotesService.getQuoteById(quoteId);
+
+    const includeInvoice = event.queryStringParameters?.includeInvoice !== 'false';
+    const includeInvoiceXml = event.queryStringParameters?.includeInvoiceXml === 'true';
+
+    let invoice: Invoice | null = null;
+    let invoiceItems: InvoiceItem[] = [];
+    if (includeInvoice) {
+      invoice = await AppDataSource.getRepository(Invoice).findOne({ where: { quoteId } });
+      if (invoice) {
+        invoiceItems = await AppDataSource.getRepository(InvoiceItem).find({ where: { invoiceId: invoice.id } });
+      }
+    }
 
     return successResponse(200, {
       id: quote.id,
@@ -47,6 +62,30 @@ const getQuoteByIdHandler = async (event: APIGatewayProxyEvent) => {
       sinCostoEnvio: quote.sinCostoEnvio,
       productos: quote.productos,
       estado: quote.estado,
+      estadoPicking: quote.estadoPicking,
+      invoice: invoice
+        ? {
+            id: invoice.id,
+            invoiceNumber: invoice.invoiceNumber,
+            issueDate: invoice.issueDate?.toISOString() ?? null,
+            currency: invoice.currency,
+            netAmount: Number(invoice.netAmount),
+            taxAmount: Number(invoice.taxAmount),
+            totalAmount: Number(invoice.totalAmount),
+            status: invoice.status,
+            xml: includeInvoiceXml ? (invoice.xml ?? null) : null
+          }
+        : null,
+      invoiceItems: invoice
+        ? invoiceItems.map(i => ({
+            id: i.id,
+            productCode: i.productCode,
+            productName: i.productName,
+            quantity: Number(i.quantity),
+            unitPrice: Number(i.unitPrice),
+            lineTotal: Number(i.lineTotal)
+          }))
+        : [],
       createdAt: quote.createdAt ? quote.createdAt.toISOString() : null,
       updatedAt: quote.updatedAt ? quote.updatedAt.toISOString() : null
     });

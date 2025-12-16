@@ -1795,7 +1795,8 @@ custom:
     perFunction: true
     perType: true
     perGroupFunction: true
-    nestedStackCount: 10
+    # Aumentar nested stacks para reducir recursos en el root stack (<500)
+    nestedStackCount: 25
   serverless-offline:
     httpPort: 9500
     host: 0.0.0.0

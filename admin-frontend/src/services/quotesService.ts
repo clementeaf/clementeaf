@@ -66,6 +66,26 @@ export interface Quote {
   sinCostoEnvio: boolean;
   productos: string | null;
   estado: string;
+  estadoPicking?: string | null;
+  invoice?: {
+    id: number;
+    invoiceNumber: string;
+    issueDate: string | null;
+    currency: string;
+    netAmount: number;
+    taxAmount: number;
+    totalAmount: number;
+    status: string;
+    xml?: string | null;
+  } | null;
+  invoiceItems?: Array<{
+    id: number;
+    productCode: string;
+    productName: string;
+    quantity: number;
+    unitPrice: number;
+    lineTotal: number;
+  }>;
   createdAt: string;
   updatedAt: string;
 }
@@ -103,10 +123,18 @@ export const quotesService = {
    * @param id - ID de la orden de compra
    * @returns Orden de compra encontrada o null si no existe
    */
-  async getQuoteById(id: number): Promise<Quote | null> {
+  async getQuoteById(
+    id: number,
+    options?: { includeInvoice?: boolean; includeInvoiceXml?: boolean }
+  ): Promise<Quote | null> {
     try {
       const url = endpoints.quotes.getById.replace('{id}', id.toString());
-      const response = await apiClient.get<{ data: Quote }>(url);
+      const response = await apiClient.get<{ data: Quote }>(url, {
+        params: {
+          includeInvoice: options?.includeInvoice ?? true,
+          includeInvoiceXml: options?.includeInvoiceXml ?? false
+        }
+      });
       return response.data.data;
     } catch (error: unknown) {
       if (error && typeof error === 'object' && 'response' in error) {

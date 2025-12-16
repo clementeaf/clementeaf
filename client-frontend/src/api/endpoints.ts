@@ -12,7 +12,7 @@ const isDevelopment = (): boolean => {
  */
 const BASE_URL = isDevelopment() 
   ? 'http://localhost:9500'
-  : 'https://9hzayjhnz8.execute-api.us-east-1.amazonaws.com';
+  : 'https://zzv7qnwgz1.execute-api.us-east-1.amazonaws.com';
 
 /**
  * Stage del backend (dev, prod, etc.)
@@ -48,6 +48,9 @@ export const endpoints = {
     login: 'login',
     me: 'me',
     logout: 'logout'
+  }),
+  quotes: buildEndpoints('quotes', {
+    getById: '{id}'
   })
 } as const;
 
