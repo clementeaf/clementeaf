@@ -7,9 +7,12 @@ import { stockMovementsService, MovementType } from '../../services/stockMovemen
 import { useStockMovementsWebSocket } from '../../hooks/useStockMovementsWebSocket';
 import type { Product } from '../../services/productsService';
 import type { Warehouse } from '../../services/warehousesService';
-import { columns } from './columns';
+import { getProductColumns } from './columns';
 import { historyColumns } from './HistoryColumns';
 import { CreateMovementModal } from './CreateMovementModal';
+import { ProductFormModal } from './ProductFormModal';
+import { DeleteProductModal } from './DeleteProductModal';
+import { usePermissions } from '../../hooks/usePermissions';
 
 /**
  * Página de búsqueda de productos mejorada
@@ -158,6 +161,16 @@ export const SearchProducts = (): React.ReactElement => {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [activeTab, setActiveTab] = useState<string>('search');
   const [isCreateMovementModalOpen, setIsCreateMovementModalOpen] = useState(false);
+  const [isProductModalOpen, setIsProductModalOpen] = useState(false);
+  const [productModalMode, setProductModalMode] = useState<'create' | 'edit'>('create');
+  const [productToEdit, setProductToEdit] = useState<Product | null>(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [productToDelete, setProductToDelete] = useState<Product | null>(null);
+
+  const { hasPermission, isSuperAdmin } = usePermissions();
+  const canCreate = isSuperAdmin || hasPermission('create:products:catalog');
+  const canEdit = isSuperAdmin || hasPermission('update:products:catalog');
+  const canDelete = isSuperAdmin || hasPermission('delete:products:catalog');
 
   /**
    * Obtiene las bodegas disponibles
@@ -205,6 +218,22 @@ export const SearchProducts = (): React.ReactElement => {
     return products;
   }, [productsData?.data, selectedWarehouseId]);
 
+  const productColumns = useMemo(() => {
+    return getProductColumns({
+      canEdit,
+      canDelete,
+      onEdit: (product: Product) => {
+        setProductModalMode('edit');
+        setProductToEdit(product);
+        setIsProductModalOpen(true);
+      },
+      onDelete: (product: Product) => {
+        setProductToDelete(product);
+        setIsDeleteModalOpen(true);
+      }
+    });
+  }, [canEdit, canDelete]);
+
   /**
    * Maneja la selección de un producto
    */
@@ -223,7 +252,7 @@ export const SearchProducts = (): React.ReactElement => {
       content: (
         <DataTablePage<Product>
           data={filteredProducts}
-          columns={columns}
+          columns={productColumns}
           isLoading={isLoading}
           onRowClick={(row) => handleProductSelect(row.original)}
           errorMessage="Error al buscar productos"
@@ -271,7 +300,24 @@ export const SearchProducts = (): React.ReactElement => {
 
   return (
     <div className="w-full h-full flex flex-col p-8">
-      <PageHeader title="Búsqueda de Productos" />
+      <PageHeader
+        title="Productos (WMS)"
+        actionButtons={
+          canCreate
+            ? [
+                {
+                  label: 'Nuevo Producto',
+                  onClick: () => {
+                    setProductModalMode('create');
+                    setProductToEdit(null);
+                    setIsProductModalOpen(true);
+                  },
+                  variant: 'primary'
+                }
+              ]
+            : []
+        }
+      />
 
       <div className="flex gap-4 flex-1 min-h-0">
         <div className="flex-1 flex flex-col min-w-0">
@@ -404,6 +450,19 @@ export const SearchProducts = (): React.ReactElement => {
         onSuccess={() => {
           // El historial se actualizará automáticamente por la invalidación de queries
         }}
+      />
+
+      <ProductFormModal
+        isOpen={isProductModalOpen}
+        mode={productModalMode}
+        product={productModalMode === 'edit' ? productToEdit : null}
+        onClose={() => setIsProductModalOpen(false)}
+      />
+
+      <DeleteProductModal
+        isOpen={isDeleteModalOpen}
+        product={productToDelete}
+        onClose={() => setIsDeleteModalOpen(false)}
       />
     </div>
   );

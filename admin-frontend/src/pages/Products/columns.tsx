@@ -4,7 +4,19 @@ import type { Product } from '../../services/productsService';
 /**
  * Columnas de la tabla de productos
  */
-export const columns: ColumnDef<Product>[] = [
+export interface ProductTableActions {
+  onEdit: (product: Product) => void;
+  onDelete: (product: Product) => void;
+  canEdit: boolean;
+  canDelete: boolean;
+}
+
+/**
+ * Construye columnas de productos incluyendo acciones
+ * @param actions - Callbacks y flags de permisos
+ * @returns Columnas para la tabla
+ */
+export const getProductColumns = (actions: ProductTableActions): ColumnDef<Product>[] => [
   {
     accessorKey: 'codigo',
     header: 'Código',
@@ -27,6 +39,23 @@ export const columns: ColumnDef<Product>[] = [
     cell: ({ row }) => (
       <div className="text-gray-600 text-sm">{row.original.sku || '-'}</div>
     ),
+    size: 120
+  },
+  {
+    accessorKey: 'descontinuado',
+    header: 'Estado',
+    cell: ({ row }) => {
+      const discontinued = Boolean(row.original.descontinuado);
+      return (
+        <span
+          className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
+            discontinued ? 'bg-amber-100 text-amber-800' : 'bg-green-100 text-green-800'
+          }`}
+        >
+          {discontinued ? 'Descontinuado' : 'Activo'}
+        </span>
+      );
+    },
     size: 120
   },
   {
@@ -74,6 +103,47 @@ export const columns: ColumnDef<Product>[] = [
     cell: ({ row }) => (
       <div className="text-gray-600 text-sm">{row.original.marca || '-'}</div>
     ),
+    size: 120
+  },
+  {
+    id: 'actions',
+    header: '',
+    cell: ({ row }) => {
+      const product = row.original;
+      const stop = (e: React.MouseEvent<HTMLButtonElement>): void => {
+        e.preventDefault();
+        e.stopPropagation();
+      };
+
+      return (
+        <div className="flex justify-end gap-2">
+          {actions.canEdit && (
+            <button
+              type="button"
+              onClick={(e) => {
+                stop(e);
+                actions.onEdit(product);
+              }}
+              className="px-3 py-1 text-xs font-medium rounded-md bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
+            >
+              Editar
+            </button>
+          )}
+          {actions.canDelete && (
+            <button
+              type="button"
+              onClick={(e) => {
+                stop(e);
+                actions.onDelete(product);
+              }}
+              className="px-3 py-1 text-xs font-medium rounded-md bg-red-600 text-white hover:bg-red-700"
+            >
+              Eliminar
+            </button>
+          )}
+        </div>
+      );
+    },
     size: 120
   }
 ];

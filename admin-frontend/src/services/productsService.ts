@@ -33,6 +33,33 @@ export interface SearchProductsResponse {
 }
 
 /**
+ * Payload para crear producto en catálogo
+ */
+export interface CreateCatalogProductDto {
+  codigo: string;
+  nombre: string;
+  sku?: string | null;
+  descontinuado?: boolean;
+  descontinuadoReason?: string | null;
+}
+
+/**
+ * Payload para actualizar producto en catálogo
+ */
+export type UpdateCatalogProductDto = Partial<CreateCatalogProductDto>;
+
+/**
+ * Respuesta base para mutaciones de catálogo
+ */
+export interface CatalogProductMutationResult {
+  id: number;
+  codigo: string;
+  nombre: string;
+  descontinuado?: boolean;
+  deletedAt?: string | null;
+}
+
+/**
  * Servicio para gestionar productos
  */
 export const productsService = {
@@ -64,6 +91,43 @@ export const productsService = {
       console.error('Error searching products:', error);
       return [];
     }
+  }
+  ,
+
+  /**
+   * Crea un producto en el catálogo WMS
+   * @param dto - Datos del producto
+   * @returns Resultado de creación
+   */
+  async createCatalogProduct(dto: CreateCatalogProductDto): Promise<CatalogProductMutationResult> {
+    const { data } = await apiClient.post<{ data: CatalogProductMutationResult }>(
+      endpoints.products.catalogCreate,
+      dto
+    );
+    return data.data;
+  },
+
+  /**
+   * Actualiza un producto del catálogo WMS
+   * @param id - ID del producto
+   * @param dto - Campos a actualizar
+   * @returns Resultado de actualización
+   */
+  async updateCatalogProduct(id: number, dto: UpdateCatalogProductDto): Promise<CatalogProductMutationResult> {
+    const url = endpoints.products.catalogUpdate.replace('{id}', id.toString());
+    const { data } = await apiClient.put<{ data: CatalogProductMutationResult }>(url, dto);
+    return data.data;
+  },
+
+  /**
+   * Elimina (soft delete) un producto del catálogo WMS
+   * @param id - ID del producto
+   * @returns Resultado de eliminación
+   */
+  async deleteCatalogProduct(id: number): Promise<CatalogProductMutationResult> {
+    const url = endpoints.products.catalogDelete.replace('{id}', id.toString());
+    const { data } = await apiClient.delete<{ data: CatalogProductMutationResult }>(url);
+    return data.data;
   }
 };
 
