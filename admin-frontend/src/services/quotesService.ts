@@ -124,6 +124,14 @@ export interface ConfirmPickingResponse {
   updatedAt: string;
 }
 
+export interface ApproveQuoteResponse {
+  id: number;
+  numeroCotizacion: string | null;
+  estado: string;
+  clienteNombre: string;
+  updatedAt: string;
+}
+
 /**
  * Servicio para gestionar órdenes de compra
  */
@@ -221,6 +229,17 @@ export const quotesService = {
   async confirmPicking(id: number): Promise<ConfirmPickingResponse> {
     const url = endpoints.quotes.confirmPicking.replace('{id}', id.toString());
     const { data } = await apiClient.post<{ data: ConfirmPickingResponse }>(url);
+    return data.data;
+  },
+
+  /**
+   * Aprueba una nota de venta (habilita flujo de picking/reservas).
+   * @param id - ID de la nota de venta
+   * @returns Respuesta de aprobación
+   */
+  async approveQuote(id: number): Promise<ApproveQuoteResponse> {
+    const url = endpoints.quotes.approve.replace('{id}', id.toString());
+    const { data } = await apiClient.post<{ data: ApproveQuoteResponse }>(url);
     return data.data;
   },
 

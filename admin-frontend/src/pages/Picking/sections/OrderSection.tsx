@@ -154,6 +154,20 @@ export const OrderSection = ({ filters = {} }: OrderSectionProps): React.ReactEl
         return;
       }
 
+      // Si el usuario mueve desde "Nota de venta emitida" a "Picking",
+      // primero se debe aprobar para disparar reservas y habilitar picking.
+      if (newStatus === 'Picking') {
+        try {
+          await quotesService.approveQuote(quoteId);
+        } catch (approveError: unknown) {
+          // Si ya está aprobada, el backend devuelve 400; no es un error bloqueante
+          const msg = getReadableErrorMessage(approveError);
+          if (!msg.toLowerCase().includes('ya está aprobada')) {
+            throw approveError;
+          }
+        }
+      }
+
       const pickingStatus = mapKanbanStatusToPickingStatus(newStatus);
       if (!pickingStatus) {
         // "Devolver a Nota de venta emitida": limpiamos estadoPicking (nullable) vía updateQuote.

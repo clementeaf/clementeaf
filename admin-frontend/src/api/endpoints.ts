@@ -85,6 +85,7 @@ export const endpoints = {
     getNextNumber: 'next-number/query',
     update: '{id}',
     delete: '{id}',
+    approve: '{id}/approve',
     updatePickingStatus: '{id}/picking-status',
     confirmPicking: '{id}/confirm-picking',
     getPickingOrders: 'picking-orders'
