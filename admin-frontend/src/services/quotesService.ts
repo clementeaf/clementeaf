@@ -26,6 +26,7 @@ export interface CreateQuoteDto {
   sinCostoEnvio?: boolean;
   productos?: string;
   estado?: string;
+  estadoPicking?: string | null;
 }
 
 /**
@@ -36,6 +37,7 @@ export interface QuoteResponse {
   clienteNombre: string;
   numeroCotizacion: string | null;
   estado: string;
+  estadoPicking?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -99,6 +101,27 @@ export interface PaginatedQuotesResponse {
   page: number;
   limit: number;
   totalPages: number;
+}
+
+export type PickingStatus = 'iniciado' | 'recolectado' | 'confirmado' | 'en_ruta';
+
+export interface UpdatePickingStatusResponse {
+  id: number;
+  numeroCotizacion: string | null;
+  estado: string;
+  estadoPicking: PickingStatus;
+  clienteNombre: string;
+  updatedAt: string;
+}
+
+export interface ConfirmPickingResponse {
+  id: number;
+  numeroCotizacion: string | null;
+  estado: string;
+  estadoPicking: PickingStatus;
+  invoice: { id: number; invoiceNumber: string; totalAmount: number } | null;
+  totalSalidas: number;
+  updatedAt: string;
 }
 
 /**
@@ -175,6 +198,29 @@ export const quotesService = {
       url,
       quoteData
     );
+    return data.data;
+  },
+
+  /**
+   * Actualiza el estado de picking de una nota de venta aprobada
+   * @param id - ID de la nota de venta
+   * @param estadoPicking - Nuevo estado de picking
+   * @returns Respuesta con la nota actualizada
+   */
+  async updatePickingStatus(id: number, estadoPicking: PickingStatus): Promise<UpdatePickingStatusResponse> {
+    const url = endpoints.quotes.updatePickingStatus.replace('{id}', id.toString());
+    const { data } = await apiClient.put<{ data: UpdatePickingStatusResponse }>(url, { estadoPicking });
+    return data.data;
+  },
+
+  /**
+   * Confirma picking: convierte RESERVA → SALIDA y emite factura
+   * @param id - ID de la nota de venta
+   * @returns Respuesta con resumen del despacho y factura
+   */
+  async confirmPicking(id: number): Promise<ConfirmPickingResponse> {
+    const url = endpoints.quotes.confirmPicking.replace('{id}', id.toString());
+    const { data } = await apiClient.post<{ data: ConfirmPickingResponse }>(url);
     return data.data;
   },
 

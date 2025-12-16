@@ -12,6 +12,14 @@ import { AppDataSource } from '../../../config/database';
 import { StockMovement } from '../../Products/entities/StockMovement.entity';
 import { InvoicesService } from '../../Accounting/services/InvoicesService';
 
+interface SalidaCreada {
+  productId: string;
+  productCode: string;
+  cantidad: number;
+  stockNuevo: number;
+  reservaOriginalId: number;
+}
+
 /**
  * Handler para confirmar picking y convertir RESERVA → SALIDA
  */
@@ -62,7 +70,7 @@ const confirmPickingHandler = async (event: APIGatewayProxyEvent) => {
     console.log(`📦 Encontradas ${reservas.length} reservas para quote ${quoteId}. Convirtiendo a SALIDA...`);
 
     // Crear movimientos de SALIDA
-    const salidasCreadas: any[] = [];
+    const salidasCreadas: SalidaCreada[] = [];
     const salidasMovimientos: StockMovement[] = [];
     for (const reserva of reservas) {
       try {
@@ -116,7 +124,7 @@ const confirmPickingHandler = async (event: APIGatewayProxyEvent) => {
     let invoice: { id: number; invoiceNumber: string; totalAmount: number } | null = null;
     try {
       const invoicesService = new InvoicesService();
-      const created = await invoicesService.emitInvoiceForQuote(updatedQuote as any, salidasMovimientos);
+      const created = await invoicesService.emitInvoiceForQuote(updatedQuote, salidasMovimientos);
       invoice = { id: created.id, invoiceNumber: created.invoiceNumber, totalAmount: Number(created.totalAmount) };
       console.log(`🧾 Factura emitida: ${created.invoiceNumber} (quote ${updatedQuote.id})`);
     } catch (invError) {

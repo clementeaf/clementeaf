@@ -93,6 +93,7 @@ export class QuoteToPickingOrderService {
       'borrador': 'Nota de venta emitida',
       'enviada': 'Nota de venta emitida',
       'aceptada': 'Nota de venta emitida',
+      'aprobada': 'Nota de venta emitida',
       'Nota de venta emitida': 'Nota de venta emitida',
       'Picking': 'Picking',
       'Confirmación': 'Confirmación',
@@ -101,7 +102,24 @@ export class QuoteToPickingOrderService {
       'cancelada': 'Nota de venta emitida'
     };
 
-    const pickingEstado = estadoMap[quote.estado] || 'Nota de venta emitida';
+    const pickingFromEstadoPicking = (estadoPicking: string | null): PickingOrder['estado'] | null => {
+      if (!estadoPicking) return null;
+      switch (estadoPicking) {
+        case 'iniciado':
+        case 'recolectado':
+          return 'Picking';
+        case 'confirmado':
+          return 'Confirmación';
+        case 'en_ruta':
+          return 'Despachado';
+        default:
+          return null;
+      }
+    };
+
+    // Si la nota está aprobada, el Kanban debe reflejar estadoPicking (no sobrescribir "estado")
+    const estadoPorPicking = quote.estado === 'aprobada' ? pickingFromEstadoPicking(quote.estadoPicking) : null;
+    const pickingEstado = estadoPorPicking ?? estadoMap[quote.estado] ?? 'Nota de venta emitida';
 
     return {
       id: String(quote.id),

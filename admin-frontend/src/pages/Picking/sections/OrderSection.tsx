@@ -4,7 +4,7 @@ import type { PickingOrder, PickingOrderStatus } from '../types';
 import type { PickingFilters } from '../PickingSidebar';
 import { usePickingOrders } from '../../../hooks/usePickingOrders';
 import { usePickingOrdersWebSocket } from '../../../hooks/usePickingOrdersWebSocket';
-import { useUpdateQuote } from '../../../hooks/useQuotes';
+import { quotesService, type PickingStatus } from '../../../services/quotesService';
 import { toast } from 'react-toastify';
 import { logger } from '../../../utils/logger';
 
@@ -21,7 +21,6 @@ export const OrderSection = ({ filters = {} }: OrderSectionProps): React.ReactEl
   // Obtener órdenes desde la API
   const { data: ordersData, isLoading, refetch } = usePickingOrders(1, 100);
   const [orders, setOrders] = useState<PickingOrder[]>([]);
-  const updateQuoteMutation = useUpdateQuote();
 
   // Actualizar órdenes cuando se cargan desde la API
   useEffect(() => {
@@ -84,16 +83,23 @@ export const OrderSection = ({ filters = {} }: OrderSectionProps): React.ReactEl
   });
 
   /**
-   * Mapea el estado de picking al estado de quote
+   * Mapea el estado del Kanban a estadoPicking del backend
+   * @param status - Estado del Kanban
+   * @returns Estado de picking del backend (o null si no aplica)
    */
-  const mapPickingStatusToQuoteStatus = (status: PickingOrderStatus): string => {
-    const statusMap: Record<PickingOrderStatus, string> = {
-      'Nota de venta emitida': 'Nota de venta emitida',
-      'Picking': 'Picking',
-      'Confirmación': 'Confirmación',
-      'Despachado': 'Despachado'
-    };
-    return statusMap[status] || status;
+  const mapKanbanStatusToPickingStatus = (status: PickingOrderStatus): PickingStatus | null => {
+    switch (status) {
+      case 'Picking':
+        return 'iniciado';
+      case 'Confirmación':
+        return 'confirmado';
+      case 'Despachado':
+        // en el backend, "en_ruta" queda tras confirmPicking
+        return 'en_ruta';
+      case 'Nota de venta emitida':
+      default:
+        return null;
+    }
   };
 
   /**
@@ -118,20 +124,33 @@ export const OrderSection = ({ filters = {} }: OrderSectionProps): React.ReactEl
         return;
       }
 
-      const quoteStatus = mapPickingStatusToQuoteStatus(newStatus);
-      await updateQuoteMutation.mutateAsync({
-        id: quoteId,
-        data: { estado: quoteStatus }
-      });
+      // Si el usuario mueve a "Despachado", el flujo correcto es confirmar picking:
+      // requiere que la nota esté aprobada y estadoPicking="confirmado".
+      if (newStatus === 'Despachado') {
+        await quotesService.confirmPicking(quoteId);
+        toast.success('Picking confirmado: despacho registrado y factura emitida');
+        refetch();
+        return;
+      }
 
-      toast.success(`Orden actualizada a: ${newStatus}`);
+      const pickingStatus = mapKanbanStatusToPickingStatus(newStatus);
+      if (!pickingStatus) {
+        // "Devolver a Nota de venta emitida": limpiamos estadoPicking (nullable) vía updateQuote.
+        await quotesService.updateQuote(quoteId, { estadoPicking: null });
+        toast.success('Estado de picking reiniciado');
+        refetch();
+        return;
+      }
+
+      await quotesService.updatePickingStatus(quoteId, pickingStatus);
+      toast.success(`Estado actualizado a: ${newStatus}`);
     } catch (error) {
       logger.error('[PICKING] Error actualizando estado', error);
-      toast.error('Error al actualizar el estado de la orden');
+      toast.error('Error al actualizar el estado (requiere nota aprobada)');
       // Revertir cambio optimista
       refetch();
     }
-  }, [updateQuoteMutation, refetch]);
+  }, [refetch]);
 
   /**
    * Filtra las órdenes según los filtros aplicados
