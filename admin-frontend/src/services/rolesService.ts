@@ -1,15 +1,27 @@
 import { apiClient } from '../api/client';
 import { endpoints } from '../api/endpoints';
 
+export interface RoleCapability {
+  id: number;
+  roleId: number;
+  module: string;
+  action: string;
+  allowed: boolean;
+  createdAt: string;
+}
+
 export interface Role {
   id: number;
   name: string;
   description: string | null;
   isActive: boolean;
+  moduleScopes?: string[] | null;
+  canDelegatePermissions?: boolean;
   rolePermissions?: Array<{
     id: number;
     permission: Permission;
   }>;
+  roleCapabilities?: RoleCapability[];
   createdAt: string;
   updatedAt: string;
 }
@@ -39,6 +51,9 @@ export interface CreateRoleDto {
   name: string;
   description?: string;
   permissionIds?: number[];
+  moduleScopes?: string[];
+  canDelegatePermissions?: boolean;
+  capabilities?: Array<{module: string; action: string; allowed?: boolean}>;
 }
 
 export interface UpdateRoleDto {
@@ -46,6 +61,9 @@ export interface UpdateRoleDto {
   description?: string;
   isActive?: boolean;
   permissionIds?: number[];
+  moduleScopes?: string[];
+  canDelegatePermissions?: boolean;
+  capabilities?: Array<{module: string; action: string; allowed?: boolean}>;
 }
 
 export const rolesService = {
@@ -108,4 +126,18 @@ export const permissionsService = {
     return data.data.permissions;
   }
 };
+
+/**
+ * Módulos disponibles en el sistema
+ */
+export const AVAILABLE_MODULES = [
+  { value: 'sells', label: 'Ventas' },
+  { value: 'picking', label: 'Picking' },
+  { value: 'products', label: 'Productos' },
+  { value: 'roles', label: 'Roles y Usuarios' },
+  { value: 'whatsapp', label: 'WhatsApp' },
+  { value: 'ocr', label: 'OCR' },
+  { value: 'activity', label: 'Actividad' },
+  { value: 'chat', label: 'Chat' }
+];
 
