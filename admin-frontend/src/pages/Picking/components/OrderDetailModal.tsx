@@ -1,5 +1,5 @@
-import { useMemo } from 'react';
-import { Modal, Button } from '../../../components/commons';
+import { useMemo, useState } from 'react';
+import { Modal, Button, Input } from '../../../components/commons';
 import type { PickingOrder } from '../types';
 import { quotesService } from '../../../services/quotesService';
 import { whatsappService } from '../../../services/whatsappService';
@@ -21,6 +21,40 @@ export const OrderDetailModal = ({ isOpen, onClose, order }: OrderDetailModalPro
     const id = parseInt(order.id, 10);
     return isNaN(id) ? null : id;
   }, [order.id]);
+
+  const [isRecipientModalOpen, setIsRecipientModalOpen] = useState(false);
+  const [recipientMode, setRecipientMode] = useState<'whatsapp' | 'email' | null>(null);
+  const [recipientValue, setRecipientValue] = useState<string>('');
+  const [feedbackModal, setFeedbackModal] = useState<{ isOpen: boolean; title: string; message: string }>({
+    isOpen: false,
+    title: '',
+    message: ''
+  });
+  const [isActionLoading, setIsActionLoading] = useState(false);
+
+  /**
+   * Abre un modal de feedback con un mensaje.
+   * @param title - Título del modal
+   * @param message - Mensaje a mostrar
+   */
+  const openFeedback = (title: string, message: string): void => {
+    setFeedbackModal({ isOpen: true, title, message });
+  };
+
+  /**
+   * Valida un destinatario según modo.
+   * @param mode - Tipo de envío (whatsapp|email)
+   * @param value - Destinatario
+   * @returns true si es válido
+   */
+  const isValidRecipient = (mode: 'whatsapp' | 'email', value: string): boolean => {
+    const trimmed = value.trim();
+    if (mode === 'email') {
+      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed);
+    }
+    // WhatsApp: permite + y dígitos, mínimo 8
+    return /^\+?\d{8,15}$/.test(trimmed);
+  };
 
   const buildPrintableHtml = (data: {
     invoiceNumber: string;
@@ -94,7 +128,7 @@ export const OrderDetailModal = ({ isOpen, onClose, order }: OrderDetailModalPro
     if (!quoteId) return;
     const quote = await quotesService.getQuoteById(quoteId, { includeInvoice: true, includeInvoiceXml: false });
     if (!quote?.invoice) {
-      alert('Esta orden aún no tiene factura emitida.');
+      openFeedback('Sin factura', 'Esta orden aún no tiene factura emitida.');
       return;
     }
     const items =
@@ -120,7 +154,7 @@ export const OrderDetailModal = ({ isOpen, onClose, order }: OrderDetailModalPro
 
     const w = window.open('', '_blank', 'noopener,noreferrer');
     if (!w) {
-      alert('Bloqueador de popups: permite abrir ventanas para imprimir.');
+      openFeedback('No se pudo imprimir', 'Tu navegador bloqueó la ventana emergente. Habilita popups para imprimir.');
       return;
     }
     w.document.open();
@@ -130,153 +164,241 @@ export const OrderDetailModal = ({ isOpen, onClose, order }: OrderDetailModalPro
     w.print();
   };
 
-  const handleSendWhatsApp = async (): Promise<void> => {
-    if (!quoteId) return;
-    const to = window.prompt('Número WhatsApp destino (ej: +569XXXXXXXX):');
-    if (!to) return;
-    const quote = await quotesService.getQuoteById(quoteId, { includeInvoice: true, includeInvoiceXml: false });
-    if (!quote?.invoice) {
-      alert('Esta orden aún no tiene factura emitida.');
-      return;
-    }
-    const msg = [
-      `Factura ${quote.invoice.invoiceNumber}`,
-      `Cliente: ${quote.clienteNombre}`,
-      `Total: $${quote.invoice.totalAmount.toLocaleString('es-CL')}`,
-      `Nota: ${quote.numeroCotizacion || `Q-${quote.id}`}`,
-      '',
-      'Puedes solicitar el XML desde el portal (Contabilidad / Picking).'
-    ].join('\n');
-    await whatsappService.sendMessage(to, msg);
-    alert('Enviado por WhatsApp (si el servicio está conectado).');
+  /**
+   * Abre el modal para capturar destinatario.
+   * @param mode - Modo de envío
+   */
+  const openRecipientModal = (mode: 'whatsapp' | 'email'): void => {
+    setRecipientMode(mode);
+    setRecipientValue('');
+    setIsRecipientModalOpen(true);
   };
 
-  const handleSendEmail = async (): Promise<void> => {
-    if (!quoteId) return;
-    const to = window.prompt('Email destino:');
-    if (!to) return;
-    const quote = await quotesService.getQuoteById(quoteId, { includeInvoice: true, includeInvoiceXml: true });
-    if (!quote?.invoice) {
-      alert('Esta orden aún no tiene factura emitida.');
+  /**
+   * Ejecuta el envío por el canal seleccionado.
+   */
+  const handleConfirmSend = async (): Promise<void> => {
+    if (!quoteId || !recipientMode) return;
+    const to = recipientValue.trim();
+
+    if (!isValidRecipient(recipientMode, to)) {
+      openFeedback('Destinatario inválido', recipientMode === 'email'
+        ? 'Ingresa un email válido.'
+        : 'Ingresa un número válido (ej: +569XXXXXXXX).');
       return;
     }
-    const subject = `Factura ${quote.invoice.invoiceNumber} - ${quote.clienteNombre}`;
-    const xml = quote.invoice.xml ? `<pre style="white-space:pre-wrap;font-size:11px;border:1px solid #eee;padding:12px;">${quote.invoice.xml.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</pre>` : '<p>(Sin XML)</p>';
-    const htmlBody = `
-      <div style="font-family: Arial, sans-serif; line-height:1.5">
-        <h2>Factura ${quote.invoice.invoiceNumber}</h2>
-        <p><strong>Cliente:</strong> ${quote.clienteNombre}</p>
-        <p><strong>Total:</strong> $${quote.invoice.totalAmount.toLocaleString('es-CL')}</p>
-        <p><strong>IVA (19%):</strong> $${quote.invoice.taxAmount.toLocaleString('es-CL')}</p>
-        <h3>XML</h3>
-        ${xml}
-      </div>
-    `;
-    await emailService.sendEmail({
-      to,
-      subject,
-      body: `Factura ${quote.invoice.invoiceNumber} - Total $${quote.invoice.totalAmount.toLocaleString('es-CL')}`,
-      htmlBody
-    });
-    alert('Email enviado (si SES está configurado).');
+
+    setIsActionLoading(true);
+    try {
+      const includeInvoiceXml = recipientMode === 'email';
+      const quote = await quotesService.getQuoteById(quoteId, { includeInvoice: true, includeInvoiceXml });
+      if (!quote?.invoice) {
+        setIsRecipientModalOpen(false);
+        openFeedback('Sin factura', 'Esta orden aún no tiene factura emitida.');
+        return;
+      }
+
+      if (recipientMode === 'whatsapp') {
+        const msg = [
+          `Factura ${quote.invoice.invoiceNumber}`,
+          `Cliente: ${quote.clienteNombre}`,
+          `Total: $${quote.invoice.totalAmount.toLocaleString('es-CL')}`,
+          `Nota: ${quote.numeroCotizacion || `Q-${quote.id}`}`,
+          '',
+          'Puedes solicitar el XML desde el portal (Contabilidad / Picking).'
+        ].join('\n');
+        await whatsappService.sendMessage(to, msg);
+        setIsRecipientModalOpen(false);
+        openFeedback('Enviado', 'La factura fue enviada por WhatsApp.');
+        return;
+      }
+
+      const subject = `Factura ${quote.invoice.invoiceNumber} - ${quote.clienteNombre}`;
+      const escapedXml = quote.invoice.xml
+        ? quote.invoice.xml.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        : null;
+      const xmlBlock = escapedXml
+        ? `<pre style="white-space:pre-wrap;font-size:11px;border:1px solid #eee;padding:12px;">${escapedXml}</pre>`
+        : '<p>(Sin XML)</p>';
+      const htmlBody = `
+        <div style="font-family: Arial, sans-serif; line-height:1.5">
+          <h2>Factura ${quote.invoice.invoiceNumber}</h2>
+          <p><strong>Cliente:</strong> ${quote.clienteNombre}</p>
+          <p><strong>Total:</strong> $${quote.invoice.totalAmount.toLocaleString('es-CL')}</p>
+          <p><strong>IVA (19%):</strong> $${quote.invoice.taxAmount.toLocaleString('es-CL')}</p>
+          <h3>XML</h3>
+          ${xmlBlock}
+        </div>
+      `;
+      await emailService.sendEmail({
+        to,
+        subject,
+        body: `Factura ${quote.invoice.invoiceNumber} - Total $${quote.invoice.totalAmount.toLocaleString('es-CL')}`,
+        htmlBody
+      });
+      setIsRecipientModalOpen(false);
+      openFeedback('Enviado', 'La factura fue enviada por email.');
+    } catch (error: unknown) {
+      setIsRecipientModalOpen(false);
+      const message = error instanceof Error ? error.message : 'Error desconocido';
+      openFeedback('Error', message);
+    } finally {
+      setIsActionLoading(false);
+    }
   };
 
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      title={`Detalle de orden: ${order.codigoOrden}`}
-      contentClassName="max-w-4xl"
-    >
-      <div className="space-y-4">
-        {/* Acciones de factura */}
-        <div className="flex gap-2 justify-end">
-          <Button
-            onClick={handlePrintInvoice}
-            className="px-3 py-2 bg-[#0052C9] text-white hover:bg-[#004BB7] text-xs"
-            disabled={!quoteId}
-          >
-            Imprimir factura
-          </Button>
-          <Button
-            onClick={handleSendWhatsApp}
-            className="px-3 py-2 bg-green-600 text-white hover:bg-green-700 text-xs"
-            disabled={!quoteId}
-          >
-            Enviar WhatsApp
-          </Button>
-          <Button
-            onClick={handleSendEmail}
-            className="px-3 py-2 bg-gray-800 text-white hover:bg-black text-xs"
-            disabled={!quoteId}
-          >
-            Enviar Email
-          </Button>
-        </div>
+    <>
+      <Modal
+        isOpen={isOpen}
+        onClose={onClose}
+        title={`Detalle de orden: ${order.codigoOrden}`}
+        contentClassName="max-w-4xl"
+      >
+        <div className="space-y-4">
+          {/* Acciones de factura */}
+          <div className="flex gap-2 justify-end">
+            <Button
+              onClick={handlePrintInvoice}
+              className="px-3 py-2 bg-[#0052C9] text-white hover:bg-[#004BB7] text-xs"
+              disabled={!quoteId}
+            >
+              Imprimir factura
+            </Button>
+            <Button
+              onClick={() => openRecipientModal('whatsapp')}
+              className="px-3 py-2 bg-green-600 text-white hover:bg-green-700 text-xs"
+              disabled={!quoteId}
+            >
+              Enviar WhatsApp
+            </Button>
+            <Button
+              onClick={() => openRecipientModal('email')}
+              className="px-3 py-2 bg-gray-800 text-white hover:bg-black text-xs"
+              disabled={!quoteId}
+            >
+              Enviar Email
+            </Button>
+          </div>
 
-        {/* Información de la orden */}
-        <div className="bg-gray-50 rounded-lg p-4 mb-4">
-          <div className="grid grid-cols-3 gap-4">
-            <div>
-              <label className="text-xs text-gray-500">Vendedor</label>
-              <p className="text-sm font-medium text-gray-900 mt-1">{order.vendedor}</p>
-            </div>
-            <div>
-              <label className="text-xs text-gray-500">Cantidad de productos</label>
-              <p className="text-sm font-medium text-gray-900 mt-1">{order.cantidadProductos}</p>
-            </div>
-            <div>
-              <label className="text-xs text-gray-500">Estado</label>
-              <p className="text-sm font-medium text-gray-900 mt-1">{order.estado}</p>
+          {/* Información de la orden */}
+          <div className="bg-gray-50 rounded-lg p-4 mb-4">
+            <div className="grid grid-cols-3 gap-4">
+              <div>
+                <label className="text-xs text-gray-500">Vendedor</label>
+                <p className="text-sm font-medium text-gray-900 mt-1">{order.vendedor}</p>
+              </div>
+              <div>
+                <label className="text-xs text-gray-500">Cantidad de productos</label>
+                <p className="text-sm font-medium text-gray-900 mt-1">{order.cantidadProductos}</p>
+              </div>
+              <div>
+                <label className="text-xs text-gray-500">Estado</label>
+                <p className="text-sm font-medium text-gray-900 mt-1">{order.estado}</p>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Tabla de productos */}
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse">
-            <thead>
-              <tr className="border-b border-gray-200 bg-gray-50">
-                <th className="text-left text-xs font-medium text-gray-700 uppercase tracking-wider py-3 px-4">
-                  Nombre del producto
-                </th>
-                <th className="text-left text-xs font-medium text-gray-700 uppercase tracking-wider py-3 px-4">
-                  Código del producto
-                </th>
-                <th className="text-left text-xs font-medium text-gray-700 uppercase tracking-wider py-3 px-4">
-                  Ubicación
-                </th>
-                <th className="text-left text-xs font-medium text-gray-700 uppercase tracking-wider py-3 px-4">
-                  Stock
-                </th>
-                <th className="text-left text-xs font-medium text-gray-700 uppercase tracking-wider py-3 px-4">
-                  Cantidad Solicitada
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {order.productos.length > 0 ? (
-                order.productos.map((product) => (
-                  <tr key={product.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-                    <td className="py-3 px-4 text-sm text-gray-900">{product.nombre}</td>
-                    <td className="py-3 px-4 text-sm text-gray-900">{product.codigo}</td>
-                    <td className="py-3 px-4 text-sm text-gray-900">{product.ubicacion}</td>
-                    <td className="py-3 px-4 text-sm text-gray-900">{product.stock}</td>
-                    <td className="py-3 px-4 text-sm font-medium text-gray-900">{product.cantidadSolicitada}</td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={5} className="py-8 px-4 text-center text-sm text-gray-500">
-                    No hay productos en esta orden
-                  </td>
+          {/* Tabla de productos */}
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse">
+              <thead>
+                <tr className="border-b border-gray-200 bg-gray-50">
+                  <th className="text-left text-xs font-medium text-gray-700 uppercase tracking-wider py-3 px-4">
+                    Nombre del producto
+                  </th>
+                  <th className="text-left text-xs font-medium text-gray-700 uppercase tracking-wider py-3 px-4">
+                    Código del producto
+                  </th>
+                  <th className="text-left text-xs font-medium text-gray-700 uppercase tracking-wider py-3 px-4">
+                    Ubicación
+                  </th>
+                  <th className="text-left text-xs font-medium text-gray-700 uppercase tracking-wider py-3 px-4">
+                    Stock
+                  </th>
+                  <th className="text-left text-xs font-medium text-gray-700 uppercase tracking-wider py-3 px-4">
+                    Cantidad Solicitada
+                  </th>
                 </tr>
-              )}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {order.productos.length > 0 ? (
+                  order.productos.map((product) => (
+                    <tr key={product.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                      <td className="py-3 px-4 text-sm text-gray-900">{product.nombre}</td>
+                      <td className="py-3 px-4 text-sm text-gray-900">{product.codigo}</td>
+                      <td className="py-3 px-4 text-sm text-gray-900">{product.ubicacion}</td>
+                      <td className="py-3 px-4 text-sm text-gray-900">{product.stock}</td>
+                      <td className="py-3 px-4 text-sm font-medium text-gray-900">{product.cantidadSolicitada}</td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={5} className="py-8 px-4 text-center text-sm text-gray-500">
+                      No hay productos en esta orden
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
-    </Modal>
+      </Modal>
+
+      {/* Modal destinatario */}
+      <Modal
+        isOpen={isRecipientModalOpen}
+        onClose={() => setIsRecipientModalOpen(false)}
+        title={recipientMode === 'email' ? 'Enviar por Email' : 'Enviar por WhatsApp'}
+        size="sm"
+      >
+        <div className="space-y-4">
+          <Input
+            id="invoice-recipient"
+            label={recipientMode === 'email' ? 'Email destino' : 'Número destino'}
+            value={recipientValue}
+            onChange={(e) => setRecipientValue(e.target.value)}
+            placeholder={recipientMode === 'email' ? 'cliente@correo.com' : '+569XXXXXXXX'}
+          />
+          <div className="flex justify-end gap-2">
+            <Button
+              onClick={() => setIsRecipientModalOpen(false)}
+              className="px-3 py-2 bg-gray-100 text-gray-800 hover:bg-gray-200 text-xs"
+              disabled={isActionLoading}
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleConfirmSend}
+              className="px-3 py-2 bg-[#0052C9] text-white hover:bg-[#004BB7] text-xs"
+              disabled={isActionLoading || !recipientMode}
+            >
+              {isActionLoading ? 'Enviando...' : 'Enviar'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Modal feedback */}
+      <Modal
+        isOpen={feedbackModal.isOpen}
+        onClose={() => setFeedbackModal(prev => ({ ...prev, isOpen: false }))}
+        title={feedbackModal.title}
+        size="sm"
+      >
+        <div className="space-y-4">
+          <div className="text-sm text-gray-700">{feedbackModal.message}</div>
+          <div className="flex justify-end">
+            <Button
+              onClick={() => setFeedbackModal(prev => ({ ...prev, isOpen: false }))}
+              className="px-3 py-2 bg-[#0052C9] text-white hover:bg-[#004BB7] text-xs"
+            >
+              Entendido
+            </Button>
+          </div>
+        </div>
+      </Modal>
+    </>
   );
 };
 
