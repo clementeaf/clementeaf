@@ -34,6 +34,7 @@ const WhatsApp = lazy(() => import('./pages/WhatsApp').then(module => ({ default
 const OCR = lazy(() => import('./pages/OCR/OCR').then(module => ({ default: module.default })));
 const Activity = lazy(() => import('./pages/Activity').then(module => ({ default: module.Activity })));
 const Finanzas = lazy(() => import('./pages/Finanzas').then(module => ({ default: module.Finanzas })));
+const Accounting = lazy(() => import('./pages/Accounting/Accounting').then(module => ({ default: module.Accounting })));
 
 /**
  * Componente de carga para Suspense
@@ -236,6 +237,16 @@ function App(): React.ReactNode {
             <Route 
               path={routes.finanzas} 
               element={<Finanzas />} 
+            />
+
+            {/* Rutas de Contabilidad */}
+            <Route
+              path={routes.accounting}
+              element={
+                <ProtectedRoute requiredPermission="view:accounting:overview">
+                  <Accounting />
+                </ProtectedRoute>
+              }
             />
             
             {/* Rutas legacy (sin protección por ahora) */}

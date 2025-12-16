@@ -35,6 +35,7 @@ export const routes = {
   ocr: '/ocr',
   activity: '/activity',
   finanzas: '/finanzas',
+  accounting: '/accounting',
   notFound: '/*'
 } as const;
 

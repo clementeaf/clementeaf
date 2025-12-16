@@ -854,6 +854,22 @@ functions:
               - Authorization
             allowCredentials: false
 
+  # Accounting (Contabilidad)
+  getAccountingOverview:
+    handler: dist/modules/Accounting/handlers/getAccountingOverview.handler
+    timeout: 30
+    memorySize: 512
+    events:
+      - http:
+          path: accounting/overview
+          method: get
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
+
   # Picking Metrics endpoints
   getPickingMetrics:
     handler: dist/modules/Picking/handlers/getPickingMetrics.handler

@@ -20,6 +20,7 @@ export const navItems: NavItem[] = [
   { name: 'OCR', path: routes.ocr, icon: articlesIcon },
   { name: 'Picking', path: routes.picking, icon: checkIcon, hasSubItems: true },
   { name: 'Productos', path: routes.productsSearch, icon: articlesIcon },
+  { name: 'Contabilidad', path: routes.accounting, icon: articlesIcon },
   { name: 'Soporte', path: routes.support, icon: articlesIcon },
   { name: 'Roles', path: routes.rolesManagement, icon: checkIcon, hasSubItems: true }
 ];

@@ -10,6 +10,7 @@ import { WebSocketConnectionService } from '../../Chat/services/WebSocketConnect
 import { AwsWebSocketClient } from '../../Chat/services/aws/AwsWebSocketClient';
 import { AppDataSource } from '../../../config/database';
 import { StockMovement } from '../../Products/entities/StockMovement.entity';
+import { InvoicesService } from '../../Accounting/services/InvoicesService';
 
 /**
  * Handler para confirmar picking y convertir RESERVA → SALIDA
@@ -62,6 +63,7 @@ const confirmPickingHandler = async (event: APIGatewayProxyEvent) => {
 
     // Crear movimientos de SALIDA
     const salidasCreadas: any[] = [];
+    const salidasMovimientos: StockMovement[] = [];
     for (const reserva of reservas) {
       try {
         // Crear SALIDA de stock físico
@@ -86,6 +88,7 @@ const confirmPickingHandler = async (event: APIGatewayProxyEvent) => {
           stockNuevo: salida.stockNuevo,
           reservaOriginalId: reserva.id
         });
+        salidasMovimientos.push(salida as unknown as StockMovement);
 
         console.log(`✅ SALIDA creada: ${salida.productCode} - ${salida.cantidad} unidades. Stock nuevo: ${salida.stockNuevo}`);
       } catch (error) {
@@ -94,10 +97,31 @@ const confirmPickingHandler = async (event: APIGatewayProxyEvent) => {
       }
     }
 
+    // Limpiar reservas para evitar doble procesamiento (idempotencia básica)
+    try {
+      const reservaIds = reservas.map(r => r.id);
+      if (reservaIds.length > 0) {
+        await movementRepository.delete(reservaIds);
+      }
+    } catch (cleanupError) {
+      console.error('⚠️ Error eliminando reservas (no crítico):', cleanupError);
+    }
+
     // Actualizar estado de picking a "en_ruta"
     const updatedQuote = await quotesService.updateQuote(parseInt(quoteId), {
       estadoPicking: 'en_ruta'
     });
+
+    // Emitir factura (XML + persistencia + asiento de inventario valorizado)
+    let invoice: { id: number; invoiceNumber: string; totalAmount: number } | null = null;
+    try {
+      const invoicesService = new InvoicesService();
+      const created = await invoicesService.emitInvoiceForQuote(updatedQuote as any, salidasMovimientos);
+      invoice = { id: created.id, invoiceNumber: created.invoiceNumber, totalAmount: Number(created.totalAmount) };
+      console.log(`🧾 Factura emitida: ${created.invoiceNumber} (quote ${updatedQuote.id})`);
+    } catch (invError) {
+      console.error('❌ Error emitiendo factura (no crítico para despacho):', invError);
+    }
 
     console.log(`✅ Picking confirmado para quote ${quoteId}. ${salidasCreadas.length} salidas de stock creadas`);
 
@@ -131,6 +155,7 @@ const confirmPickingHandler = async (event: APIGatewayProxyEvent) => {
       numeroCotizacion: updatedQuote.numeroCotizacion,
       estado: updatedQuote.estado,
       estadoPicking: updatedQuote.estadoPicking,
+      invoice,
       salidasCreadas,
       totalSalidas: salidasCreadas.length,
       updatedAt: updatedQuote.updatedAt.toISOString()

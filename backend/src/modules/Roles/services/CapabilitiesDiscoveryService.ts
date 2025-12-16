@@ -44,6 +44,14 @@ export class CapabilitiesDiscoveryService {
   private getManualCapabilities(): Capability[] {
     return [
       {
+        code: 'view:accounting:overview',
+        name: 'Ver Contabilidad (Vista)',
+        description: 'Permite ver la vista contable de notas de venta, facturas y haberes por bodega',
+        category: 'Contabilidad',
+        resource: 'accounting',
+        action: 'view:overview'
+      },
+      {
         code: 'view:products:history',
         name: 'Ver Historial de Productos',
         description: 'Permite ver el historial de movimientos de stock de productos',

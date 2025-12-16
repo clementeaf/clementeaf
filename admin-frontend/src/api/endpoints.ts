@@ -98,6 +98,9 @@ export const endpoints = {
     getHistory: '{productId}/history',
     createMovement: 'movements'
   }),
+  accounting: buildEndpoints('accounting', {
+    overview: 'overview'
+  }),
   roles: buildEndpoints('roles', {
     create: '',
     getById: '{id}',

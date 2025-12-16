@@ -25,6 +25,12 @@ export { Notification } from '../modules/Notifications/entities/Notification.ent
 // OCR
 export { OCRDocument } from '../modules/OCR/entities/OCRDocument.entity';
 
+// Accounting
+export { Invoice } from '../modules/Accounting/entities/Invoice.entity';
+export { InvoiceItem } from '../modules/Accounting/entities/InvoiceItem.entity';
+export { WarehouseAccountingBalance } from '../modules/Accounting/entities/WarehouseAccountingBalance.entity';
+export { InventoryLedgerEntry } from '../modules/Accounting/entities/InventoryLedgerEntry.entity';
+
 // Products
 export { StockMovement } from '../modules/Products/entities/StockMovement.entity';
 export { Warehouse } from '../modules/Products/entities/Warehouse.entity';
@@ -57,6 +63,10 @@ import { Branch } from '../modules/Clients/entities/Branch.entity';
 import { Clients } from '../modules/Clients/entities/Clients.entity';
 import { Notification } from '../modules/Notifications/entities/Notification.entity';
 import { OCRDocument } from '../modules/OCR/entities/OCRDocument.entity';
+import { Invoice } from '../modules/Accounting/entities/Invoice.entity';
+import { InvoiceItem } from '../modules/Accounting/entities/InvoiceItem.entity';
+import { WarehouseAccountingBalance } from '../modules/Accounting/entities/WarehouseAccountingBalance.entity';
+import { InventoryLedgerEntry } from '../modules/Accounting/entities/InventoryLedgerEntry.entity';
 import { StockMovement } from '../modules/Products/entities/StockMovement.entity';
 import { Warehouse } from '../modules/Products/entities/Warehouse.entity';
 import { Product } from '../modules/Products/entities/Product.entity';
@@ -80,6 +90,10 @@ export const allEntities = [
   Clients,
   Notification,
   OCRDocument,
+  Invoice,
+  InvoiceItem,
+  WarehouseAccountingBalance,
+  InventoryLedgerEntry,
   StockMovement,
   Warehouse,
   Product,
