@@ -100,6 +100,15 @@ export const endpoints = {
     update: '{id}',
     delete: '{id}'
   }),
+  dynamicRoles: buildEndpoints('roles/dynamic', {
+    create: '',
+    getAll: '',
+    update: '{id}',
+    delete: '{id}',
+    assignCapabilities: '{id}/capabilities',
+    setHierarchy: '{id}/hierarchy',
+    getSubordinates: '{id}/subordinates'
+  }),
   permissions: buildEndpoints('permissions', {
     getAll: '',
     getCapabilities: 'capabilities',

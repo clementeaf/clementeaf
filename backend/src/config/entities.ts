@@ -36,6 +36,8 @@ export { Quote } from '../modules/Quotes/entities/Quote.entity';
 export { Permission } from '../modules/Roles/entities/Permission.entity';
 export { Role } from '../modules/Roles/entities/Role.entity';
 export { RolePermission } from '../modules/Roles/entities/RolePermission.entity';
+export { RoleCapability } from '../modules/Roles/entities/RoleCapability.entity';
+export { RoleHierarchy } from '../modules/Roles/entities/RoleHierarchy.entity';
 
 // Tickets
 export { Ticket } from '../modules/Tickets/entities/Ticket.entity';
@@ -60,6 +62,8 @@ import { Quote } from '../modules/Quotes/entities/Quote.entity';
 import { Permission } from '../modules/Roles/entities/Permission.entity';
 import { Role } from '../modules/Roles/entities/Role.entity';
 import { RolePermission } from '../modules/Roles/entities/RolePermission.entity';
+import { RoleCapability } from '../modules/Roles/entities/RoleCapability.entity';
+import { RoleHierarchy } from '../modules/Roles/entities/RoleHierarchy.entity';
 import { Ticket } from '../modules/Tickets/entities/Ticket.entity';
 import { User } from '../modules/Users/entities/User.entity';
 
@@ -80,6 +84,8 @@ export const allEntities = [
   Permission,
   Role,
   RolePermission,
+  RoleCapability,
+  RoleHierarchy,
   Ticket,
   User,
 ];

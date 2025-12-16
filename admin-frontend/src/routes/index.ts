@@ -28,6 +28,7 @@ export const routes = {
   invoices: '/invoices',
   rolesManagement: '/roles/roles',
   createRole: '/roles/roles/create',
+  dynamicRoles: '/roles/dynamic',
   permissions: '/roles/permissions',
   users: '/roles/users',
   createUser: '/roles/users/create',
