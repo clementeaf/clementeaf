@@ -10,6 +10,7 @@ export interface AccountingOverviewRow {
     estadoPicking: string | null;
     createdAt: string | null;
   };
+  accountingStatus?: 'pendiente_factura' | 'facturada' | 'no_aplica';
   invoice: {
     id: number;
     invoiceNumber: string;

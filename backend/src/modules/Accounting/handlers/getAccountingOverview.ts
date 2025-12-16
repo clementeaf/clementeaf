@@ -6,6 +6,7 @@ import { initializeDatabase, AppDataSource } from '../../../config/database';
 import { Quote } from '../../Quotes/entities/Quote.entity';
 import { Invoice } from '../entities/Invoice.entity';
 import { WarehouseAccountingBalance } from '../entities/WarehouseAccountingBalance.entity';
+import { isApprovedForPicking } from '../../Quotes/utils/pickingApproval';
 
 /**
  * Vista contable: lista notas de venta con su estado (picking/factura) y haberes por bodega.
@@ -65,10 +66,23 @@ const getAccountingOverviewHandler = async (event: APIGatewayProxyEvent) => {
       balanceByWarehouseId[b.warehouseId] = b;
     }
 
+    /**
+     * Calcula el estado contable para UI basado en estadoPicking + existencia de factura.
+     * @param quote - Nota de venta
+     * @param invoice - Factura asociada (si existe)
+     * @returns Estado contable para mostrar
+     */
+    const resolveAccountingStatus = (quote: Quote, invoice: Invoice | null): 'pendiente_factura' | 'facturada' | 'no_aplica' => {
+      if (!isApprovedForPicking(quote.estado)) return 'no_aplica';
+      if (invoice) return 'facturada';
+      return quote.estadoPicking === 'confirmado' ? 'pendiente_factura' : 'no_aplica';
+    };
+
     return successResponse(200, {
       data: quotes.map(q => {
         const inv = invoiceByQuoteId[q.id] || null;
         const balance = inv ? (balanceByWarehouseId[inv.warehouseId]?.inventoryValue ?? 0) : 0;
+        const accountingStatus = resolveAccountingStatus(q, inv);
         return {
           quote: {
             id: q.id,
@@ -78,6 +92,7 @@ const getAccountingOverviewHandler = async (event: APIGatewayProxyEvent) => {
             estadoPicking: q.estadoPicking,
             createdAt: q.createdAt?.toISOString() ?? null
           },
+          accountingStatus,
           invoice: inv
             ? {
                 id: inv.id,

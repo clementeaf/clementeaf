@@ -23,7 +23,12 @@ export const accountingColumns: ColumnDef<AccountingOverviewRow>[] = [
   {
     accessorKey: 'invoice.invoiceNumber',
     header: 'FACTURA',
-    cell: ({ row }) => row.original.invoice?.invoiceNumber ?? 'Pendiente'
+    cell: ({ row }) => {
+      const status = row.original.accountingStatus ?? 'no_aplica';
+      if (row.original.invoice?.invoiceNumber) return row.original.invoice.invoiceNumber;
+      if (status === 'pendiente_factura') return 'Pendiente de facturar';
+      return 'Pendiente';
+    }
   },
   {
     accessorKey: 'invoice.totalAmount',
