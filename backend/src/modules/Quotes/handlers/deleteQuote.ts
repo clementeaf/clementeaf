@@ -6,6 +6,7 @@ import { EventPublisher } from '../services/EventPublisher';
 import { QuoteDeletedEventFactory } from '../events/QuoteDeletedEvent';
 import { extractToken } from '../../Users/utils/auth';
 import { AuthService } from '../../Users/services/AuthService';
+import { validatePermission } from '../../Users/utils/permissions';
 
 /**
  * Handler para eliminar una orden de compra
@@ -13,6 +14,9 @@ import { AuthService } from '../../Users/services/AuthService';
  * @returns Respuesta de confirmación
  */
 const deleteQuoteHandler = async (event: APIGatewayProxyEvent) => {
+  const permissionError = await validatePermission(event, 'delete:quotes');
+  if (permissionError) return permissionError;
+
   const id = event.pathParameters?.id;
 
   if (!id) {

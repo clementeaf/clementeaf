@@ -100,6 +100,14 @@ export class CapabilitiesDiscoveryService {
         action: 'seed:catalog'
       },
       {
+        code: 'delete:quotes',
+        name: 'Eliminar Notas de Venta',
+        description: 'Permite eliminar notas de venta/órdenes de compra',
+        category: 'Ventas',
+        resource: 'quotes',
+        action: 'delete'
+      },
+      {
         code: 'create:products:movements',
         name: 'Crear Movimientos de Stock',
         description: 'Permite crear movimientos de stock (entradas, salidas, ajustes)',
