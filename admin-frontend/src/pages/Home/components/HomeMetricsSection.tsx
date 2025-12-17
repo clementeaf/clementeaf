@@ -26,7 +26,9 @@ interface MonthlySalesPoint {
 const MetricsCard = ({ title, children }: { title: string; children: ReactNode }): ReactElement => {
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 h-[140px] flex flex-col overflow-hidden">
-      <div className="text-xs font-medium text-gray-500 mb-2 truncate">{title}</div>
+      <div className="text-xs font-medium text-gray-500 mb-2 whitespace-normal break-words leading-snug">
+        {title}
+      </div>
       <div className="flex-1 min-h-0 overflow-hidden">
         {children}
       </div>
