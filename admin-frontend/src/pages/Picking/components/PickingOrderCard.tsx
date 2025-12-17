@@ -166,7 +166,7 @@ export const PickingOrderCard = ({ order, onStatusChange }: PickingOrderCardProp
               className="bg-[#0052C9] text-white hover:bg-[#004BB7] flex items-center gap-1.5 text-xs px-2 py-1 flex-shrink-0"
               leftIcon={<EyeIcon color="white" />}
             >
-              Detalle
+              Ver detalles
             </Button>
           </div>
         </div>
