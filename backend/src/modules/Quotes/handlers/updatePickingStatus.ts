@@ -74,8 +74,10 @@ const updatePickingStatusHandler = async (event: APIGatewayProxyEvent) => {
         updatedBy: user.id
       };
 
-      await connectionService.broadcast(message);
-      console.log(`📡 Notificación WebSocket enviada para cambio de estado picking de quote ${quoteId}`);
+      // No bloquear la respuesta HTTP esperando WebSocket (evita timeouts en API Gateway)
+      connectionService.broadcast(message)
+        .then(() => console.log(`📡 Notificación WebSocket enviada para cambio de estado picking de quote ${quoteId}`))
+        .catch(wsError => console.error('⚠️ Error enviando notificación WebSocket (no crítico):', wsError));
     } catch (wsError) {
       console.error('⚠️ Error enviando notificación WebSocket (no crítico):', wsError);
     }
