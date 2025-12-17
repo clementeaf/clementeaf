@@ -137,8 +137,8 @@ export const Home = (): React.ReactElement => {
   }, [handleDelete]);
 
   return (
-    <div className="w-full h-full flex flex-col p-8">
-      <div className="flex-1 flex flex-col min-w-0">
+    <div className="w-full h-full flex flex-col p-8 overflow-hidden">
+      <div className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden">
         <div className="flex items-center justify-between mb-4">
           <div className="text-lg font-semibold text-gray-900">Inicio</div>
           <div className="flex items-center gap-2">
@@ -166,15 +166,17 @@ export const Home = (): React.ReactElement => {
         {/* Métricas (siempre arriba, fuera del contenedor con overflow para evitar scrollbars) */}
         <HomeMetricsSection orders={orders} />
 
-        <div className="flex-1 overflow-hidden rounded-lg shadow-sm bg-white border border-gray-200 p-4 h-full">
+        <div className="flex-1 min-h-0 overflow-hidden rounded-lg shadow-sm bg-white border border-gray-200 p-4">
           {viewMode === 'kanban' ? (
-            <HomeKanbanBoard
-              orders={orders}
-              onStatusChange={handleStatusChange}
-              onDelete={handleDelete}
-            />
+            <div className="h-full min-h-0 overflow-auto">
+              <HomeKanbanBoard
+                orders={orders}
+                onStatusChange={handleStatusChange}
+                onDelete={handleDelete}
+              />
+            </div>
           ) : (
-            <div className="h-full">
+            <div className="h-full min-h-0 overflow-hidden">
               <DataTablePage<HomeOrder>
                 data={orders}
                 columns={getHomeOrdersColumns(tableActions)}
@@ -182,7 +184,7 @@ export const Home = (): React.ReactElement => {
                 error={null}
                 errorMessage="Error al cargar órdenes"
                 onRowClick={(row) => setSelectedOrder(row.original)}
-                tableContainerClassName="h-full p-0 border-0 shadow-none"
+                tableContainerClassName="h-full min-h-0 p-0 border-0 shadow-none"
               />
             </div>
           )}

@@ -25,9 +25,11 @@ interface MonthlySalesPoint {
  */
 const MetricsCard = ({ title, children }: { title: string; children: ReactNode }): ReactElement => {
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 min-h-[140px]">
-      <div className="text-xs font-medium text-gray-500 mb-2">{title}</div>
-      {children}
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 h-[140px] flex flex-col overflow-hidden">
+      <div className="text-xs font-medium text-gray-500 mb-2 truncate">{title}</div>
+      <div className="flex-1 min-h-0 overflow-hidden">
+        {children}
+      </div>
     </div>
   );
 };
@@ -126,85 +128,77 @@ export const HomeMetricsSection = ({ orders }: HomeMetricsSectionProps): ReactEl
   ];
 
   return (
-    <div className="flex flex-nowrap gap-4 overflow-x-auto pb-2 mb-4">
-      <div className="min-w-[260px] flex-shrink-0">
-        <MetricsCard title="Top 5 vendedores (más ventas)">
-        <div className="space-y-2">
+    <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 mb-4">
+      <MetricsCard title="Top 5 vendedores (más ventas)">
+        <div className="space-y-1.5">
           {(derived.topVendors.length ? derived.topVendors : topN([{ label: 'Vendedor A', value: 5_200_000 }], 1)).slice(0, 5).map((it, idx) => (
             <div key={`${it.label}-${idx}`} className="flex items-center justify-between gap-3">
-              <div className="text-sm text-gray-900 truncate">{idx + 1}. {it.label}</div>
-              <div className="text-sm font-medium text-gray-900">{formatCurrency(it.value)}</div>
+              <div className="text-xs text-gray-900 truncate">{idx + 1}. {it.label}</div>
+              <div className="text-xs font-medium text-gray-900 whitespace-nowrap">{formatCurrency(it.value)}</div>
             </div>
           ))}
         </div>
-        </MetricsCard>
-      </div>
+      </MetricsCard>
 
-      <div className="min-w-[520px] flex-shrink-0">
-        <MetricsCard title="Monto vendido vs Meta mensual (últimos 5 meses)">
-          <div className="flex items-end justify-between gap-4">
+      <MetricsCard title="Monto vendido vs Meta mensual (últimos 5 meses)">
+        <div className="flex items-end justify-between gap-4">
             <div>
-              <div className="text-2xl font-semibold text-gray-900">{formatCurrency(currentMonth.soldAmount)}</div>
-              <div className="text-xs text-gray-500">Meta: {formatCurrency(currentMonth.goalAmount)} ({currentMonth.monthLabel})</div>
+              <div className="text-xl font-semibold text-gray-900">{formatCurrency(currentMonth.soldAmount)}</div>
+              <div className="text-[11px] text-gray-500 truncate">
+                Meta: {formatCurrency(currentMonth.goalAmount)} ({currentMonth.monthLabel})
+              </div>
             </div>
-            <div className="text-xs text-gray-500 text-right">
+            <div className="text-[11px] text-gray-500 text-right whitespace-nowrap">
               {(progress * 100).toFixed(0)}% de la meta
             </div>
-          </div>
+        </div>
 
-          <div className="mt-3 h-2 bg-gray-100 rounded-full overflow-hidden">
-            <div className="h-2 bg-[#0052C9]" style={{ width: `${progress * 100}%` }} />
-          </div>
+        <div className="mt-3 h-2 bg-gray-100 rounded-full overflow-hidden">
+          <div className="h-2 bg-[#0052C9]" style={{ width: `${progress * 100}%` }} />
+        </div>
 
-          <div className="mt-4 grid grid-cols-5 gap-2">
-            {monthlySeries.map((p) => (
-              <div key={p.monthLabel} className="text-[11px] text-gray-600">
-                <div className="truncate">{p.monthLabel}</div>
-                <div className="font-medium text-gray-900">{formatCurrency(p.soldAmount)}</div>
-              </div>
-            ))}
-          </div>
-        </MetricsCard>
-      </div>
+        <div className="mt-3 grid grid-cols-5 gap-2">
+          {monthlySeries.map((p) => (
+            <div key={p.monthLabel} className="text-[10px] text-gray-600 min-w-0">
+              <div className="truncate">{p.monthLabel}</div>
+              <div className="font-medium text-gray-900 truncate">{formatCurrency(p.soldAmount)}</div>
+            </div>
+          ))}
+        </div>
+      </MetricsCard>
 
-      <div className="min-w-[260px] flex-shrink-0">
-        <MetricsCard title="Top 5 productos (más ventas)">
-          <div className="space-y-2">
+      <MetricsCard title="Top 5 productos (más ventas)">
+        <div className="space-y-1.5">
             {topProductsMock.map((it, idx) => (
               <div key={it.label} className="flex items-center justify-between gap-3">
-                <div className="text-sm text-gray-900 truncate">{idx + 1}. {it.label}</div>
-                <div className="text-sm font-medium text-gray-900">{it.value.toLocaleString('es-CL')}</div>
+                <div className="text-xs text-gray-900 truncate">{idx + 1}. {it.label}</div>
+                <div className="text-xs font-medium text-gray-900 whitespace-nowrap">{it.value.toLocaleString('es-CL')}</div>
               </div>
             ))}
           </div>
-        </MetricsCard>
-      </div>
+      </MetricsCard>
 
-      <div className="min-w-[260px] flex-shrink-0">
-        <MetricsCard title="Top 5 clientes (más compran)">
-          <div className="space-y-2">
+      <MetricsCard title="Top 5 clientes (más compran)">
+        <div className="space-y-1.5">
             {(derived.topCustomers.length ? derived.topCustomers : topN([{ label: 'Cliente A', value: 4_800_000 }], 1)).slice(0, 5).map((it, idx) => (
               <div key={`${it.label}-${idx}`} className="flex items-center justify-between gap-3">
-                <div className="text-sm text-gray-900 truncate">{idx + 1}. {it.label}</div>
-                <div className="text-sm font-medium text-gray-900">{formatCurrency(it.value)}</div>
+                <div className="text-xs text-gray-900 truncate">{idx + 1}. {it.label}</div>
+                <div className="text-xs font-medium text-gray-900 whitespace-nowrap">{formatCurrency(it.value)}</div>
               </div>
             ))}
           </div>
-        </MetricsCard>
-      </div>
+      </MetricsCard>
 
-      <div className="min-w-[260px] flex-shrink-0">
-        <MetricsCard title="Top 5 clientes (menos deuda)">
-          <div className="space-y-2">
+      <MetricsCard title="Top 5 clientes (menos deuda)">
+        <div className="space-y-1.5">
             {topClientsLeastDebtMock.map((it, idx) => (
               <div key={it.label} className="flex items-center justify-between gap-3">
-                <div className="text-sm text-gray-900 truncate">{idx + 1}. {it.label}</div>
-                <div className="text-sm font-medium text-gray-900">{formatCurrency(it.value)}</div>
+                <div className="text-xs text-gray-900 truncate">{idx + 1}. {it.label}</div>
+                <div className="text-xs font-medium text-gray-900 whitespace-nowrap">{formatCurrency(it.value)}</div>
               </div>
             ))}
           </div>
-        </MetricsCard>
-      </div>
+      </MetricsCard>
     </div>
   );
 };
