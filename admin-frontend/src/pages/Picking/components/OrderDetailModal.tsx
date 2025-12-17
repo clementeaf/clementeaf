@@ -1,11 +1,14 @@
 import { useMemo, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Modal, Button, Input } from '../../../components/commons';
 import { Table } from '../../../components/commons/Table';
 import { type ColumnDef } from '@tanstack/react-table';
 import type { PickingOrder } from '../types';
 import { quotesService } from '../../../services/quotesService';
+import type { Quote } from '../../../services/quotesService';
 import { whatsappService } from '../../../services/whatsappService';
 import { emailService } from '../../../services/emailService';
+import { formatCurrency } from '../../../utils/formatUtils';
 
 interface OrderDetailModalProps {
   isOpen: boolean;
@@ -33,6 +36,72 @@ export const OrderDetailModal = ({ isOpen, onClose, order }: OrderDetailModalPro
     message: ''
   });
   const [isActionLoading, setIsActionLoading] = useState(false);
+
+  type QuoteProductAmountRaw = {
+    cantidad?: unknown;
+    cantidadSolicitada?: unknown;
+    precio?: unknown;
+    totalLinea?: unknown;
+  };
+
+  /**
+   * Calcula el monto total de una nota de venta.
+   * Prioriza `invoice.totalAmount` si existe; si no, intenta sumar desde `quote.productos`.
+   * @param quote - Quote con posibles invoice/productos
+   * @returns Monto total estimado
+   */
+  const computeQuoteAmount = (quote: Quote | null): number => {
+    const fromInvoice = quote?.invoice?.totalAmount;
+    if (typeof fromInvoice === 'number' && Number.isFinite(fromInvoice)) {
+      return fromInvoice;
+    }
+
+    const productosJson = quote?.productos ?? null;
+    if (!productosJson) return 0;
+
+    try {
+      const parsed: unknown = JSON.parse(productosJson);
+      if (!Array.isArray(parsed)) return 0;
+
+      return parsed.reduce((acc: number, item: unknown) => {
+        if (!item || typeof item !== 'object') return acc;
+        const p = item as QuoteProductAmountRaw;
+
+        const totalLinea = typeof p.totalLinea === 'number'
+          ? p.totalLinea
+          : (typeof p.totalLinea === 'string' ? Number(p.totalLinea) : NaN);
+        if (Number.isFinite(totalLinea)) return acc + (totalLinea as number);
+
+        const cantidad = typeof p.cantidad === 'number'
+          ? p.cantidad
+          : (typeof p.cantidad === 'string' ? Number(p.cantidad) : NaN);
+        const cantidadSolicitada = typeof p.cantidadSolicitada === 'number'
+          ? p.cantidadSolicitada
+          : (typeof p.cantidadSolicitada === 'string' ? Number(p.cantidadSolicitada) : NaN);
+        const qty = Number.isFinite(cantidad) ? (cantidad as number) : (Number.isFinite(cantidadSolicitada) ? (cantidadSolicitada as number) : 0);
+
+        const precio = typeof p.precio === 'number'
+          ? p.precio
+          : (typeof p.precio === 'string' ? Number(p.precio) : NaN);
+        const unit = Number.isFinite(precio) ? (precio as number) : 0;
+
+        return acc + qty * unit;
+      }, 0);
+    } catch {
+      return 0;
+    }
+  };
+
+  const { data: quoteInfo } = useQuery<Quote | null>({
+    queryKey: ['orderDetailQuoteInfo', quoteId],
+    queryFn: async () => {
+      if (!quoteId) return null;
+      return await quotesService.getQuoteById(quoteId, { includeInvoice: true, includeInvoiceXml: false });
+    },
+    enabled: isOpen && !!quoteId,
+    staleTime: 0,
+    refetchOnWindowFocus: false
+  });
 
   /**
    * Abre un modal de feedback con un mensaje.
@@ -338,10 +407,24 @@ export const OrderDetailModal = ({ isOpen, onClose, order }: OrderDetailModalPro
 
           {/* Información de la orden */}
           <div className="bg-gray-50 rounded-lg p-4 mb-4">
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+              <div>
+                <label className="text-xs text-gray-500">Cliente</label>
+                <p className="text-sm font-medium text-gray-900 mt-1 break-words">
+                  {quoteInfo?.clienteNombre ?? '-'}
+                </p>
+              </div>
               <div>
                 <label className="text-xs text-gray-500">Vendedor</label>
-                <p className="text-sm font-medium text-gray-900 mt-1">{order.vendedor}</p>
+                <p className="text-sm font-medium text-gray-900 mt-1 break-words">
+                  {quoteInfo?.asesorAsignado ?? order.vendedor}
+                </p>
+              </div>
+              <div>
+                <label className="text-xs text-gray-500">Monto</label>
+                <p className="text-sm font-medium text-gray-900 mt-1">
+                  {formatCurrency(computeQuoteAmount(quoteInfo))}
+                </p>
               </div>
               <div>
                 <label className="text-xs text-gray-500">Cantidad de productos</label>
