@@ -11,6 +11,7 @@ import { Button } from '../components/commons';
 import { DataTablePage } from '../components/commons/DataTablePage';
 import { getHomeOrdersColumns, type HomeOrdersTableActions } from './Home/columns';
 import { HomeOrderDetailModal } from './Home/components/HomeOrderDetailModal';
+import { HomeMetricsSection } from './Home/components/HomeMetricsSection';
 
 type HomeViewMode = 'kanban' | 'table';
 
@@ -171,6 +172,7 @@ export const Home = (): React.ReactElement => {
             />
           ) : (
             <div className="h-full">
+              <HomeMetricsSection orders={orders} />
               <DataTablePage<HomeOrder>
                 data={orders}
                 columns={getHomeOrdersColumns(tableActions)}
