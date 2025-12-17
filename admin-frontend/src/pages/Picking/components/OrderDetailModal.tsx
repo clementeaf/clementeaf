@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Modal, Button, Input } from '../../../components/commons';
+import { Table } from '../../../components/commons/Table';
+import { type ColumnDef } from '@tanstack/react-table';
 import type { PickingOrder } from '../types';
 import { quotesService } from '../../../services/quotesService';
 import { whatsappService } from '../../../services/whatsappService';
@@ -87,7 +89,7 @@ export const OrderDetailModal = ({ isOpen, onClose, order }: OrderDetailModalPro
   <meta charset="utf-8" />
   <title>${data.invoiceNumber}</title>
   <style>
-    body { font-family: Arial, sans-serif; padding: 24px; }
+    body { font-family: Avenir, Arial, sans-serif; padding: 24px; }
     h1 { margin: 0 0 8px 0; }
     .meta { margin: 0 0 16px 0; color: #444; }
     table { width: 100%; border-collapse: collapse; margin-top: 12px; }
@@ -221,7 +223,7 @@ export const OrderDetailModal = ({ isOpen, onClose, order }: OrderDetailModalPro
         ? `<pre style="white-space:pre-wrap;font-size:11px;border:1px solid #eee;padding:12px;">${escapedXml}</pre>`
         : '<p>(Sin XML)</p>';
       const htmlBody = `
-        <div style="font-family: Arial, sans-serif; line-height:1.5">
+        <div style="font-family: Avenir, Arial, sans-serif; line-height:1.5">
           <h2>Factura ${quote.invoice.invoiceNumber}</h2>
           <p><strong>Cliente:</strong> ${quote.clienteNombre}</p>
           <p><strong>Total:</strong> $${quote.invoice.totalAmount.toLocaleString('es-CL')}</p>
@@ -246,6 +248,59 @@ export const OrderDetailModal = ({ isOpen, onClose, order }: OrderDetailModalPro
       setIsActionLoading(false);
     }
   };
+
+  /**
+   * Fila de producto para tabla del modal.
+   */
+  interface OrderProductRow {
+    id: string;
+    nombre: string;
+    codigo: string;
+    ubicacion: string;
+    stock: number;
+    cantidadSolicitada: number;
+  }
+
+  const productRows = useMemo<OrderProductRow[]>(() => {
+    return order.productos.map((p) => ({
+      id: p.id,
+      nombre: p.nombre,
+      codigo: p.codigo,
+      ubicacion: p.ubicacion,
+      stock: p.stock,
+      cantidadSolicitada: p.cantidadSolicitada
+    }));
+  }, [order.productos]);
+
+  const productColumns = useMemo<ColumnDef<OrderProductRow>[]>(() => {
+    return [
+      {
+        accessorKey: 'nombre',
+        header: 'Nombre del producto',
+        cell: ({ getValue }) => <div className="break-words">{String(getValue() ?? '')}</div>
+      },
+      {
+        accessorKey: 'codigo',
+        header: 'Código del producto',
+        cell: ({ getValue }) => <div className="break-words">{String(getValue() ?? '')}</div>
+      },
+      {
+        accessorKey: 'ubicacion',
+        header: 'Ubicación',
+        cell: ({ getValue }) => <div className="break-words">{String(getValue() ?? '')}</div>
+      },
+      {
+        accessorKey: 'stock',
+        header: 'Stock',
+        cell: ({ getValue }) => <div className="text-right">{Number(getValue() ?? 0).toLocaleString('es-CL')}</div>
+      },
+      {
+        accessorKey: 'cantidadSolicitada',
+        header: 'Cantidad solicitada',
+        cell: ({ getValue }) => <div className="text-right font-medium">{Number(getValue() ?? 0).toLocaleString('es-CL')}</div>
+      }
+    ];
+  }, []);
 
   return (
     <>
@@ -300,48 +355,24 @@ export const OrderDetailModal = ({ isOpen, onClose, order }: OrderDetailModalPro
           </div>
 
           {/* Tabla de productos */}
-          <div className="overflow-x-visible">
-            <table className="w-full border-collapse table-fixed">
-              <thead>
-                <tr className="border-b border-gray-200 bg-gray-50">
-                  <th className="text-left text-xs font-medium text-gray-700 uppercase tracking-wider py-3 px-4">
-                    Nombre del producto
-                  </th>
-                  <th className="text-left text-xs font-medium text-gray-700 uppercase tracking-wider py-3 px-4">
-                    Código del producto
-                  </th>
-                  <th className="text-left text-xs font-medium text-gray-700 uppercase tracking-wider py-3 px-4">
-                    Ubicación
-                  </th>
-                  <th className="text-left text-xs font-medium text-gray-700 uppercase tracking-wider py-3 px-4">
-                    Stock
-                  </th>
-                  <th className="text-left text-xs font-medium text-gray-700 uppercase tracking-wider py-3 px-4">
-                    Cantidad Solicitada
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {order.productos.length > 0 ? (
-                  order.productos.map((product) => (
-                    <tr key={product.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-                      <td className="py-3 px-4 text-sm text-gray-900 break-words">{product.nombre}</td>
-                      <td className="py-3 px-4 text-sm text-gray-900 break-words">{product.codigo}</td>
-                      <td className="py-3 px-4 text-sm text-gray-900 break-words">{product.ubicacion}</td>
-                      <td className="py-3 px-4 text-sm text-gray-900">{product.stock}</td>
-                      <td className="py-3 px-4 text-sm font-medium text-gray-900">{product.cantidadSolicitada}</td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={5} className="py-8 px-4 text-center text-sm text-gray-500">
-                      No hay productos en esta orden
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+          {productRows.length > 0 ? (
+            <Table<OrderProductRow>
+              data={productRows}
+              columns={productColumns}
+              enableSorting={false}
+              containerClassName="w-full"
+              tableClassName="w-full border-collapse table-fixed"
+              theadClassName="bg-gray-50"
+              headerRowClassName="border-b border-gray-200"
+              headerCellClassName="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider"
+              bodyRowClassName="border-b border-gray-200 hover:bg-gray-50 transition-colors duration-150"
+              bodyCellClassName="px-4 py-3 text-sm text-gray-900 align-top"
+            />
+          ) : (
+            <div className="py-8 px-4 text-center text-sm text-gray-500 border border-gray-200 rounded-lg bg-white">
+              No hay productos en esta orden
+            </div>
+          )}
         </div>
       </Modal>
 
