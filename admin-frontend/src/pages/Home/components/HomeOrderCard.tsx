@@ -1,28 +1,14 @@
-import { useMemo, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import type { HomeOrder, HomeOrderStatus } from '../types';
 import { Button } from '../../../components/commons';
 import { EyeIcon } from '../../../components/commons/icons';
-import { OrderDetailModal } from '../../Picking/components/OrderDetailModal';
-import type { PickingOrder, PickingOrderStatus } from '../../Picking/types';
-import { quotesService } from '../../../services/quotesService';
-import type { Quote } from '../../../services/quotesService';
+import { useState } from 'react';
+import { HomeOrderDetailModal } from './HomeOrderDetailModal';
 
 interface HomeOrderCardProps {
   order: HomeOrder;
   onStatusChange: (orderId: string, newStatus: HomeOrderStatus) => void;
   onDelete?: (orderId: string) => void;
 }
-
-type QuoteProductRaw = {
-  id?: unknown;
-  codigo?: unknown;
-  nombre?: unknown;
-  ubicacion?: unknown;
-  stock?: unknown;
-  cantidad?: unknown;
-  cantidadSolicitada?: unknown;
-};
 
 /**
  * Componente de tarjeta para una orden en el dashboard de inicio
@@ -79,111 +65,6 @@ export const HomeOrderCard = ({ order, onDelete }: HomeOrderCardProps): React.Re
         return 'bg-gray-100 text-gray-800';
     }
   };
-
-  /**
-   * Convierte el estado de Home al estado esperado por Picking (para el modal de detalle).
-   * @param status - Estado del tablero Home
-   * @returns Estado equivalente en Picking
-   */
-  const mapHomeStatusToPickingStatus = (status: HomeOrderStatus): PickingOrderStatus => {
-    switch (status) {
-      case 'Nota de Venta':
-        return 'Nota de venta emitida';
-      case 'Picking':
-        return 'Picking';
-      case 'Factura':
-        return 'Confirmación';
-      case 'Ruta':
-        return 'Despachado';
-      default:
-        return 'Nota de venta emitida';
-    }
-  };
-
-  /**
-   * Parsea el JSON de productos de una quote a la estructura de productos de picking.
-   * @param productosJson - JSON serializado con productos
-   * @returns Lista normalizada de productos para el modal de detalle
-   */
-  const parseQuoteProductsToPicking = (productosJson: string | null | undefined): PickingOrder['productos'] => {
-    if (!productosJson) return [];
-    try {
-      const parsed: unknown = JSON.parse(productosJson);
-      if (!Array.isArray(parsed)) return [];
-
-      return parsed
-        .map((p: unknown): PickingOrder['productos'][number] | null => {
-          if (!p || typeof p !== 'object') return null;
-          const raw = p as QuoteProductRaw;
-
-          const codigo = typeof raw.codigo === 'string' && raw.codigo.trim().length > 0 ? raw.codigo.trim() : 'SIN-CODIGO';
-          const nombre = typeof raw.nombre === 'string' && raw.nombre.trim().length > 0 ? raw.nombre.trim() : 'Producto sin nombre';
-          const ubicacion = typeof raw.ubicacion === 'string' ? raw.ubicacion : '-';
-
-          const stock = typeof raw.stock === 'number'
-            ? raw.stock
-            : (typeof raw.stock === 'string' ? Number(raw.stock) : 0);
-
-          const cantidadSolicitadaCandidate = typeof raw.cantidadSolicitada === 'number'
-            ? raw.cantidadSolicitada
-            : (typeof raw.cantidadSolicitada === 'string' ? Number(raw.cantidadSolicitada) : undefined);
-
-          const cantidadCandidate = typeof raw.cantidad === 'number'
-            ? raw.cantidad
-            : (typeof raw.cantidad === 'string' ? Number(raw.cantidad) : undefined);
-
-          const cantidadSolicitada = Number.isFinite(cantidadSolicitadaCandidate)
-            ? (cantidadSolicitadaCandidate as number)
-            : (Number.isFinite(cantidadCandidate) ? (cantidadCandidate as number) : 0);
-
-          const idValue = typeof raw.id === 'string'
-            ? raw.id
-            : (typeof raw.id === 'number' ? String(raw.id) : codigo);
-
-          return {
-            id: idValue,
-            codigo,
-            nombre,
-            ubicacion,
-            stock: Number.isFinite(stock) ? stock : 0,
-            cantidadSolicitada: Number.isFinite(cantidadSolicitada) ? cantidadSolicitada : 0
-          };
-        })
-        .filter((p): p is PickingOrder['productos'][number] => p !== null);
-    } catch {
-      return [];
-    }
-  };
-
-  const quoteId = useMemo((): number | null => {
-    const parsed = Number.parseInt(order.id, 10);
-    return Number.isFinite(parsed) ? parsed : null;
-  }, [order.id]);
-
-  const { data: quoteData } = useQuery<Quote | null>({
-    queryKey: ['homeOrderQuoteDetail', quoteId],
-    queryFn: async () => {
-      if (quoteId === null) return null;
-      return await quotesService.getQuoteById(quoteId, { includeInvoice: true, includeInvoiceXml: true });
-    },
-    enabled: isDetailModalOpen && quoteId !== null,
-    staleTime: 0,
-    refetchOnWindowFocus: false
-  });
-
-  const pickingOrderForModal = useMemo<PickingOrder>(() => {
-    const productos = parseQuoteProductsToPicking(quoteData?.productos ?? null);
-
-    return {
-      id: order.id,
-      codigoOrden: order.codigoOrden,
-      fechaHoraOrden: order.fechaHoraOrden,
-      vendedor: quoteData?.asesorAsignado ?? order.vendedor,
-      cantidadProductos: productos.length,
-      estado: mapHomeStatusToPickingStatus(order.estado),
-      productos
-    };
-  }, [order, quoteData]);
 
   return (
     <>
@@ -254,10 +135,10 @@ export const HomeOrderCard = ({ order, onDelete }: HomeOrderCardProps): React.Re
       </div>
     </div>
 
-      <OrderDetailModal
+      <HomeOrderDetailModal
         isOpen={isDetailModalOpen}
         onClose={() => setIsDetailModalOpen(false)}
-        order={pickingOrderForModal}
+        order={order}
       />
     </>
   );
