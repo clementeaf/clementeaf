@@ -39,16 +39,6 @@ export const HomeOrderCard = ({ order, onDelete }: HomeOrderCardProps): React.Re
   };
 
   /**
-   * Formatea un monto a formato de moneda
-   */
-  const formatCurrency = (amount: number): string => {
-    return new Intl.NumberFormat('es-CL', {
-      style: 'currency',
-      currency: 'CLP'
-    }).format(amount);
-  };
-
-  /**
    * Obtiene el color del badge según el estado
    */
   const getStatusColor = (status: HomeOrderStatus): string => {
@@ -70,7 +60,7 @@ export const HomeOrderCard = ({ order, onDelete }: HomeOrderCardProps): React.Re
     <>
       <div
         className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow duration-200 w-full flex flex-col overflow-hidden"
-        style={{ minHeight: order.estado === 'Nota de Venta' && onDelete ? '190px' : '150px' }}
+        style={{ minHeight: order.estado === 'Nota de Venta' && onDelete ? '120px' : '90px' }}
       >
         <div className="flex flex-col gap-2 min-w-0 flex-1 overflow-hidden">
         {/* Header con código de orden y estado */}
@@ -82,22 +72,6 @@ export const HomeOrderCard = ({ order, onDelete }: HomeOrderCardProps): React.Re
           <span className={`px-2 py-0.5 rounded-full text-[9px] font-medium whitespace-nowrap flex-shrink-0 ${getStatusColor(order.estado)}`}>
             {order.estado}
           </span>
-        </div>
-
-        {/* Información de la orden */}
-        <div className="grid grid-cols-1 gap-2 flex-shrink-0">
-          <div>
-            <label className="text-[9px] text-gray-500">Cliente</label>
-            <p className="text-[11px] font-medium text-gray-900 mt-0.5 break-words">{order.cliente}</p>
-          </div>
-          <div>
-            <label className="text-[9px] text-gray-500">Vendedor</label>
-            <p className="text-[11px] font-medium text-gray-900 mt-0.5 break-words">{order.vendedor}</p>
-          </div>
-          <div>
-            <label className="text-[9px] text-gray-500">Monto</label>
-            <p className="text-[11px] font-medium text-gray-900 mt-0.5">{formatCurrency(order.monto)}</p>
-          </div>
         </div>
 
         {/* Acciones */}
