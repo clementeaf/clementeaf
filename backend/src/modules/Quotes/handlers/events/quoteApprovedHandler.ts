@@ -63,11 +63,19 @@ export const quoteApprovedHandler = async (
     let productos: QuoteApprovedProduct[];
     try {
       const parsed: unknown = JSON.parse(quoteData.productos);
-      if (!Array.isArray(parsed)) {
+      if (Array.isArray(parsed)) {
+        productos = parsed as QuoteApprovedProduct[];
+      } else if (typeof parsed === 'string') {
+        const parsed2: unknown = JSON.parse(parsed);
+        if (!Array.isArray(parsed2)) {
+          console.error(`❌ productos no es un array para quote ${quoteData.quoteId}`);
+          return;
+        }
+        productos = parsed2 as QuoteApprovedProduct[];
+      } else {
         console.error(`❌ productos no es un array para quote ${quoteData.quoteId}`);
         return;
       }
-      productos = parsed as QuoteApprovedProduct[];
     } catch (error) {
       console.error(`❌ Error parseando productos de quote ${quoteData.quoteId}:`, error);
       return;

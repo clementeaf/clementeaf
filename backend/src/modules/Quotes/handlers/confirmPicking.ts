@@ -31,6 +31,11 @@ interface QuoteProductForReservation {
   bodegaId?: number;
 }
 
+interface ReservaOnDemandError {
+  productCode: string;
+  message: string;
+}
+
 /**
  * Handler para confirmar picking y convertir RESERVA → SALIDA
  */
@@ -78,10 +83,11 @@ const confirmPickingHandler = async (event: APIGatewayProxyEvent) => {
     if (reservas.length === 0) {
       const productos: QuoteProductForReservation[] = parseQuoteProducts(quote.productos);
       if (productos.length === 0) {
-        return errorResponse(400, 'No se encontraron reservas para esta nota de venta');
+        return errorResponse(400, 'No se encontraron reservas y la nota no tiene productos para crear reservas');
       }
 
       console.log(`⚠️ No hay reservas para quote ${quoteId}. Creando reservas on-demand (${productos.length} items)...`);
+      const reservaErrors: ReservaOnDemandError[] = [];
       for (const producto of productos) {
         const cantidad = Number(producto.cantidad ?? producto.cantidadSolicitada ?? 0);
         if (!Number.isFinite(cantidad) || cantidad <= 0) continue;
@@ -105,7 +111,9 @@ const confirmPickingHandler = async (event: APIGatewayProxyEvent) => {
             quoteId: parseInt(quoteId)
           });
         } catch (reserveError) {
-          console.error(`❌ Error creando reserva on-demand para ${productCode}:`, reserveError);
+          const message = reserveError instanceof Error ? reserveError.message : 'Error desconocido';
+          reservaErrors.push({ productCode, message });
+          console.error(`❌ Error creando reserva on-demand para ${productCode}:`, message);
         }
       }
 
@@ -117,6 +125,10 @@ const confirmPickingHandler = async (event: APIGatewayProxyEvent) => {
       });
 
       if (reservas.length === 0) {
+        if (reservaErrors.length > 0) {
+          const first = reservaErrors[0];
+          return errorResponse(400, `No se pudieron crear reservas. Ejemplo (${first.productCode}): ${first.message}`);
+        }
         return errorResponse(400, 'No se encontraron reservas para esta nota de venta');
       }
     }
@@ -240,7 +252,13 @@ const parseQuoteProducts = (productosJson: string | null): QuoteProductForReserv
   if (!productosJson) return [];
   try {
     const parsed: unknown = JSON.parse(productosJson);
-    return Array.isArray(parsed) ? (parsed as QuoteProductForReservation[]) : [];
+    if (Array.isArray(parsed)) return parsed as QuoteProductForReservation[];
+    // Algunos quotes tienen el JSON doble-encapsulado (string que contiene JSON)
+    if (typeof parsed === 'string') {
+      const parsed2: unknown = JSON.parse(parsed);
+      return Array.isArray(parsed2) ? (parsed2 as QuoteProductForReservation[]) : [];
+    }
+    return [];
   } catch {
     return [];
   }

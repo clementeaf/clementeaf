@@ -145,6 +145,7 @@ export class QuotesService {
     if (updateData.sinCostoEnvio !== undefined) updateFields.sinCostoEnvio = updateData.sinCostoEnvio;
     if (updateData.productos !== undefined) updateFields.productos = updateData.productos ?? null;
     if (updateData.estado !== undefined) updateFields.estado = updateData.estado;
+    if (updateData.estadoPicking !== undefined) updateFields.estadoPicking = updateData.estadoPicking ?? null;
 
     Object.assign(quote, updateFields);
     const updatedQuote = await this.quotesRepository.save(quote);

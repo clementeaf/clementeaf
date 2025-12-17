@@ -126,8 +126,13 @@ export class InvoicesService {
   private parseQuoteProducts(productosJson: string | null): QuoteProduct[] {
     if (!productosJson) return [];
     try {
-      const parsed = JSON.parse(productosJson);
-      return Array.isArray(parsed) ? (parsed as QuoteProduct[]) : [];
+      const parsed: unknown = JSON.parse(productosJson);
+      if (Array.isArray(parsed)) return parsed as QuoteProduct[];
+      if (typeof parsed === 'string') {
+        const parsed2: unknown = JSON.parse(parsed);
+        return Array.isArray(parsed2) ? (parsed2 as QuoteProduct[]) : [];
+      }
+      return [];
     } catch {
       return [];
     }
