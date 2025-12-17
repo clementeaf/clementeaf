@@ -1,4 +1,12 @@
+import { useMemo, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import type { HomeOrder, HomeOrderStatus } from '../types';
+import { Button } from '../../../components/commons';
+import { EyeIcon } from '../../../components/commons/icons';
+import { OrderDetailModal } from '../../Picking/components/OrderDetailModal';
+import type { PickingOrder, PickingOrderStatus } from '../../Picking/types';
+import { quotesService } from '../../../services/quotesService';
+import type { Quote } from '../../../services/quotesService';
 
 interface HomeOrderCardProps {
   order: HomeOrder;
@@ -6,12 +14,24 @@ interface HomeOrderCardProps {
   onDelete?: (orderId: string) => void;
 }
 
+type QuoteProductRaw = {
+  id?: unknown;
+  codigo?: unknown;
+  nombre?: unknown;
+  ubicacion?: unknown;
+  stock?: unknown;
+  cantidad?: unknown;
+  cantidadSolicitada?: unknown;
+};
+
 /**
  * Componente de tarjeta para una orden en el dashboard de inicio
  * @param props - Props del componente HomeOrderCard
  * @returns Componente HomeOrderCard
  */
 export const HomeOrderCard = ({ order, onDelete }: HomeOrderCardProps): React.ReactElement => {
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+
   /**
    * Formatea una fecha ISO a formato DD/MM/YYYY HH:mm
    */
@@ -60,9 +80,115 @@ export const HomeOrderCard = ({ order, onDelete }: HomeOrderCardProps): React.Re
     }
   };
 
+  /**
+   * Convierte el estado de Home al estado esperado por Picking (para el modal de detalle).
+   * @param status - Estado del tablero Home
+   * @returns Estado equivalente en Picking
+   */
+  const mapHomeStatusToPickingStatus = (status: HomeOrderStatus): PickingOrderStatus => {
+    switch (status) {
+      case 'Nota de Venta':
+        return 'Nota de venta emitida';
+      case 'Picking':
+        return 'Picking';
+      case 'Factura':
+        return 'Confirmación';
+      case 'Ruta':
+        return 'Despachado';
+      default:
+        return 'Nota de venta emitida';
+    }
+  };
+
+  /**
+   * Parsea el JSON de productos de una quote a la estructura de productos de picking.
+   * @param productosJson - JSON serializado con productos
+   * @returns Lista normalizada de productos para el modal de detalle
+   */
+  const parseQuoteProductsToPicking = (productosJson: string | null | undefined): PickingOrder['productos'] => {
+    if (!productosJson) return [];
+    try {
+      const parsed: unknown = JSON.parse(productosJson);
+      if (!Array.isArray(parsed)) return [];
+
+      return parsed
+        .map((p: unknown): PickingOrder['productos'][number] | null => {
+          if (!p || typeof p !== 'object') return null;
+          const raw = p as QuoteProductRaw;
+
+          const codigo = typeof raw.codigo === 'string' && raw.codigo.trim().length > 0 ? raw.codigo.trim() : 'SIN-CODIGO';
+          const nombre = typeof raw.nombre === 'string' && raw.nombre.trim().length > 0 ? raw.nombre.trim() : 'Producto sin nombre';
+          const ubicacion = typeof raw.ubicacion === 'string' ? raw.ubicacion : '-';
+
+          const stock = typeof raw.stock === 'number'
+            ? raw.stock
+            : (typeof raw.stock === 'string' ? Number(raw.stock) : 0);
+
+          const cantidadSolicitadaCandidate = typeof raw.cantidadSolicitada === 'number'
+            ? raw.cantidadSolicitada
+            : (typeof raw.cantidadSolicitada === 'string' ? Number(raw.cantidadSolicitada) : undefined);
+
+          const cantidadCandidate = typeof raw.cantidad === 'number'
+            ? raw.cantidad
+            : (typeof raw.cantidad === 'string' ? Number(raw.cantidad) : undefined);
+
+          const cantidadSolicitada = Number.isFinite(cantidadSolicitadaCandidate)
+            ? (cantidadSolicitadaCandidate as number)
+            : (Number.isFinite(cantidadCandidate) ? (cantidadCandidate as number) : 0);
+
+          const idValue = typeof raw.id === 'string'
+            ? raw.id
+            : (typeof raw.id === 'number' ? String(raw.id) : codigo);
+
+          return {
+            id: idValue,
+            codigo,
+            nombre,
+            ubicacion,
+            stock: Number.isFinite(stock) ? stock : 0,
+            cantidadSolicitada: Number.isFinite(cantidadSolicitada) ? cantidadSolicitada : 0
+          };
+        })
+        .filter((p): p is PickingOrder['productos'][number] => p !== null);
+    } catch {
+      return [];
+    }
+  };
+
+  const quoteId = useMemo((): number | null => {
+    const parsed = Number.parseInt(order.id, 10);
+    return Number.isFinite(parsed) ? parsed : null;
+  }, [order.id]);
+
+  const { data: quoteData } = useQuery<Quote | null>({
+    queryKey: ['homeOrderQuoteDetail', quoteId],
+    queryFn: async () => {
+      if (quoteId === null) return null;
+      return await quotesService.getQuoteById(quoteId, { includeInvoice: true, includeInvoiceXml: true });
+    },
+    enabled: isDetailModalOpen && quoteId !== null,
+    staleTime: 0,
+    refetchOnWindowFocus: false
+  });
+
+  const pickingOrderForModal = useMemo<PickingOrder>(() => {
+    const productos = parseQuoteProductsToPicking(quoteData?.productos ?? null);
+
+    return {
+      id: order.id,
+      codigoOrden: order.codigoOrden,
+      fechaHoraOrden: order.fechaHoraOrden,
+      vendedor: quoteData?.asesorAsignado ?? order.vendedor,
+      cantidadProductos: productos.length,
+      estado: mapHomeStatusToPickingStatus(order.estado),
+      productos
+    };
+  }, [order, quoteData]);
+
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-5 hover:shadow-md transition-shadow duration-200 w-full flex flex-col overflow-hidden" style={{ minHeight: order.estado === 'Nota de Venta' && onDelete ? '260px' : '220px' }}>
-      <div className="flex flex-col gap-3 min-w-0 flex-1 overflow-hidden">
+    <>
+      <div className="bg-white rounded-lg border border-gray-200 p-5 hover:shadow-md transition-shadow duration-200 w-full flex flex-col overflow-hidden" style={{ minHeight: order.estado === 'Nota de Venta' && onDelete ? '300px' : '250px' }}>
+        <div className="flex flex-col gap-3 min-w-0 flex-1 overflow-hidden">
         {/* Header con código de orden y estado */}
         <div className="flex items-start justify-between gap-2 flex-shrink-0">
           <div className="flex-1 min-w-0">
@@ -90,9 +216,18 @@ export const HomeOrderCard = ({ order, onDelete }: HomeOrderCardProps): React.Re
           </div>
         </div>
 
-        {/* Botón de eliminar solo para Nota de Venta */}
-        {order.estado === 'Nota de Venta' && onDelete && (
-          <div className="mt-auto pt-3 flex-shrink-0">
+        {/* Acciones */}
+        <div className="mt-auto pt-3 flex-shrink-0 space-y-2">
+          <Button
+            onClick={() => setIsDetailModalOpen(true)}
+            className="w-full bg-[#0052C9] text-white hover:bg-[#004BB7] flex items-center justify-center gap-1.5 text-xs px-3 py-2"
+            leftIcon={<EyeIcon color="white" />}
+          >
+            Ver detalles
+          </Button>
+
+          {/* Botón de eliminar solo para Nota de Venta */}
+          {order.estado === 'Nota de Venta' && onDelete && (
             <button
               onClick={() => onDelete(order.id)}
               className="w-full px-3 py-2 bg-red-500 hover:bg-red-600 text-white text-xs font-medium rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
@@ -114,10 +249,17 @@ export const HomeOrderCard = ({ order, onDelete }: HomeOrderCardProps): React.Re
               </svg>
               Eliminar
             </button>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
+
+      <OrderDetailModal
+        isOpen={isDetailModalOpen}
+        onClose={() => setIsDetailModalOpen(false)}
+        order={pickingOrderForModal}
+      />
+    </>
   );
 };
 
