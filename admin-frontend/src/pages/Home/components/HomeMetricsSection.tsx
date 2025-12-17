@@ -108,11 +108,6 @@ export const HomeMetricsSection = ({ orders }: HomeMetricsSectionProps): ReactEl
   const derived = useMemo(() => calculateTopFromOrders(orders), [orders]);
   const monthlySeries = useMemo(() => buildMockMonthlySeries(now), [now]);
 
-  const currentMonth = monthlySeries[monthlySeries.length - 1];
-  const progress = currentMonth.goalAmount > 0
-    ? Math.min(1, Math.max(0, currentMonth.soldAmount / currentMonth.goalAmount))
-    : 0;
-
   const topProductsMock: TopItem[] = [
     { label: 'Toalla 500gsm', value: 148 },
     { label: 'Sábanas 300TC', value: 121 },
@@ -142,7 +137,7 @@ export const HomeMetricsSection = ({ orders }: HomeMetricsSectionProps): ReactEl
         </div>
       </MetricsCard>
 
-      <MetricsCard title="Monto vendido vs Meta mensual (últimos 5 meses)">
+      <MetricsCard title="Vendido y Meta">
         <div className="w-full">
           <div className="grid grid-cols-2 gap-3 pb-2 border-b border-gray-200">
             <div className="text-[11px] font-semibold text-gray-700">Vendido</div>
