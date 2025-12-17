@@ -322,14 +322,14 @@ export const OrderDetailModal = ({ isOpen, onClose, order }: OrderDetailModalPro
             </Button>
             <Button
               onClick={() => openRecipientModal('whatsapp')}
-              className="px-3 py-2 bg-green-600 text-white hover:bg-green-700 text-xs"
+              className="px-3 py-2 bg-white text-[#0052C9] border border-[#0052C9] hover:bg-[#EAF2FF] text-xs"
               disabled={!quoteId}
             >
               Enviar WhatsApp
             </Button>
             <Button
               onClick={() => openRecipientModal('email')}
-              className="px-3 py-2 bg-gray-800 text-white hover:bg-black text-xs"
+              className="px-3 py-2 bg-white text-[#0052C9] border border-[#0052C9] hover:bg-[#EAF2FF] text-xs"
               disabled={!quoteId}
             >
               Enviar Email
