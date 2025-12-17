@@ -23,12 +23,14 @@ interface MonthlySalesPoint {
  * @param props - Props del componente
  * @returns Card de métrica
  */
-const MetricsCard = ({ title, children }: { title: string; children: ReactNode }): ReactElement => {
+const MetricsCard = ({ title, children }: { title?: string; children: ReactNode }): ReactElement => {
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 h-[140px] flex flex-col overflow-hidden">
-      <div className="text-xs font-medium text-gray-500 mb-2 whitespace-normal break-words leading-snug">
-        {title}
-      </div>
+      {title && (
+        <div className="text-xs font-medium text-gray-500 mb-2 whitespace-normal break-words leading-snug">
+          {title}
+        </div>
+      )}
       <div className="flex-1 min-h-0 overflow-hidden">
         {children}
       </div>
@@ -137,7 +139,7 @@ export const HomeMetricsSection = ({ orders }: HomeMetricsSectionProps): ReactEl
         </div>
       </MetricsCard>
 
-      <MetricsCard title="Vendido y Meta">
+      <MetricsCard>
         <div className="w-full">
           <div className="grid grid-cols-2 gap-3 pb-2 border-b border-gray-200">
             <div className="text-[11px] font-semibold text-gray-700">Vendido</div>
