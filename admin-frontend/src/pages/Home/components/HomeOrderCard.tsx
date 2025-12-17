@@ -68,13 +68,16 @@ export const HomeOrderCard = ({ order, onDelete }: HomeOrderCardProps): React.Re
 
   return (
     <>
-      <div className="bg-white rounded-lg border border-gray-200 p-5 hover:shadow-md transition-shadow duration-200 w-full flex flex-col overflow-hidden" style={{ minHeight: order.estado === 'Nota de Venta' && onDelete ? '300px' : '250px' }}>
-        <div className="flex flex-col gap-3 min-w-0 flex-1 overflow-hidden">
+      <div
+        className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow duration-200 w-full flex flex-col overflow-hidden"
+        style={{ minHeight: order.estado === 'Nota de Venta' && onDelete ? '190px' : '150px' }}
+      >
+        <div className="flex flex-col gap-2 min-w-0 flex-1 overflow-hidden">
         {/* Header con código de orden y estado */}
         <div className="flex items-start justify-between gap-2 flex-shrink-0">
           <div className="flex-1 min-w-0">
-            <h3 className="text-base font-semibold text-gray-900 leading-tight whitespace-nowrap overflow-hidden text-ellipsis">Código: {order.codigoOrden}</h3>
-            <p className="text-xs text-gray-500 mt-0.5">{formatDateTime(order.fechaHoraOrden)}</p>
+            <h3 className="text-sm font-semibold text-gray-900 leading-tight whitespace-nowrap overflow-hidden text-ellipsis">Código: {order.codigoOrden}</h3>
+            <p className="text-[10px] text-gray-500 mt-0.5">{formatDateTime(order.fechaHoraOrden)}</p>
           </div>
           <span className={`px-2 py-0.5 rounded-full text-[9px] font-medium whitespace-nowrap flex-shrink-0 ${getStatusColor(order.estado)}`}>
             {order.estado}
@@ -82,26 +85,26 @@ export const HomeOrderCard = ({ order, onDelete }: HomeOrderCardProps): React.Re
         </div>
 
         {/* Información de la orden */}
-        <div className="grid grid-cols-1 gap-3 flex-shrink-0">
+        <div className="grid grid-cols-1 gap-2 flex-shrink-0">
           <div>
-            <label className="text-[10px] text-gray-500">Cliente</label>
-            <p className="text-xs font-medium text-gray-900 mt-0.5 break-words">{order.cliente}</p>
+            <label className="text-[9px] text-gray-500">Cliente</label>
+            <p className="text-[11px] font-medium text-gray-900 mt-0.5 break-words">{order.cliente}</p>
           </div>
           <div>
-            <label className="text-[10px] text-gray-500">Vendedor</label>
-            <p className="text-xs font-medium text-gray-900 mt-0.5 break-words">{order.vendedor}</p>
+            <label className="text-[9px] text-gray-500">Vendedor</label>
+            <p className="text-[11px] font-medium text-gray-900 mt-0.5 break-words">{order.vendedor}</p>
           </div>
           <div>
-            <label className="text-[10px] text-gray-500">Monto</label>
-            <p className="text-xs font-medium text-gray-900 mt-0.5">{formatCurrency(order.monto)}</p>
+            <label className="text-[9px] text-gray-500">Monto</label>
+            <p className="text-[11px] font-medium text-gray-900 mt-0.5">{formatCurrency(order.monto)}</p>
           </div>
         </div>
 
         {/* Acciones */}
-        <div className="mt-auto pt-3 flex-shrink-0 space-y-2">
+        <div className="mt-auto pt-2 flex-shrink-0 space-y-2">
           <Button
             onClick={() => setIsDetailModalOpen(true)}
-            className="w-full bg-[#0052C9] text-white hover:bg-[#004BB7] flex items-center justify-center gap-1.5 text-xs px-3 py-2"
+            className="w-full bg-[#0052C9] text-white hover:bg-[#004BB7] flex items-center justify-center gap-1.5 text-xs px-3 py-1.5"
             leftIcon={<EyeIcon color="white" />}
           >
             Ver detalles
@@ -111,7 +114,7 @@ export const HomeOrderCard = ({ order, onDelete }: HomeOrderCardProps): React.Re
           {order.estado === 'Nota de Venta' && onDelete && (
             <button
               onClick={() => onDelete(order.id)}
-              className="w-full px-3 py-2 bg-red-500 hover:bg-red-600 text-white text-xs font-medium rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
+              className="w-full px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white text-xs font-medium rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
             >
               <svg
                 width="14"
