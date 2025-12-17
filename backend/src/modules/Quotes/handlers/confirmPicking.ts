@@ -21,6 +21,16 @@ interface SalidaCreada {
   reservaOriginalId: number;
 }
 
+interface QuoteProductForReservation {
+  id?: string | number;
+  codigo?: string;
+  nombre?: string;
+  cantidad?: number;
+  cantidadSolicitada?: number;
+  warehouseId?: number;
+  bodegaId?: number;
+}
+
 /**
  * Handler para confirmar picking y convertir RESERVA → SALIDA
  */
@@ -57,15 +67,58 @@ const confirmPickingHandler = async (event: APIGatewayProxyEvent) => {
 
     // Buscar reservas asociadas a esta quote
     const movementRepository = AppDataSource.getRepository(StockMovement);
-    const reservas = await movementRepository.find({
+    let reservas = await movementRepository.find({
       where: {
         quoteId: parseInt(quoteId),
         type: MovementType.RESERVA
       }
     });
 
+    // Si no hay reservas, intentar crearlas on-demand desde quote.productos (para flujos manuales desde Contabilidad)
     if (reservas.length === 0) {
-      return errorResponse(400, 'No se encontraron reservas para esta nota de venta');
+      const productos: QuoteProductForReservation[] = parseQuoteProducts(quote.productos);
+      if (productos.length === 0) {
+        return errorResponse(400, 'No se encontraron reservas para esta nota de venta');
+      }
+
+      console.log(`⚠️ No hay reservas para quote ${quoteId}. Creando reservas on-demand (${productos.length} items)...`);
+      for (const producto of productos) {
+        const cantidad = Number(producto.cantidad ?? producto.cantidadSolicitada ?? 0);
+        if (!Number.isFinite(cantidad) || cantidad <= 0) continue;
+        const warehouseId = Number(producto.warehouseId ?? producto.bodegaId ?? 1);
+        const productCode = (producto.codigo ?? '').toString() || 'SIN-CODIGO';
+        const productId = (producto.id ?? productCode).toString();
+        const productName = (producto.nombre ?? 'Producto sin nombre').toString();
+
+        try {
+          await stockMovementService.createMovement({
+            productId,
+            productCode,
+            productName,
+            warehouseId: Number.isFinite(warehouseId) && warehouseId > 0 ? warehouseId : 1,
+            type: MovementType.RESERVA,
+            cantidad,
+            documento: 'NOTA_VENTA',
+            numeroDocumento: quote.numeroCotizacion || `Q-${quote.id}`,
+            observaciones: `Reserva on-demand por confirmación de picking (Contabilidad). Nota ${quote.numeroCotizacion}`,
+            createdBy: user.id,
+            quoteId: parseInt(quoteId)
+          });
+        } catch (reserveError) {
+          console.error(`❌ Error creando reserva on-demand para ${productCode}:`, reserveError);
+        }
+      }
+
+      reservas = await movementRepository.find({
+        where: {
+          quoteId: parseInt(quoteId),
+          type: MovementType.RESERVA
+        }
+      });
+
+      if (reservas.length === 0) {
+        return errorResponse(400, 'No se encontraron reservas para esta nota de venta');
+      }
     }
 
     console.log(`📦 Encontradas ${reservas.length} reservas para quote ${quoteId}. Convirtiendo a SALIDA...`);
@@ -177,3 +230,18 @@ const confirmPickingHandler = async (event: APIGatewayProxyEvent) => {
 };
 
 export const handler = handlerWrapper(confirmPickingHandler);
+
+/**
+ * Parseo seguro de productos desde JSON string de la quote.
+ * @param productosJson - JSON string
+ * @returns Array de productos (puede ser vacío)
+ */
+const parseQuoteProducts = (productosJson: string | null): QuoteProductForReservation[] => {
+  if (!productosJson) return [];
+  try {
+    const parsed: unknown = JSON.parse(productosJson);
+    return Array.isArray(parsed) ? (parsed as QuoteProductForReservation[]) : [];
+  } catch {
+    return [];
+  }
+};
