@@ -2,10 +2,14 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { PageHeader, DataTablePage, Select } from '../../components/commons';
 import { accountingService } from '../../services/accountingService';
-import { accountingColumns } from './columns';
+import { getAccountingColumns } from './columns';
+import type { AccountingOverviewRow } from '../../services/accountingService';
+import { InvoicePendingModal } from './InvoicePendingModal';
 
 export const Accounting = (): React.ReactElement => {
   const [estadoPicking, setEstadoPicking] = useState<string>('');
+  const [selectedRow, setSelectedRow] = useState<AccountingOverviewRow | null>(null);
+  const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
 
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['accountingOverview', estadoPicking],
@@ -20,6 +24,12 @@ export const Accounting = (): React.ReactElement => {
   });
 
   const rows = data?.data ?? [];
+  const columns = getAccountingColumns({
+    onOpenInvoiceModal: (row) => {
+      setSelectedRow(row);
+      setIsInvoiceModalOpen(true);
+    }
+  });
 
   const pickingOptions = [
     { value: '', label: 'Todos' },
@@ -64,11 +74,18 @@ export const Accounting = (): React.ReactElement => {
       <div className="flex-1 min-h-0">
         <DataTablePage
           data={rows}
-          columns={accountingColumns}
+          columns={columns}
           isLoading={isLoading}
           errorMessage="Error al cargar contabilidad"
         />
       </div>
+
+      <InvoicePendingModal
+        isOpen={isInvoiceModalOpen}
+        onClose={() => setIsInvoiceModalOpen(false)}
+        row={selectedRow}
+        onCompleted={() => refetch()}
+      />
     </div>
   );
 };

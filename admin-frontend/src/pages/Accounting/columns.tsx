@@ -1,7 +1,15 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import type { AccountingOverviewRow } from '../../services/accountingService';
 
-export const accountingColumns: ColumnDef<AccountingOverviewRow>[] = [
+export interface AccountingTableActions {
+  onOpenInvoiceModal: (row: AccountingOverviewRow) => void;
+}
+
+/**
+ * Columnas de Contabilidad.
+ * @param actions - Acciones disponibles desde la tabla
+ */
+export const getAccountingColumns = (actions: AccountingTableActions): ColumnDef<AccountingOverviewRow>[] => [
   {
     accessorKey: 'quote.numeroCotizacion',
     header: 'NOTA',
@@ -26,8 +34,22 @@ export const accountingColumns: ColumnDef<AccountingOverviewRow>[] = [
     cell: ({ row }) => {
       const status = row.original.accountingStatus ?? 'no_aplica';
       if (row.original.invoice?.invoiceNumber) return row.original.invoice.invoiceNumber;
-      if (status === 'pendiente_factura') return 'Pendiente de facturar';
-      return 'Pendiente';
+
+      const label = status === 'pendiente_factura' ? 'Pendiente de facturar' : 'Pendiente';
+
+      return (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            actions.onOpenInvoiceModal(row.original);
+          }}
+          className="inline-flex px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800 hover:bg-amber-200"
+        >
+          {label}
+        </button>
+      );
     }
   },
   {
