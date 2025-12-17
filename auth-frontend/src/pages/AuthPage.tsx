@@ -210,12 +210,16 @@ const OAuthCallback = (): ReactNode => {
     const run = async (): Promise<void> => {
       const params = new URLSearchParams(location.search);
       const code = params.get('code');
+      const oauthError = params.get('error');
+      const oauthErrorDescription = params.get('error_description');
       const state = params.get('state');
       const debug = params.get('debug') === '1' || import.meta.env.DEV;
       const { state: savedState, codeVerifier } = getOAuthSession();
 
       if (!code) {
-        const msg = 'No se recibió código de autenticación';
+        const msg = oauthError
+          ? `OAuth error: ${oauthError}${oauthErrorDescription ? ` (${decodeURIComponent(oauthErrorDescription)})` : ''}`
+          : 'No se recibió código de autenticación';
         setError(msg);
         sessionStorage.setItem('oauth_last_error', JSON.stringify({ message: msg, at: new Date().toISOString() } satisfies OAuthDebugInfo));
         setIsProcessing(false);
