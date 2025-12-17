@@ -242,7 +242,13 @@ fi
 echo ""
 echo "🔍 Verificando configuración de VPC en serverless.yml..."
 if grep -q "LAMBDA_SECURITY_GROUP_ID" serverless.yml && [ -z "$LAMBDA_SECURITY_GROUP_ID" ]; then
-  report_warning "VPC está configurado pero LAMBDA_SECURITY_GROUP_ID no está establecido. Usar defaults de serverless.yml."
+  # Si serverless.yml ya define un fallback (ej: ${env:VAR, 'default'}), no es un problema real.
+  # Solo advertir cuando se referencia la env var SIN default.
+  if grep -q "env:LAMBDA_SECURITY_GROUP_ID," serverless.yml; then
+    report_success "VPC: LAMBDA_SECURITY_GROUP_ID no está seteado pero serverless.yml tiene default"
+  else
+    report_warning "VPC está configurado pero LAMBDA_SECURITY_GROUP_ID no está establecido y no hay default en serverless.yml"
+  fi
 fi
 
 # 11. Verificar que AWS CLI está configurado
