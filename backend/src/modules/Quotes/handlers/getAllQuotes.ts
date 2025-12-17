@@ -40,6 +40,7 @@ const getAllQuotesHandler = async (event: APIGatewayProxyEvent) => {
         sinCostoEnvio: quote.sinCostoEnvio,
         productos: quote.productos,
         estado: quote.estado,
+        estadoPicking: quote.estadoPicking,
         createdAt: quote.createdAt ? quote.createdAt.toISOString() : null,
         updatedAt: quote.updatedAt ? quote.updatedAt.toISOString() : null
       })),

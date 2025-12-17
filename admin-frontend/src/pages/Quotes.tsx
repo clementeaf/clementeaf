@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PageHeader, FiltersPanel, SearchBar, DataTablePage, type ActionButton } from '../components/commons';
-import { columns } from './Quotes/columns';
-import { useAllQuotes } from '../hooks/useQuotes';
+import { getQuoteColumns } from './Quotes/columns';
+import { DeleteQuoteModal } from './Quotes/DeleteQuoteModal';
+import { useAllQuotes, useDeleteQuote } from '../hooks/useQuotes';
 import { useQuotesWebSocket } from '../hooks/useQuotesWebSocket';
 import { routes } from '../routes';
 import { formatDateShort } from '../utils/dateUtils';
@@ -15,10 +16,13 @@ import type { QuoteRow } from './Quotes/columns';
 export const Quotes = () => {
   const navigate = useNavigate();
   const [searchValue, setSearchValue] = useState('');
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [quoteToDelete, setQuoteToDelete] = useState<QuoteRow | null>(null);
   const page = 1;
   const limit = 50;
 
   const { data: quotesData, isLoading, error, hasDataChanged } = useAllQuotes(page, limit);
+  const deleteQuoteMutation = useDeleteQuote();
 
   // WebSocket para eventos de quotes (invalidación automática de queries)
   useQuotesWebSocket();
@@ -31,7 +35,8 @@ export const Quotes = () => {
     clienteNombre: quote.clienteNombre || '-',
     numeroCotizacion: quote.numeroCotizacion || '-',
     fecha: formatDateShort(quote.fecha),
-    estado: quote.estado || 'borrador'
+    estado: quote.estado || 'borrador',
+    estadoPicking: quote.estadoPicking ?? null
   })) || [];
 
   /**
@@ -58,6 +63,13 @@ export const Quotes = () => {
     const quoteId = row.original.id;
     navigate(`${routes.quoteDetails}/${quoteId}`);
   };
+
+  const columns = getQuoteColumns({
+    onDelete: (row) => {
+      setQuoteToDelete(row);
+      setIsDeleteOpen(true);
+    }
+  });
 
   /**
    * Mostrar skeleton solo si está cargando y no hay datos persistidos
@@ -93,6 +105,19 @@ export const Quotes = () => {
           />
         </div>
       </div>
+
+      <DeleteQuoteModal
+        isOpen={isDeleteOpen}
+        onClose={() => setIsDeleteOpen(false)}
+        quote={quoteToDelete}
+        isLoading={deleteQuoteMutation.isPending}
+        onConfirm={async (q) => {
+          const id = parseInt(q.id, 10);
+          if (Number.isNaN(id)) return;
+          await deleteQuoteMutation.mutateAsync(id);
+          setIsDeleteOpen(false);
+        }}
+      />
     </div>
   );
 };
