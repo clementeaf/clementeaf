@@ -126,8 +126,9 @@ export const HomeMetricsSection = ({ orders }: HomeMetricsSectionProps): ReactEl
   ];
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 mb-4">
-      <MetricsCard title="Top 5 vendedores (más ventas)">
+    <div className="flex flex-nowrap gap-4 overflow-x-auto pb-2 mb-4">
+      <div className="min-w-[260px] flex-shrink-0">
+        <MetricsCard title="Top 5 vendedores (más ventas)">
         <div className="space-y-2">
           {(derived.topVendors.length ? derived.topVendors : topN([{ label: 'Vendedor A', value: 5_200_000 }], 1)).slice(0, 5).map((it, idx) => (
             <div key={`${it.label}-${idx}`} className="flex items-center justify-between gap-3">
@@ -136,9 +137,10 @@ export const HomeMetricsSection = ({ orders }: HomeMetricsSectionProps): ReactEl
             </div>
           ))}
         </div>
-      </MetricsCard>
+        </MetricsCard>
+      </div>
 
-      <div className="lg:col-span-2">
+      <div className="min-w-[520px] flex-shrink-0">
         <MetricsCard title="Monto vendido vs Meta mensual (últimos 5 meses)">
           <div className="flex items-end justify-between gap-4">
             <div>
@@ -165,38 +167,44 @@ export const HomeMetricsSection = ({ orders }: HomeMetricsSectionProps): ReactEl
         </MetricsCard>
       </div>
 
-      <MetricsCard title="Top 5 productos (más ventas)">
-        <div className="space-y-2">
-          {topProductsMock.map((it, idx) => (
-            <div key={it.label} className="flex items-center justify-between gap-3">
-              <div className="text-sm text-gray-900 truncate">{idx + 1}. {it.label}</div>
-              <div className="text-sm font-medium text-gray-900">{it.value.toLocaleString('es-CL')}</div>
-            </div>
-          ))}
-        </div>
-      </MetricsCard>
+      <div className="min-w-[260px] flex-shrink-0">
+        <MetricsCard title="Top 5 productos (más ventas)">
+          <div className="space-y-2">
+            {topProductsMock.map((it, idx) => (
+              <div key={it.label} className="flex items-center justify-between gap-3">
+                <div className="text-sm text-gray-900 truncate">{idx + 1}. {it.label}</div>
+                <div className="text-sm font-medium text-gray-900">{it.value.toLocaleString('es-CL')}</div>
+              </div>
+            ))}
+          </div>
+        </MetricsCard>
+      </div>
 
-      <MetricsCard title="Top 5 clientes (más compran)">
-        <div className="space-y-2">
-          {(derived.topCustomers.length ? derived.topCustomers : topN([{ label: 'Cliente A', value: 4_800_000 }], 1)).slice(0, 5).map((it, idx) => (
-            <div key={`${it.label}-${idx}`} className="flex items-center justify-between gap-3">
-              <div className="text-sm text-gray-900 truncate">{idx + 1}. {it.label}</div>
-              <div className="text-sm font-medium text-gray-900">{formatCurrency(it.value)}</div>
-            </div>
-          ))}
-        </div>
-      </MetricsCard>
+      <div className="min-w-[260px] flex-shrink-0">
+        <MetricsCard title="Top 5 clientes (más compran)">
+          <div className="space-y-2">
+            {(derived.topCustomers.length ? derived.topCustomers : topN([{ label: 'Cliente A', value: 4_800_000 }], 1)).slice(0, 5).map((it, idx) => (
+              <div key={`${it.label}-${idx}`} className="flex items-center justify-between gap-3">
+                <div className="text-sm text-gray-900 truncate">{idx + 1}. {it.label}</div>
+                <div className="text-sm font-medium text-gray-900">{formatCurrency(it.value)}</div>
+              </div>
+            ))}
+          </div>
+        </MetricsCard>
+      </div>
 
-      <MetricsCard title="Top 5 clientes (menos deuda)">
-        <div className="space-y-2">
-          {topClientsLeastDebtMock.map((it, idx) => (
-            <div key={it.label} className="flex items-center justify-between gap-3">
-              <div className="text-sm text-gray-900 truncate">{idx + 1}. {it.label}</div>
-              <div className="text-sm font-medium text-gray-900">{formatCurrency(it.value)}</div>
-            </div>
-          ))}
-        </div>
-      </MetricsCard>
+      <div className="min-w-[260px] flex-shrink-0">
+        <MetricsCard title="Top 5 clientes (menos deuda)">
+          <div className="space-y-2">
+            {topClientsLeastDebtMock.map((it, idx) => (
+              <div key={it.label} className="flex items-center justify-between gap-3">
+                <div className="text-sm text-gray-900 truncate">{idx + 1}. {it.label}</div>
+                <div className="text-sm font-medium text-gray-900">{formatCurrency(it.value)}</div>
+              </div>
+            ))}
+          </div>
+        </MetricsCard>
+      </div>
     </div>
   );
 };

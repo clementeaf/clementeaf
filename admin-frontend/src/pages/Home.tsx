@@ -163,8 +163,10 @@ export const Home = (): React.ReactElement => {
           </div>
         </div>
 
+        {/* Métricas (siempre arriba, fuera del contenedor con overflow para evitar scrollbars) */}
+        <HomeMetricsSection orders={orders} />
+
         <div className="flex-1 overflow-hidden rounded-lg shadow-sm bg-white border border-gray-200 p-4 h-full">
-          <HomeMetricsSection orders={orders} />
           {viewMode === 'kanban' ? (
             <HomeKanbanBoard
               orders={orders}
