@@ -164,6 +164,7 @@ export const Home = (): React.ReactElement => {
         </div>
 
         <div className="flex-1 overflow-hidden rounded-lg shadow-sm bg-white border border-gray-200 p-4 h-full">
+          <HomeMetricsSection orders={orders} />
           {viewMode === 'kanban' ? (
             <HomeKanbanBoard
               orders={orders}
@@ -172,7 +173,6 @@ export const Home = (): React.ReactElement => {
             />
           ) : (
             <div className="h-full">
-              <HomeMetricsSection orders={orders} />
               <DataTablePage<HomeOrder>
                 data={orders}
                 columns={getHomeOrdersColumns(tableActions)}
