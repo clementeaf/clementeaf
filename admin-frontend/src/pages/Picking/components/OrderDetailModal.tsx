@@ -253,7 +253,7 @@ export const OrderDetailModal = ({ isOpen, onClose, order }: OrderDetailModalPro
         isOpen={isOpen}
         onClose={onClose}
         title={`Detalle de orden: ${order.codigoOrden}`}
-        contentClassName="max-w-4xl"
+        contentClassName="w-[92vw] max-w-6xl"
       >
         <div className="space-y-4">
           {/* Acciones de factura */}
@@ -300,8 +300,8 @@ export const OrderDetailModal = ({ isOpen, onClose, order }: OrderDetailModalPro
           </div>
 
           {/* Tabla de productos */}
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse">
+          <div className="overflow-x-visible">
+            <table className="w-full border-collapse table-fixed">
               <thead>
                 <tr className="border-b border-gray-200 bg-gray-50">
                   <th className="text-left text-xs font-medium text-gray-700 uppercase tracking-wider py-3 px-4">
@@ -325,9 +325,9 @@ export const OrderDetailModal = ({ isOpen, onClose, order }: OrderDetailModalPro
                 {order.productos.length > 0 ? (
                   order.productos.map((product) => (
                     <tr key={product.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-                      <td className="py-3 px-4 text-sm text-gray-900">{product.nombre}</td>
-                      <td className="py-3 px-4 text-sm text-gray-900">{product.codigo}</td>
-                      <td className="py-3 px-4 text-sm text-gray-900">{product.ubicacion}</td>
+                      <td className="py-3 px-4 text-sm text-gray-900 break-words">{product.nombre}</td>
+                      <td className="py-3 px-4 text-sm text-gray-900 break-words">{product.codigo}</td>
+                      <td className="py-3 px-4 text-sm text-gray-900 break-words">{product.ubicacion}</td>
                       <td className="py-3 px-4 text-sm text-gray-900">{product.stock}</td>
                       <td className="py-3 px-4 text-sm font-medium text-gray-900">{product.cantidadSolicitada}</td>
                     </tr>
