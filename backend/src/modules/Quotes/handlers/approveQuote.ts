@@ -31,22 +31,17 @@ const approveQuoteHandler = async (event: APIGatewayProxyEvent) => {
     // Obtener quote actual
     const quote = await quotesService.getQuoteById(parseInt(quoteId));
 
-    // Validar que no esté ya aprobada
-    if (quote.estado === 'aprobada') {
-      return errorResponse(400, 'La nota de venta ya está aprobada');
-    }
-
     // Validar que no esté rechazada o cancelada
     if (quote.estado === 'rechazada' || quote.estado === 'cancelada') {
       return errorResponse(400, `No se puede aprobar una nota de venta ${quote.estado}`);
     }
 
-    // Actualizar estado a "aprobada"
-    const updatedQuote = await quotesService.updateQuote(parseInt(quoteId), {
-      estado: 'aprobada'
-    });
+    // Si ya está aprobada, mantener idempotencia: re-publicar evento quote.approved (reservas idempotentes).
+    const updatedQuote = quote.estado === 'aprobada'
+      ? quote
+      : await quotesService.updateQuote(parseInt(quoteId), { estado: 'aprobada' });
 
-    console.log(`✅ Nota de venta ${quoteId} aprobada por usuario ${user.id}`);
+    console.log(`✅ Nota de venta ${quoteId} aprobada/confirmada por usuario ${user.id}`);
 
     // Publicar evento quote.approved (no bloqueante)
     const eventPublisher = new EventPublisher();

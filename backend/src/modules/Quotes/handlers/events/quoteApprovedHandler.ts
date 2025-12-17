@@ -5,6 +5,18 @@ import { StockMovementService } from '../../../Products/services/StockMovementSe
 import { MovementType } from '../../../Products/entities/StockMovement.entity';
 import { WebSocketConnectionService } from '../../../Chat/services/WebSocketConnectionService';
 import { AwsWebSocketClient } from '../../../Chat/services/aws/AwsWebSocketClient';
+import { AppDataSource } from '../../../../config/database';
+import { StockMovement } from '../../../Products/entities/StockMovement.entity';
+
+interface QuoteApprovedProduct {
+  id?: string | number;
+  codigo?: string;
+  nombre?: string;
+  cantidad?: number;
+  cantidadSolicitada?: number;
+  warehouseId?: number;
+  bodegaId?: number;
+}
 
 /**
  * Handler para procesar el evento de nota de venta aprobada
@@ -29,19 +41,33 @@ export const quoteApprovedHandler = async (
     // Inicializar base de datos
     await initializeDatabase();
 
+    // Idempotencia: si ya existen reservas para esta quote, no volver a crearlas
+    const movementRepo = AppDataSource.getRepository(StockMovement);
+    const existingReservasCount = await movementRepo.count({
+      where: {
+        quoteId: quoteData.quoteId,
+        type: MovementType.RESERVA
+      }
+    });
+    if (existingReservasCount > 0) {
+      console.log(`ℹ️ Quote ${quoteData.quoteId} ya tiene ${existingReservasCount} reservas. Omitiendo recreación.`);
+      return;
+    }
+
     // Parsear productos
     if (!quoteData.productos) {
       console.warn(`⚠️ Quote ${quoteData.quoteId} no tiene productos`);
       return;
     }
 
-    let productos: any[];
+    let productos: QuoteApprovedProduct[];
     try {
-      productos = JSON.parse(quoteData.productos);
-      if (!Array.isArray(productos)) {
+      const parsed: unknown = JSON.parse(quoteData.productos);
+      if (!Array.isArray(parsed)) {
         console.error(`❌ productos no es un array para quote ${quoteData.quoteId}`);
         return;
       }
+      productos = parsed as QuoteApprovedProduct[];
     } catch (error) {
       console.error(`❌ Error parseando productos de quote ${quoteData.quoteId}:`, error);
       return;
@@ -51,7 +77,7 @@ export const quoteApprovedHandler = async (
 
     // Crear movimientos de RESERVA para cada producto
     const stockMovementService = new StockMovementService();
-    const reservasCreadas: any[] = [];
+    const reservasCreadas: Array<{ productId: string; productCode: string; cantidad: number; stockNuevo: number }> = [];
 
     for (const producto of productos) {
       try {

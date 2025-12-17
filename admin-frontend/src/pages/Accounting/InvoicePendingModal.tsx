@@ -13,6 +13,34 @@ interface InvoicePendingModalProps {
 type ModalStep = 'idle' | 'approving' | 'confirming_picking' | 'issuing_invoice';
 
 /**
+ * Extrae mensaje legible desde error Axios u objeto genérico.
+ * @param error - Error capturado
+ * @returns Mensaje de error
+ */
+const getApiErrorMessage = (error: unknown): string => {
+  if (error && typeof error === 'object') {
+    const maybeAxios = error as { response?: { data?: unknown } };
+    const data = maybeAxios.response?.data;
+    if (data && typeof data === 'object') {
+      const d = data as { message?: unknown; error?: unknown };
+      if (typeof d.message === 'string' && d.message.trim().length > 0) return d.message;
+      if (typeof d.error === 'string' && d.error.trim().length > 0) return d.error;
+    }
+    if (typeof (error as { message?: unknown }).message === 'string') {
+      return (error as { message: string }).message;
+    }
+  }
+  return 'Error desconocido';
+};
+
+/**
+ * Espera un tiempo en ms.
+ * @param ms - Milisegundos
+ */
+const sleep = async (ms: number): Promise<void> =>
+  await new Promise((resolve) => setTimeout(resolve, ms));
+
+/**
  * Modal para gestionar el estado de una nota pendiente de factura.
  * Permite aprobar, marcar picking confirmado y emitir factura (confirm-picking).
  */
@@ -45,18 +73,13 @@ export const InvoicePendingModal = ({
   /**
    * Determina si una nota ya está aprobada (estado canónico o legacy).
    */
-  const isApproved = useMemo(() => {
-    const e = row?.quote.estado ?? '';
-    return e === 'aprobada' || e === 'Picking' || e === 'Confirmación' || e === 'Despachado';
-  }, [row?.quote.estado]);
-
   /**
    * Ejecuta aprobar si falta.
    */
   const approveIfNeeded = async (): Promise<void> => {
     if (!quoteId) return;
-    if (isApproved) return;
     setStep('approving');
+    // approveQuote es idempotente en backend; podemos llamarlo siempre para asegurar reservas
     await quotesService.approveQuote(quoteId);
   };
 
@@ -81,6 +104,37 @@ export const InvoicePendingModal = ({
   };
 
   /**
+   * Emite la factura con reintentos si aún no existen reservas (eventual consistencia del evento quote.approved).
+   */
+  const issueInvoiceWithRetry = async (): Promise<void> => {
+    const maxAttempts = 6;
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        await issueInvoice();
+        return;
+      } catch (e: unknown) {
+        const msg = getApiErrorMessage(e);
+        const isNoReservas = msg.toLowerCase().includes('no se encontraron reservas');
+        const isNotConfirmed = msg.toLowerCase().includes('debe estar en estado') && msg.toLowerCase().includes('confirmado');
+
+        // Reintento: esperar a que se creen reservas por EventBridge
+        if (isNoReservas && attempt < maxAttempts) {
+          setError(`Esperando reservas... reintentando (${attempt}/${maxAttempts})`);
+          await sleep(1500);
+          continue;
+        }
+        // Reintento: asegurar confirmado (por si el update no se aplicó)
+        if (isNotConfirmed && attempt < maxAttempts) {
+          await ensurePickingConfirmed();
+          await sleep(300);
+          continue;
+        }
+        throw e;
+      }
+    }
+  };
+
+  /**
    * Acción principal: intenta dejar la nota lista y emitir factura.
    */
   const handleGenerate = async (): Promise<void> => {
@@ -88,11 +142,11 @@ export const InvoicePendingModal = ({
     try {
       await approveIfNeeded();
       await ensurePickingConfirmed();
-      await issueInvoice();
+      await issueInvoiceWithRetry();
       onCompleted();
       onClose();
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : 'Error desconocido';
+      const msg = getApiErrorMessage(e);
       setError(msg);
       setStep('idle');
     }
