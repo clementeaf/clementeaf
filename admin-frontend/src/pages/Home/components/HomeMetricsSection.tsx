@@ -141,29 +141,26 @@ export const HomeMetricsSection = ({ orders }: HomeMetricsSectionProps): ReactEl
       </MetricsCard>
 
       <MetricsCard title="Monto vendido vs Meta mensual (últimos 5 meses)">
-        <div className="flex items-end justify-between gap-4">
-            <div>
-              <div className="text-xl font-semibold text-gray-900">{formatCurrency(currentMonth.soldAmount)}</div>
-              <div className="text-[11px] text-gray-500 truncate">
-                Meta: {formatCurrency(currentMonth.goalAmount)} ({currentMonth.monthLabel})
+        <div className="w-full">
+          <div className="grid grid-cols-2 gap-3 pb-2 border-b border-gray-200">
+            <div className="text-[11px] font-semibold text-gray-700">Vendido</div>
+            <div className="text-[11px] font-semibold text-gray-700 text-right">Meta</div>
+          </div>
+
+          <div className="pt-2 space-y-1.5">
+            {monthlySeries.map((p) => (
+              <div key={p.monthLabel} className="grid grid-cols-2 gap-3 items-center">
+                <div className="min-w-0">
+                  <div className="text-[10px] text-gray-500 truncate">{p.monthLabel}</div>
+                  <div className="text-xs font-medium text-gray-900 truncate">{formatCurrency(p.soldAmount)}</div>
+                </div>
+                <div className="text-right min-w-0">
+                  <div className="text-[10px] text-gray-500 truncate">{p.monthLabel}</div>
+                  <div className="text-xs font-medium text-gray-900 truncate">{formatCurrency(p.goalAmount)}</div>
+                </div>
               </div>
-            </div>
-            <div className="text-[11px] text-gray-500 text-right whitespace-nowrap">
-              {(progress * 100).toFixed(0)}% de la meta
-            </div>
-        </div>
-
-        <div className="mt-3 h-2 bg-gray-100 rounded-full overflow-hidden">
-          <div className="h-2 bg-[#0052C9]" style={{ width: `${progress * 100}%` }} />
-        </div>
-
-        <div className="mt-3 grid grid-cols-5 gap-2">
-          {monthlySeries.map((p) => (
-            <div key={p.monthLabel} className="text-[10px] text-gray-600 min-w-0">
-              <div className="truncate">{p.monthLabel}</div>
-              <div className="font-medium text-gray-900 truncate">{formatCurrency(p.soldAmount)}</div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </MetricsCard>
 
