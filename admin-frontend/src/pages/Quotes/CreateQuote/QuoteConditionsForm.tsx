@@ -181,7 +181,7 @@ export const QuoteConditionsForm = ({ onDataChange, initialData }: QuoteConditio
             onChange={(e): void => handleFieldChange('numeroCotizacion', e.target.value)}
             placeholder={isLoadingNumber ? "Cargando..." : "030000029484892104"}
             inputClassName="bg-white"
-            disabled={isLoadingNumber}
+            disabled={true}
             error={errors.numeroCotizacion || undefined}
           />
         </div>
@@ -195,6 +195,7 @@ export const QuoteConditionsForm = ({ onDataChange, initialData }: QuoteConditio
             onChange={(e): void => handleFieldChange('fecha', e.target.value)}
             placeholder={getCurrentDate()}
             inputClassName="bg-white"
+            disabled={true}
             error={errors.fecha || undefined}
           />
         </div>

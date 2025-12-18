@@ -11,11 +11,25 @@ export class QuotesService {
   }
 
   /**
+   * Normaliza strings: convierte strings vacíos en null.
+   * @param value - Valor a normalizar
+   * @returns String normalizado o null
+   */
+  private normalizeOptionalString(value: string | null | undefined): string | null {
+    if (value === undefined || value === null) return null;
+    const trimmed = value.trim();
+    return trimmed.length === 0 ? null : trimmed;
+  }
+
+  /**
    * Crea una nueva orden de compra
    * @param createQuoteDto - Datos de la orden de compra a crear
    * @returns Orden de compra creada
    */
   async createQuote(createQuoteDto: CreateQuoteDto): Promise<Quote> {
+    const numeroCotizacionNormalized = this.normalizeOptionalString(createQuoteDto.numeroCotizacion);
+    const fecha = createQuoteDto.fecha ? new Date(createQuoteDto.fecha) : new Date();
+
     const quote = this.quotesRepository.create({
       // Paso 1: Información del Cliente
       clienteNombre: createQuoteDto.clienteNombre,
@@ -32,8 +46,8 @@ export class QuotesService {
       contactoCountryDialCode: createQuoteDto.contactoCountryDialCode ?? null,
 
       // Paso 2: Condiciones
-      numeroCotizacion: createQuoteDto.numeroCotizacion ?? null,
-      fecha: createQuoteDto.fecha ? new Date(createQuoteDto.fecha) : null,
+      numeroCotizacion: numeroCotizacionNormalized,
+      fecha,
       terminosPago: createQuoteDto.terminosPago ?? null,
       numeroReferencia: createQuoteDto.numeroReferencia ?? null,
       centroCosto: createQuoteDto.centroCosto ?? null,
@@ -48,6 +62,13 @@ export class QuotesService {
     } as Quote);
 
     const savedQuote = await this.quotesRepository.save(quote);
+
+    // Si el número no fue provisto, usar el ID autoincremental como correlativo secuencial.
+    if (numeroCotizacionNormalized === null) {
+      savedQuote.numeroCotizacion = String(savedQuote.id);
+      return await this.quotesRepository.save(savedQuote);
+    }
+
     return savedQuote;
   }
 
@@ -169,56 +190,18 @@ export class QuotesService {
    */
   async getNextQuoteNumber(): Promise<string> {
     try {
-      // Obtener la última orden de compra ordenada por numeroCotizacion descendente
+      // Correlativo secuencial simple: 1, 2, 3... (basado en id autoincremental)
       const lastQuote = await this.quotesRepository.findOne({
         where: {},
         order: { id: 'DESC' }
       });
 
-      if (!lastQuote || !lastQuote.numeroCotizacion) {
-        // Si no hay órdenes previas, empezar con 1
-        const today = new Date();
-        const year = today.getFullYear().toString().slice(-2);
-        const month = (today.getMonth() + 1).toString().padStart(2, '0');
-        const day = today.getDate().toString().padStart(2, '0');
-        return `${year}${month}${day}0000001`;
-      }
-
-      // Extraer el número secuencial del último número
-      // Formato esperado: YYMMDD + número secuencial (ej: 2511190000001)
-      const lastNumber = lastQuote.numeroCotizacion;
-      
-      // Si el formato es YYMMDD + número, extraer el número secuencial
-      if (lastNumber.length >= 7) {
-        const sequentialPart = lastNumber.slice(-7); // Últimos 7 dígitos
-        const sequentialNumber = parseInt(sequentialPart, 10);
-        
-        if (!isNaN(sequentialNumber)) {
-          const nextSequential = sequentialNumber + 1;
-          const today = new Date();
-          const year = today.getFullYear().toString().slice(-2);
-          const month = (today.getMonth() + 1).toString().padStart(2, '0');
-          const day = today.getDate().toString().padStart(2, '0');
-          return `${year}${month}${day}${nextSequential.toString().padStart(7, '0')}`;
-        }
-      }
-
-      // Si no se puede parsear, generar un nuevo número basado en el ID
-      const nextId = (lastQuote.id || 0) + 1;
-      const today = new Date();
-      const year = today.getFullYear().toString().slice(-2);
-      const month = (today.getMonth() + 1).toString().padStart(2, '0');
-      const day = today.getDate().toString().padStart(2, '0');
-      return `${year}${month}${day}${nextId.toString().padStart(7, '0')}`;
+      const nextId = (lastQuote?.id ?? 0) + 1;
+      return String(nextId);
     } catch (error) {
       console.error('Error en getNextQuoteNumber:', error);
-      // En caso de error, generar un número basado en la fecha actual
-      const today = new Date();
-      const year = today.getFullYear().toString().slice(-2);
-      const month = (today.getMonth() + 1).toString().padStart(2, '0');
-      const day = today.getDate().toString().padStart(2, '0');
-      const timestamp = Date.now().toString().slice(-7);
-      return `${year}${month}${day}${timestamp}`;
+      // Fallback conservador
+      return '1';
     }
   }
 }
