@@ -54,7 +54,7 @@ export const Sidebar = () => {
     if (mode === 'ventas') {
       return moduleName === 'Ventas' || moduleName === 'Productos' || moduleName === 'Soporte' || moduleName === 'Roles';
     }
-    return moduleName === 'Picking' || moduleName === 'Productos' || moduleName === 'Soporte' || moduleName === 'Roles';
+    return moduleName === 'Bodega' || moduleName === 'Productos' || moduleName === 'Soporte' || moduleName === 'Roles';
   }, []);
 
   /**
@@ -81,7 +81,7 @@ export const Sidebar = () => {
       // Si aún está cargando permisos, mostrar módulos básicos temporalmente
       if (shouldShowAllBasic) {
         // Mostrar módulos principales mientras cargan permisos
-        return item.name === 'Ventas' || item.name === 'Picking' || item.name === 'Roles' || item.name === 'Productos';
+        return item.name === 'Ventas' || item.name === 'Bodega' || item.name === 'Roles' || item.name === 'Productos';
       }
 
       // Validación específica para módulo Productos
@@ -95,7 +95,7 @@ export const Sidebar = () => {
         
         if (item.name === 'Ventas') {
           subModuleCodes = sellsSubItems.map(sub => getSubModulePermissionCode(sub.path));
-        } else if (item.name === 'Picking') {
+        } else if (item.name === 'Bodega') {
           subModuleCodes = pickingSubItems.map(sub => getSubModulePermissionCode(sub.path));
         } else if (item.name === 'Roles') {
           subModuleCodes = rolesSubItems.map(sub => getSubModulePermissionCode(sub.path));
@@ -208,7 +208,7 @@ export const Sidebar = () => {
         {filteredNavItems.map((item) => {
           const active = isActive(item.path, location.pathname);
           const isSellsItem = item.name === 'Ventas';
-          const isPickingItem = item.name === 'Picking';
+          const isPickingItem = item.name === 'Bodega';
           const isRolesItem = item.name === 'Roles';
           const expanded = isSellsItem ? isSellsExpanded : isPickingItem ? isPickingExpanded : isRolesItem ? isRolesExpanded : false;
           

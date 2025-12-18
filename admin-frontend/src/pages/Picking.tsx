@@ -10,8 +10,8 @@ import {
 } from './Picking/sections';
 
 /**
- * Página de Picking
- * @returns Componente Picking
+ * Página de Bodega
+ * @returns Componente Bodega
  */
 export const Picking = (): React.ReactElement => {
   const location = useLocation();
@@ -64,7 +64,7 @@ export const Picking = (): React.ReactElement => {
 
   return (
     <div className="w-full h-full flex flex-col p-8">
-      <PageHeader title="Picking" />
+      <PageHeader title="Bodega" />
 
       <div className="flex gap-4 flex-1 min-h-0">
         {activeTab === 'order' && (

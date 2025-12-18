@@ -34,7 +34,7 @@ interface OrderSectionProps {
 }
 
 /**
- * Componente de sección de Orden de picking
+ * Componente de sección de Orden de bodega
  * @param props - Props del componente OrderSection
  * @returns Componente OrderSection
  */

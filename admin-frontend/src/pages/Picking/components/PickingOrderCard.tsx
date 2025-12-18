@@ -11,7 +11,7 @@ interface PickingOrderCardProps {
 }
 
 /**
- * Componente de tarjeta para una orden de picking
+ * Componente de tarjeta para una orden de bodega
  * @param props - Props del componente PickingOrderCard
  * @returns Componente PickingOrderCard
  */

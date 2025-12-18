@@ -191,44 +191,44 @@ export const CreateRole = (): React.ReactElement => {
       ];
     }
 
-    // Servicios para Orden de picking
-    if (subModuleName === 'Orden de picking' || subModulePath === '/picking/order' || subModulePath.includes('picking/order')) {
+    // Servicios para Orden de bodega
+    if (subModuleName === 'Orden de bodega' || subModulePath === '/picking/order' || subModulePath.includes('picking/order')) {
       return [
         {
           id: 'service-create-picking-order',
-          name: 'Crear Orden de Picking',
+          name: 'Crear Orden de Bodega',
           code: 'post:picking:orders',
-          description: 'Permite crear nuevas órdenes de picking'
+          description: 'Permite crear nuevas órdenes de bodega'
         },
         {
           id: 'service-get-picking-order',
-          name: 'Obtener Orden de Picking',
+          name: 'Obtener Orden de Bodega',
           code: 'get:picking:orders:{id}',
-          description: 'Permite ver detalles de una orden de picking específica'
+          description: 'Permite ver detalles de una orden de bodega específica'
         },
         {
           id: 'service-list-picking-orders',
-          name: 'Listar Órdenes de Picking',
+          name: 'Listar Órdenes de Bodega',
           code: 'get:picking:orders',
-          description: 'Permite ver la lista de todas las órdenes de picking'
+          description: 'Permite ver la lista de todas las órdenes de bodega'
         },
         {
           id: 'service-update-picking-order',
-          name: 'Actualizar Orden de Picking',
+          name: 'Actualizar Orden de Bodega',
           code: 'put:picking:orders:{id}',
-          description: 'Permite modificar datos y estado de órdenes de picking'
+          description: 'Permite modificar datos y estado de órdenes de bodega'
         },
         {
           id: 'service-delete-picking-order',
-          name: 'Eliminar Orden de Picking',
+          name: 'Eliminar Orden de Bodega',
           code: 'delete:picking:orders:{id}',
-          description: 'Permite eliminar órdenes de picking del sistema'
+          description: 'Permite eliminar órdenes de bodega del sistema'
         },
         {
           id: 'service-update-picking-status',
           name: 'Cambiar Estado de Orden',
           code: 'put:picking:orders:{id}:status',
-          description: 'Permite cambiar el estado de una orden de picking'
+          description: 'Permite cambiar el estado de una orden de bodega'
         }
       ];
     }

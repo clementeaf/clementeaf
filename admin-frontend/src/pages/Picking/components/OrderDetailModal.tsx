@@ -17,7 +17,7 @@ interface OrderDetailModalProps {
 }
 
 /**
- * Modal para mostrar el detalle de productos de una orden de picking
+ * Modal para mostrar el detalle de productos de una orden de bodega
  * @param props - Props del componente OrderDetailModal
  * @returns Componente OrderDetailModal
  */

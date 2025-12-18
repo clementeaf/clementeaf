@@ -311,7 +311,7 @@ export const MetricsSection = (): ReactElement => {
             <h4 className="text-[10px] font-medium text-gray-500 mb-1">Tiempo Promedio</h4>
             <p className="text-xl font-bold text-indigo-600">{formatTime(metrics.tiempoPromedioPicking)}</p>
             <div className="flex items-center justify-between mt-1">
-              <p className="text-[9px] text-gray-500">Por orden de picking</p>
+              <p className="text-[9px] text-gray-500">Por orden de bodega</p>
               {renderizarVariacion(obtenerVariacion('tiempoPromedioPicking'), true)}
             </div>
           </div>

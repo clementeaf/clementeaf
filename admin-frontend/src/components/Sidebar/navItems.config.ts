@@ -18,7 +18,7 @@ export const navItems: NavItem[] = [
   { name: 'Chat', path: routes.chat, icon: articlesIcon },
   { name: 'WhatsApp', path: routes.whatsapp, icon: articlesIcon },
   { name: 'OCR', path: routes.ocr, icon: articlesIcon },
-  { name: 'Picking', path: routes.picking, icon: checkIcon, hasSubItems: true },
+  { name: 'Bodega', path: routes.picking, icon: checkIcon, hasSubItems: true },
   { name: 'Productos', path: routes.productsSearch, icon: articlesIcon },
   { name: 'Contabilidad', path: routes.accounting, icon: articlesIcon },
   { name: 'Soporte', path: routes.support, icon: articlesIcon },
@@ -36,10 +36,10 @@ export const sellsSubItems: NavItem[] = [
 ];
 
 /**
- * Configuración de subitems de Picking
+ * Configuración de subitems de Bodega
  */
 export const pickingSubItems: NavItem[] = [
-  { name: 'Orden de picking', path: routes.pickingOrder, icon: checkIcon },
+  { name: 'Orden de bodega', path: routes.pickingOrder, icon: checkIcon },
   { name: 'Métricas', path: routes.pickingMetrics, icon: checkIcon },
   { name: 'Mapa de Bodega', path: routes.pickingWarehouse, icon: checkIcon }
 ];
