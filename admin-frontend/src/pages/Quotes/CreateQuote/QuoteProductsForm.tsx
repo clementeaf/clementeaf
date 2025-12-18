@@ -224,10 +224,24 @@ export const QuoteProductsForm = ({ onDataChange, initialData, onRegisterActions
   /**
    * Exponer acción de "Añadir producto" al contenedor (para renderizar el botón fuera del scroll).
    */
+  const onRegisterActionsRef = useRef<QuoteProductsFormProps['onRegisterActions']>(onRegisterActions);
+  const addProductRef = useRef(addProduct);
+
   useEffect(() => {
-    if (!onRegisterActions) return;
-    onRegisterActions({ addProduct });
-  }, [onRegisterActions, addProduct]);
+    onRegisterActionsRef.current = onRegisterActions;
+  }, [onRegisterActions]);
+
+  useEffect(() => {
+    addProductRef.current = addProduct;
+  }, [addProduct]);
+
+  useEffect(() => {
+    const register = onRegisterActionsRef.current;
+    if (!register) return;
+    register({ addProduct: () => addProductRef.current() });
+    // Solo registrar una vez al montar (evita loops por re-render)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="flex-1 p-6">

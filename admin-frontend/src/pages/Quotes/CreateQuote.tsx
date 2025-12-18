@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { logger } from '../../utils/logger';
@@ -26,7 +26,8 @@ export const CreateQuote = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [maxStepReached, setMaxStepReached] = useState(1); // Rastrea el paso máximo alcanzado
   const [formData, setFormData] = useState<Record<string, unknown>>({});
-  const [quoteProductsActions, setQuoteProductsActions] = useState<QuoteProductsActions | null>(null);
+  const quoteProductsActionsRef = useRef<QuoteProductsActions | null>(null);
+  const [isProductsActionsReady, setIsProductsActionsReady] = useState(false);
 
   /**
    * Carga los datos guardados desde sessionStorage al montar el componente
@@ -165,7 +166,8 @@ export const CreateQuote = () => {
    * @param actions - Acciones expuestas por el paso de productos
    */
   const handleRegisterProductsActions = useCallback((actions: QuoteProductsActions): void => {
-    setQuoteProductsActions(actions);
+    quoteProductsActionsRef.current = actions;
+    setIsProductsActionsReady((prev) => prev || true);
   }, []);
 
   /**
@@ -329,10 +331,10 @@ export const CreateQuote = () => {
               <>
                 {isProductsStep && (
                   <Button
-                    onClick={(): void => quoteProductsActions?.addProduct()}
+                    onClick={(): void => quoteProductsActionsRef.current?.addProduct()}
                     leftIcon={<PlusIcon color="white" />}
                     className="bg-[#0052C9] text-white hover:bg-[#004BB7] px-6 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                    disabled={!quoteProductsActions}
+                    disabled={!isProductsActionsReady}
                   >
                     Añadir producto
                   </Button>
