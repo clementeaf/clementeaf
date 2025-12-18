@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PageHeader, FiltersPanel, SearchBar, DataTablePage, type ActionButton } from '../components/commons';
 import { VerifyRutModal } from './Clients/CreateClient/VerifyRutModal';
@@ -10,6 +10,92 @@ import { clearClientsCache } from '../utils/clearClientsCache';
 import { logger } from '../utils/logger';
 import type { ClientRow } from './Clients/columns';
 
+interface SegmentOption {
+  value: string;
+  label: string;
+  count: number;
+}
+
+interface SegmentFilterListProps {
+  options: SegmentOption[];
+  selectedSegment: string | null;
+  onSelect: (value: string | null) => void;
+}
+
+/**
+ * Renderiza el listado de segmentos para filtrar la tabla de clientes.
+ * @param props - Props del componente
+ * @returns Componente de filtro por segmento
+ */
+const SegmentFilterList = ({
+  options,
+  selectedSegment,
+  onSelect
+}: SegmentFilterListProps): React.ReactElement => {
+  const baseButton =
+    'w-full text-left px-2 py-1 rounded-md transition-colors duration-150';
+  const selectedButton = 'bg-[#EAF2FF] text-[#004BB7]';
+  const normalButton = 'hover:bg-gray-50 text-gray-700';
+
+  return (
+    <div className="space-y-1">
+      <button
+        type="button"
+        onClick={() => onSelect(null)}
+        className={`${baseButton} ${selectedSegment === null ? selectedButton : normalButton}`}
+      >
+        <div className="flex items-center justify-between gap-2">
+          <span className="truncate">Todos</span>
+          <span className="text-xs text-gray-500">{options.reduce((acc, o) => acc + o.count, 0)}</span>
+        </div>
+      </button>
+
+      {options.map((opt) => (
+        <button
+          key={opt.value}
+          type="button"
+          onClick={() => onSelect(opt.value)}
+          className={`${baseButton} ${selectedSegment === opt.value ? selectedButton : normalButton}`}
+        >
+          <div className="flex items-center justify-between gap-2">
+            <span className="truncate">{opt.label}</span>
+            <span className="text-xs text-gray-500">{opt.count}</span>
+          </div>
+        </button>
+      ))}
+    </div>
+  );
+};
+
+/**
+ * Normaliza un segmento para uso en filtros y UI.
+ * @param raw - Valor crudo desde API/tabla
+ * @returns Segmento normalizado
+ */
+const normalizeSegment = (raw: string): string => raw.trim();
+
+/**
+ * Construye la lista de segmentos únicos con conteo.
+ * @param rows - Filas de clientes
+ * @returns Lista de opciones de segmentos
+ */
+const buildSegmentOptions = (rows: ClientRow[]): SegmentOption[] => {
+  const counts = new Map<string, number>();
+
+  rows.forEach((r) => {
+    const value = normalizeSegment(r.segment ?? '');
+    counts.set(value, (counts.get(value) ?? 0) + 1);
+  });
+
+  return Array.from(counts.entries())
+    .map(([value, count]) => ({
+      value,
+      count,
+      label: value.length > 0 ? value : 'Sin segmento'
+    }))
+    .sort((a, b) => a.label.localeCompare(b.label, 'es'));
+};
+
 /**
  * Página de clientes
  * @returns Componente Clients
@@ -17,6 +103,7 @@ import type { ClientRow } from './Clients/columns';
 export const Clients = () => {
   const navigate = useNavigate();
   const [searchValue, setSearchValue] = useState('');
+  const [selectedSegment, setSelectedSegment] = useState<string | null>(null);
   const [isRutModalOpen, setIsRutModalOpen] = useState(false);
   const page = 1;
   const limit = 50;
@@ -43,6 +130,23 @@ export const Clients = () => {
     rut: client.rut || '',
     segment: client.segmento || ''
   })) || [];
+
+  const segmentOptions = useMemo<SegmentOption[]>(() => buildSegmentOptions(mappedClients), [mappedClients]);
+
+  const filteredClients = useMemo<ClientRow[]>(() => {
+    const search = searchValue.trim().toLowerCase();
+    return mappedClients.filter((c) => {
+      const matchesSearch = search.length === 0
+        ? true
+        : c.fantasyName.toLowerCase().includes(search) || c.rut.toLowerCase().includes(search);
+
+      const matchesSegment = selectedSegment === null
+        ? true
+        : normalizeSegment(c.segment) === selectedSegment;
+
+      return matchesSearch && matchesSegment;
+    });
+  }, [mappedClients, searchValue, selectedSegment]);
 
   /**
    * Mostrar skeleton solo si:
@@ -92,7 +196,21 @@ export const Clients = () => {
         <PageHeader title="Clientes" actionButtons={actionButtons} />
 
         <div className="flex gap-4 flex-1 min-h-0">
-          <FiltersPanel sections={[{ id: 'segment', label: 'Segmento' }]} />
+          <FiltersPanel
+            sections={[
+              {
+                id: 'segment',
+                label: 'Segmento',
+                content: (
+                  <SegmentFilterList
+                    options={segmentOptions}
+                    selectedSegment={selectedSegment}
+                    onSelect={setSelectedSegment}
+                  />
+                )
+              }
+            ]}
+          />
 
           <div className="flex-1 flex flex-col min-w-0">
             <SearchBar
@@ -102,7 +220,7 @@ export const Clients = () => {
             />
 
             <DataTablePage<ClientRow>
-              data={mappedClients}
+              data={filteredClients}
               columns={columns}
               isLoading={shouldShowSkeleton}
               error={error}
