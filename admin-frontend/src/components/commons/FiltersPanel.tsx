@@ -49,6 +49,7 @@ export const FiltersPanel = ({
 
   /**
    * Maneja el toggle de una sección
+   * @param sectionId - ID de la sección
    */
   const toggleSection = (sectionId: string): void => {
     setExpandedSections(prev => {
@@ -68,20 +69,27 @@ export const FiltersPanel = ({
       <div className="flex flex-col gap-4">
         {sections.map((section) => {
           const isExpanded = expandedSections.has(section.id);
+          const hasContent = Boolean(section.content);
           return (
             <div key={section.id}>
-              <button
-                onClick={() => toggleSection(section.id)}
-                className="w-full flex items-center justify-between text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors duration-200"
-              >
-                <span>{section.label}</span>
-                {isExpanded ? (
-                  <ChevronUpIcon color="#6B7280" />
-                ) : (
-                  <DropdownIcon color="#6B7280" />
-                )}
-              </button>
-              {isExpanded && section.content && (
+              {hasContent ? (
+                <button
+                  onClick={() => toggleSection(section.id)}
+                  className="w-full flex items-center justify-between text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors duration-200"
+                >
+                  <span>{section.label}</span>
+                  {isExpanded ? (
+                    <ChevronUpIcon color="#6B7280" />
+                  ) : (
+                    <DropdownIcon color="#6B7280" />
+                  )}
+                </button>
+              ) : (
+                <div className="w-full text-sm font-medium text-gray-700">
+                  {section.label}
+                </div>
+              )}
+              {isExpanded && hasContent && (
                 <div className="mt-2 pl-4 text-sm text-gray-600">
                   {section.content}
                 </div>
