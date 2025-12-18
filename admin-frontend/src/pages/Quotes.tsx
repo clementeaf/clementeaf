@@ -221,7 +221,11 @@ export const Quotes = () => {
         />
 
         <div className="flex-1 flex flex-col min-w-0">
-          <SearchBar searchValue={searchValue} onSearchChange={handleSearchChange} />
+          <SearchBar
+            searchValue={searchValue}
+            onSearchChange={handleSearchChange}
+            filterChips={[{ label: 'Nombre vendedor' }]}
+          />
 
           <DataTablePage<QuoteRow>
             data={filteredQuotes}
