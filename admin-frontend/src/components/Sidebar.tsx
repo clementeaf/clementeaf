@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import { SidebarHeader } from './Sidebar/SidebarHeader';
 import { NavItem } from './Sidebar/NavItem';
@@ -41,9 +41,6 @@ export const Sidebar = () => {
   const [manualToggle, setManualToggle] = useState(false);
   const [manualPickingToggle, setManualPickingToggle] = useState(false);
   const [manualRolesToggle, setManualRolesToggle] = useState(false);
-  const [isCollapsed, setIsCollapsed] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
-  const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   /**
    * Filtra los módulos según los permisos del usuario
@@ -176,51 +173,15 @@ export const Sidebar = () => {
     setManualRolesToggle(false);
   };
 
-  const handleToggleCollapse = (): void => {
-    setIsCollapsed((prev) => !prev);
-  };
-
-  const handleMouseEnter = (): void => {
-    if (isCollapsed) {
-      if (hoverTimeoutRef.current) {
-        clearTimeout(hoverTimeoutRef.current);
-        hoverTimeoutRef.current = null;
-      }
-      setIsHovered(true);
-    }
-  };
-
-  const handleMouseLeave = (): void => {
-    if (isCollapsed) {
-      if (hoverTimeoutRef.current) {
-        clearTimeout(hoverTimeoutRef.current);
-      }
-      hoverTimeoutRef.current = setTimeout(() => {
-        setIsHovered(false);
-        hoverTimeoutRef.current = null;
-      }, 150);
-    }
-  };
-
-  useEffect(() => {
-    return () => {
-      if (hoverTimeoutRef.current) {
-        clearTimeout(hoverTimeoutRef.current);
-      }
-    };
-  }, []);
-
-  const isExpanded = !isCollapsed || isHovered;
+  const isExpanded = true;
 
   return (
     <div 
       className={`h-full bg-[#002254] text-white flex flex-col items-start py-4 transition-all duration-300 ease-in-out ${
-        isExpanded ? 'w-[208px]' : 'w-[64px]'
+        isExpanded ? 'w-[208px]' : 'w-[208px]'
       }`}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
     >
-      <SidebarHeader isCollapsed={isCollapsed} onToggleCollapse={handleToggleCollapse} isExpanded={isExpanded} />
+      <SidebarHeader />
 
       <nav className={`w-full flex flex-col transition-all duration-300 flex-1 ${isExpanded ? 'px-2' : 'px-1'}`}>
         {filteredNavItems.map((item) => {
@@ -254,7 +215,7 @@ export const Sidebar = () => {
                 isExpanded={expanded}
                 onToggle={isSellsItem ? handleToggleSells : isPickingItem ? handleTogglePicking : isRolesItem ? handleToggleRoles : undefined}
                 showExpandIcon={item.hasSubItems === true}
-                isCollapsed={!isExpanded}
+                isCollapsed={false}
               />
 
               {isSellsItem && isExpanded && filteredSellsSubItems.length > 0 && (
