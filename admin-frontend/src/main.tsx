@@ -6,6 +6,7 @@ import 'react-toastify/dist/ReactToastify.css'
 import './index.css'
 import App from './App.tsx'
 import { deleteCookie, setCookie } from './utils/cookies'
+import { parseAppMode, setStoredAppMode } from './utils/appMode'
 
 /**
  * Valida que un token sea un JWT válido
@@ -36,6 +37,7 @@ const handleTokenFromUrl = (): void => {
   const urlParams = new URLSearchParams(window.location.search);
   const token = urlParams.get('token');
   const refreshToken = urlParams.get('refreshToken');
+  const modeParam = urlParams.get('mode');
   
   if (token) {
     // Validar que el token sea un JWT válido antes de guardarlo
@@ -69,6 +71,21 @@ const handleTokenFromUrl = (): void => {
       : window.location.pathname;
     
     // Reemplazar la URL sin recargar la página
+    window.history.replaceState({}, '', newUrl);
+  }
+
+  // Persistir modo si viene en URL, incluso si no viene token (por ejemplo, deep link)
+  const parsedMode = parseAppMode(modeParam);
+  if (parsedMode) {
+    setStoredAppMode(parsedMode);
+  }
+
+  // Limpiar el parámetro mode de la URL (si existe), aunque no haya token
+  if (modeParam) {
+    urlParams.delete('mode');
+    const newUrl = urlParams.toString()
+      ? `${window.location.pathname}?${urlParams.toString()}`
+      : window.location.pathname;
     window.history.replaceState({}, '', newUrl);
   }
 };

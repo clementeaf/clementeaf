@@ -3,17 +3,20 @@ import { Button } from '../components/ui/Button';
 import { getFrontendUrls } from '../config/frontendUrls';
 import { getCookie } from '../utils/cookies';
 
+type AdminMode = 'ventas' | 'bodega';
+
 /**
- * Redirige a la aplicación seleccionada con el token y refresh token en la URL
- * @param url - URL de la aplicación a la que redirigir
+ * Redirige a la aplicación admin con el token, refresh token y modo en la URL.
+ * @param url - URL de la aplicación admin
+ * @param mode - Modo seleccionado
  */
-const redirectToApp = (url: string): void => {
+const redirectToAdminWithMode = (url: string, mode: AdminMode): void => {
   const token = getCookie('authToken');
   const refreshToken = getCookie('refreshToken');
   
   if (token) {
     const separator = url.includes('?') ? '&' : '?';
-    let redirectUrl = `${url}${separator}token=${encodeURIComponent(token)}`;
+    let redirectUrl = `${url}${separator}token=${encodeURIComponent(token)}&mode=${encodeURIComponent(mode)}`;
     
     if (refreshToken) {
       redirectUrl += `&refreshToken=${encodeURIComponent(refreshToken)}`;
@@ -21,12 +24,12 @@ const redirectToApp = (url: string): void => {
     
     window.location.href = redirectUrl;
   } else {
-    window.location.href = url;
+    window.location.href = `${url}?mode=${encodeURIComponent(mode)}`;
   }
 };
 
 /**
- * Componente provisional para seleccionar la aplicación después del login exitoso
+ * Componente para seleccionar modo de operación después del login exitoso
  * @returns Componente AppSelector
  */
 export const AppSelector = (): React.ReactNode => {
@@ -34,28 +37,28 @@ export const AppSelector = (): React.ReactNode => {
   
   return (
     <Wrapper className='flex flex-col items-center justify-center bg-white rounded-lg shadow-sm p-8 w-auto min-w-[400px]'>
-      <FormHeader subtitle="Selecciona una aplicación" />
+      <FormHeader subtitle="Selecciona un modo" />
       
       <div className="w-full mt-6 space-y-4">
         <p className="text-sm text-gray-600 text-center mb-6">
-          Has iniciado sesión exitosamente. Elige a qué aplicación deseas acceder:
+          Has iniciado sesión exitosamente. Elige el modo de trabajo:
         </p>
         
         <div className="space-y-3">
           <Button
             type="button"
-            onClick={() => redirectToApp(frontendUrls.admin)}
+            onClick={() => redirectToAdminWithMode(frontendUrls.admin, 'ventas')}
             className="w-full py-3 text-base font-medium border-2 border-blue-500 rounded-xl px-4 text-blue-500 hover:bg-blue-500 hover:text-white ease-in-out duration-300"
           >
-            Admin Frontend
+            Ventas
           </Button>
           
           <Button
             type="button"
-            onClick={() => redirectToApp(frontendUrls.client)}
+            onClick={() => redirectToAdminWithMode(frontendUrls.admin, 'bodega')}
             className="w-full py-3 text-base font-medium border-2 border-blue-500 rounded-xl px-4 text-blue-500 hover:bg-blue-500 hover:text-white ease-in-out duration-300"
           >
-            Client Frontend
+            Bodega
           </Button>
         </div>
       </div>

@@ -3,6 +3,7 @@ import { Routes, Route } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import { Sidebar } from './components/Sidebar';
 import { ProtectedRoute } from './components/ProtectedRoute';
+import { AppModeLanding, AppModeRoute } from './components/AppModeRoute';
 import { NotificationsProvider } from './components/Notifications';
 import { routes } from './routes';
 
@@ -58,74 +59,98 @@ function App(): React.ReactNode {
         <div className="w-full h-full rounded-lg shadow-sm overflow-auto">
           <Suspense fallback={<LoadingFallback />}>
           <Routes>
-            {/* Rutas públicas (sin restricción de permisos) */}
-            <Route path={routes.home} element={<Home />} />
-            <Route path={routes.chat} element={<Chat />} />
-            <Route path={routes.support} element={<Support />} />
+            {/* Landing: redirige según modo */}
+            <Route path={routes.home} element={<AppModeLanding />} />
+            
+            {/* Soporte (permitido en ambos modos) */}
+            <Route
+              path={routes.support}
+              element={
+                <AppModeRoute allowedModes={['ventas', 'bodega']}>
+                  <Support />
+                </AppModeRoute>
+              }
+            />
             
             {/* Rutas de Ventas */}
             <Route 
               path={routes.sells} 
               element={
-                <ProtectedRoute requiredPermissions={['module:sells', 'view:sells:clients', 'view:sells:quotes', 'view:sells:collections']} requireAny>
-                  <Sells />
-                </ProtectedRoute>
+                <AppModeRoute allowedModes={['ventas']}>
+                  <ProtectedRoute requiredPermissions={['module:sells', 'view:sells:clients', 'view:sells:quotes', 'view:sells:collections']} requireAny>
+                    <Sells />
+                  </ProtectedRoute>
+                </AppModeRoute>
               } 
             />
             <Route 
               path={routes.clients} 
               element={
-                <ProtectedRoute requiredPermission="view:sells:clients">
-                  <Clients />
-                </ProtectedRoute>
+                <AppModeRoute allowedModes={['ventas']}>
+                  <ProtectedRoute requiredPermission="view:sells:clients">
+                    <Clients />
+                  </ProtectedRoute>
+                </AppModeRoute>
               } 
             />
             <Route 
               path={routes.createClient} 
               element={
-                <ProtectedRoute requiredPermission="view:sells:clients">
-                  <CreateClient />
-                </ProtectedRoute>
+                <AppModeRoute allowedModes={['ventas']}>
+                  <ProtectedRoute requiredPermission="view:sells:clients">
+                    <CreateClient />
+                  </ProtectedRoute>
+                </AppModeRoute>
               } 
             />
             <Route 
               path={`${routes.clientDetails}/:id`} 
               element={
-                <ProtectedRoute requiredPermission="view:sells:clients">
-                  <ClientDetails />
-                </ProtectedRoute>
+                <AppModeRoute allowedModes={['ventas']}>
+                  <ProtectedRoute requiredPermission="view:sells:clients">
+                    <ClientDetails />
+                  </ProtectedRoute>
+                </AppModeRoute>
               } 
             />
             <Route 
               path={routes.quotes} 
               element={
-                <ProtectedRoute requiredPermission="view:sells:quotes">
-                  <Quotes />
-                </ProtectedRoute>
+                <AppModeRoute allowedModes={['ventas']}>
+                  <ProtectedRoute requiredPermission="view:sells:quotes">
+                    <Quotes />
+                  </ProtectedRoute>
+                </AppModeRoute>
               } 
             />
             <Route 
               path={routes.createQuote} 
               element={
-                <ProtectedRoute requiredPermission="view:sells:quotes">
-                  <CreateQuote />
-                </ProtectedRoute>
+                <AppModeRoute allowedModes={['ventas']}>
+                  <ProtectedRoute requiredPermission="view:sells:quotes">
+                    <CreateQuote />
+                  </ProtectedRoute>
+                </AppModeRoute>
               } 
             />
             <Route 
               path={`${routes.quoteDetails}/:id`} 
               element={
-                <ProtectedRoute requiredPermission="view:sells:quotes">
-                  <QuoteDetails />
-                </ProtectedRoute>
+                <AppModeRoute allowedModes={['ventas']}>
+                  <ProtectedRoute requiredPermission="view:sells:quotes">
+                    <QuoteDetails />
+                  </ProtectedRoute>
+                </AppModeRoute>
               } 
             />
             <Route 
               path={routes.collections} 
               element={
-                <ProtectedRoute requiredPermission="view:sells:collections">
-                  <Collections />
-                </ProtectedRoute>
+                <AppModeRoute allowedModes={['ventas']}>
+                  <ProtectedRoute requiredPermission="view:sells:collections">
+                    <Collections />
+                  </ProtectedRoute>
+                </AppModeRoute>
               } 
             />
             
@@ -133,33 +158,41 @@ function App(): React.ReactNode {
             <Route 
               path={routes.picking} 
               element={
-                <ProtectedRoute requiredPermissions={['module:picking', 'view:picking:order', 'view:picking:metrics', 'view:picking:warehouse']} requireAny>
-                  <Picking />
-                </ProtectedRoute>
+                <AppModeRoute allowedModes={['bodega']}>
+                  <ProtectedRoute requiredPermissions={['module:picking', 'view:picking:order', 'view:picking:metrics', 'view:picking:warehouse']} requireAny>
+                    <Picking />
+                  </ProtectedRoute>
+                </AppModeRoute>
               } 
             />
             <Route 
               path={routes.pickingOrder} 
               element={
-                <ProtectedRoute requiredPermission="view:picking:order">
-                  <Picking />
-                </ProtectedRoute>
+                <AppModeRoute allowedModes={['bodega']}>
+                  <ProtectedRoute requiredPermission="view:picking:order">
+                    <Picking />
+                  </ProtectedRoute>
+                </AppModeRoute>
               } 
             />
             <Route 
               path={routes.pickingMetrics} 
               element={
-                <ProtectedRoute requiredPermission="view:picking:metrics">
-                  <Picking />
-                </ProtectedRoute>
+                <AppModeRoute allowedModes={['bodega']}>
+                  <ProtectedRoute requiredPermission="view:picking:metrics">
+                    <Picking />
+                  </ProtectedRoute>
+                </AppModeRoute>
               } 
             />
             <Route 
               path={routes.pickingWarehouse} 
               element={
-                <ProtectedRoute requiredPermission="view:picking:warehouse">
-                  <Picking />
-                </ProtectedRoute>
+                <AppModeRoute allowedModes={['bodega']}>
+                  <ProtectedRoute requiredPermission="view:picking:warehouse">
+                    <Picking />
+                  </ProtectedRoute>
+                </AppModeRoute>
               } 
             />
             
@@ -167,33 +200,41 @@ function App(): React.ReactNode {
             <Route 
               path={routes.rolesManagement} 
               element={
-                <ProtectedRoute requiredPermission="view:roles:roles">
-                  <RolesManagement />
-                </ProtectedRoute>
+                <AppModeRoute allowedModes={['ventas', 'bodega']}>
+                  <ProtectedRoute requiredPermission="view:roles:roles">
+                    <RolesManagement />
+                  </ProtectedRoute>
+                </AppModeRoute>
               } 
             />
             <Route 
               path={routes.createRole} 
               element={
-                <ProtectedRoute requiredPermission="view:roles:roles">
-                  <CreateRole />
-                </ProtectedRoute>
+                <AppModeRoute allowedModes={['ventas', 'bodega']}>
+                  <ProtectedRoute requiredPermission="view:roles:roles">
+                    <CreateRole />
+                  </ProtectedRoute>
+                </AppModeRoute>
               } 
             />
             <Route 
               path={routes.users} 
               element={
-                <ProtectedRoute requiredPermission="view:roles:users">
-                  <UsersManagement />
-                </ProtectedRoute>
+                <AppModeRoute allowedModes={['ventas', 'bodega']}>
+                  <ProtectedRoute requiredPermission="view:roles:users">
+                    <UsersManagement />
+                  </ProtectedRoute>
+                </AppModeRoute>
               } 
             />
             <Route 
               path={routes.createUser} 
               element={
-                <ProtectedRoute requiredPermission="view:roles:users">
-                  <CreateUser />
-                </ProtectedRoute>
+                <AppModeRoute allowedModes={['ventas', 'bodega']}>
+                  <ProtectedRoute requiredPermission="view:roles:users">
+                    <CreateUser />
+                  </ProtectedRoute>
+                </AppModeRoute>
               } 
             />
             
@@ -201,9 +242,11 @@ function App(): React.ReactNode {
             <Route 
               path={routes.productsSearch} 
               element={
-                <ProtectedRoute requiredPermission="view:products:search">
-                  <SearchProducts />
-                </ProtectedRoute>
+                <AppModeRoute allowedModes={['ventas', 'bodega']}>
+                  <ProtectedRoute requiredPermission="view:products:search">
+                    <SearchProducts />
+                  </ProtectedRoute>
+                </AppModeRoute>
               } 
             />
             
@@ -249,14 +292,8 @@ function App(): React.ReactNode {
               }
             />
             
-            {/* Rutas legacy (sin protección por ahora) */}
-            <Route path={routes.articles} element={<Articles />} />
-            <Route path={routes.opportunities} element={<Opportunities />} />
-            <Route path={routes.components} element={<Components />} />
-            <Route path={routes.salesOrder} element={<SalesOrder />} />
-            <Route path={routes.analytics} element={<Analytics />} />
-            <Route path={routes.invoices} element={<Invoices />} />
-            <Route path={routes.permissions} element={<PermissionsManagement />} />
+            {/* Fallback: cualquier otra ruta redirige según modo */}
+            <Route path={routes.notFound} element={<AppModeLanding />} />
           </Routes>
         </Suspense>
       </div>

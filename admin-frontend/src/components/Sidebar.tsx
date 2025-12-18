@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useCallback, useState, useEffect, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import { SidebarHeader } from './Sidebar/SidebarHeader';
 import { NavItem } from './Sidebar/NavItem';
@@ -7,6 +7,7 @@ import { navItems, sellsSubItems, pickingSubItems, rolesSubItems } from './Sideb
 import { isActive, isSellsSectionActive, isPickingSectionActive, isRolesSectionActive } from './Sidebar/utils';
 import { useLogout } from '../hooks/useAuth';
 import { usePermissions } from '../hooks/usePermissions';
+import { getStoredAppMode, type AppMode } from '../utils/appMode';
 import type { NavItem as NavItemType } from './Sidebar/types';
 
 /**
@@ -43,15 +44,35 @@ export const Sidebar = () => {
   const [manualRolesToggle, setManualRolesToggle] = useState(false);
 
   /**
+   * Determina si un módulo principal está permitido por modo.
+   * @param moduleName - Nombre del módulo
+   * @param mode - Modo actual
+   * @returns true si está permitido
+   */
+  const isModuleAllowedByMode = useCallback((moduleName: string, mode: AppMode | null): boolean => {
+    if (!mode) return false;
+    if (mode === 'ventas') {
+      return moduleName === 'Ventas' || moduleName === 'Productos' || moduleName === 'Soporte' || moduleName === 'Roles';
+    }
+    return moduleName === 'Picking' || moduleName === 'Productos' || moduleName === 'Soporte' || moduleName === 'Roles';
+  }, []);
+
+  /**
    * Filtra los módulos según los permisos del usuario
    * Si aún está cargando y hay usuario optimista, mostrar todos los módulos básicos
    * Los permisos se validarán cuando carguen del servidor
    */
   const filteredNavItems = useMemo(() => {
+    const mode = getStoredAppMode();
     // Si está cargando pero hay usuario, mostrar módulos básicos (se filtrarán cuando carguen permisos)
     const shouldShowAllBasic = isLoading && user;
 
     const filtered = navItems.filter(item => {
+      // Restricción por modo (Ventas/Bodega)
+      if (!isModuleAllowedByMode(item.name, mode)) {
+        return false;
+      }
+
       // Inicio y Chat siempre visibles (sin restricción de permisos)
       if (item.name === 'Inicio' || item.name === 'Chat' || item.name === 'Soporte') {
         return true;
@@ -92,7 +113,7 @@ export const Sidebar = () => {
     // No loguear aquí - se hará en useEffect cuando cambien los valores
 
     return filtered;
-  }, [hasPermission, hasModuleAccess, isLoading, user, isSuperAdmin]);
+  }, [hasPermission, hasModuleAccess, isLoading, user, isSuperAdmin, isModuleAllowedByMode]);
 
   /**
    * Filtra los submódulos según los permisos del usuario
