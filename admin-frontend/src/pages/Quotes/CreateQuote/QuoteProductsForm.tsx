@@ -1,6 +1,10 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
-import { Input, Button, PlusIcon, ProductSearchInput } from '../../../components/commons';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Input, Button, ProductSearchInput } from '../../../components/commons';
 import type { Product } from '../../../services/productsService';
+
+export interface QuoteProductsActions {
+  addProduct: () => void;
+}
 
 /**
  * Interfaz para un producto en la orden de compra
@@ -30,6 +34,11 @@ interface QuoteProductsFormProps {
    * Función para volver al paso anterior
    */
   onBack?: () => void;
+
+  /**
+   * Callback para registrar acciones del paso (ej: añadir producto) en el contenedor padre.
+   */
+  onRegisterActions?: (actions: QuoteProductsActions) => void;
 }
 
 /**
@@ -37,7 +46,7 @@ interface QuoteProductsFormProps {
  * @param props - Props del componente QuoteProductsForm
  * @returns Componente QuoteProductsForm
  */
-export const QuoteProductsForm = ({ onDataChange, initialData }: QuoteProductsFormProps) => {
+export const QuoteProductsForm = ({ onDataChange, initialData, onRegisterActions }: QuoteProductsFormProps) => {
   const [products, setProducts] = useState<ProductItem[]>([
     {
       id: '1',
@@ -157,7 +166,7 @@ export const QuoteProductsForm = ({ onDataChange, initialData }: QuoteProductsFo
   /**
    * Agrega un nuevo producto
    */
-  const handleAddProduct = (): void => {
+  const addProduct = useCallback((): void => {
     isUserUpdateRef.current = true; // Marcar como actualización del usuario
     const newProduct: ProductItem = {
       id: Date.now().toString(),
@@ -168,7 +177,7 @@ export const QuoteProductsForm = ({ onDataChange, initialData }: QuoteProductsFo
       totalLinea: '$0'
     };
     setProducts(prev => [...prev, newProduct]);
-  };
+  }, []);
 
   /**
    * Elimina un producto específico
@@ -211,6 +220,14 @@ export const QuoteProductsForm = ({ onDataChange, initialData }: QuoteProductsFo
     // TODO: Implementar importación desde Excel
     console.log('Importar desde Excel');
   };
+
+  /**
+   * Exponer acción de "Añadir producto" al contenedor (para renderizar el botón fuera del scroll).
+   */
+  useEffect(() => {
+    if (!onRegisterActions) return;
+    onRegisterActions({ addProduct });
+  }, [onRegisterActions, addProduct]);
 
   return (
     <div className="flex-1 p-6">
@@ -319,17 +336,6 @@ export const QuoteProductsForm = ({ onDataChange, initialData }: QuoteProductsFo
               </div>
             ))}
           </div>
-        </div>
-
-        {/* Botón Añadir producto */}
-        <div className="flex justify-center mt-4">
-          <Button
-            onClick={handleAddProduct}
-            className="bg-[#0052C9] text-white hover:bg-[#004BB7] px-4 py-2"
-            leftIcon={<PlusIcon color="white" />}
-          >
-            Añadir producto
-          </Button>
         </div>
       </div>
     </div>

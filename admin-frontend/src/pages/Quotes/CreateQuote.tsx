@@ -6,10 +6,10 @@ import { CreateQuoteHeader } from './CreateQuote/CreateQuoteHeader';
 import { QuoteStepper } from './CreateQuote/QuoteStepper';
 import { QuoteClientForm } from './CreateQuote/QuoteClientForm';
 import { QuoteConditionsForm } from './CreateQuote/QuoteConditionsForm';
-import { QuoteProductsForm } from './CreateQuote/QuoteProductsForm';
+import { QuoteProductsForm, type QuoteProductsActions } from './CreateQuote/QuoteProductsForm';
 import { QuoteReviewForm } from './CreateQuote/QuoteReviewForm';
 import { Button } from '../../components/commons';
-import { ChevronRightIcon } from '../../components/commons/icons';
+import { ChevronRightIcon, PlusIcon } from '../../components/commons/icons';
 import { useCreateQuote } from '../../hooks/useQuotes';
 import { routes } from '../../routes';
 import type { CreateQuoteDto } from '../../services/quotesService';
@@ -26,6 +26,7 @@ export const CreateQuote = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [maxStepReached, setMaxStepReached] = useState(1); // Rastrea el paso máximo alcanzado
   const [formData, setFormData] = useState<Record<string, unknown>>({});
+  const [quoteProductsActions, setQuoteProductsActions] = useState<QuoteProductsActions | null>(null);
 
   /**
    * Carga los datos guardados desde sessionStorage al montar el componente
@@ -160,6 +161,14 @@ export const CreateQuote = () => {
   }, []);
 
   /**
+   * Registra acciones del paso de productos para usarlas en la barra inferior (fuera del scroll).
+   * @param actions - Acciones expuestas por el paso de productos
+   */
+  const handleRegisterProductsActions = useCallback((actions: QuoteProductsActions): void => {
+    setQuoteProductsActions(actions);
+  }, []);
+
+  /**
    * Mapeador de pasos a sus componentes correspondientes
    */
   const stepComponents: Record<number, () => React.ReactNode> = {
@@ -180,6 +189,7 @@ export const CreateQuote = () => {
         onDataChange={handleDataChange}
         initialData={formData as Record<string, string>}
         onBack={handleBack}
+        onRegisterActions={handleRegisterProductsActions}
       />
     ),
     4: () => (
@@ -280,6 +290,7 @@ export const CreateQuote = () => {
   };
 
   const isLastStep = currentStep === 4;
+  const isProductsStep = currentStep === 3;
 
   return (
     <div className="w-full h-full flex flex-col p-8">
@@ -291,7 +302,7 @@ export const CreateQuote = () => {
           <div className="flex-1 overflow-y-auto">
             {renderStepContent()}
           </div>
-          <div className="flex justify-end gap-4 mt-6">
+          <div className={`flex gap-4 mt-6 ${!isLastStep && isProductsStep ? 'justify-between' : 'justify-end'}`}>
             {isLastStep ? (
               <>
                 <Button
@@ -315,13 +326,25 @@ export const CreateQuote = () => {
                 </Button>
               </>
             ) : (
-              <Button
-                onClick={handleNext}
-                rightIcon={<ChevronRightIcon color="white" />}
-                className="bg-[#004BB7] text-white hover:bg-blue-600 px-6 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Siguiente
-              </Button>
+              <>
+                {isProductsStep && (
+                  <Button
+                    onClick={(): void => quoteProductsActions?.addProduct()}
+                    leftIcon={<PlusIcon color="white" />}
+                    className="bg-[#0052C9] text-white hover:bg-[#004BB7] px-6 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={!quoteProductsActions}
+                  >
+                    Añadir producto
+                  </Button>
+                )}
+                <Button
+                  onClick={handleNext}
+                  rightIcon={<ChevronRightIcon color="white" />}
+                  className="bg-[#004BB7] text-white hover:bg-blue-600 px-6 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Siguiente
+                </Button>
+              </>
             )}
           </div>
         </div>
