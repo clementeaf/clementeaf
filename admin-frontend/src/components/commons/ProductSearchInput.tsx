@@ -44,6 +44,11 @@ interface ProductSearchInputProps {
    * Límite de resultados (default: 10)
    */
   limit?: number;
+
+  /**
+   * ID de bodega para incluir stock (opcional).
+   */
+  warehouseId?: number;
 }
 
 /**
@@ -60,7 +65,8 @@ export const ProductSearchInput = ({
   inputClassName = '',
   error,
   id,
-  limit = 10
+  limit = 10,
+  warehouseId
 }: ProductSearchInputProps) => {
   const [searchTerm, setSearchTerm] = useState(value);
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(value);
@@ -72,12 +78,12 @@ export const ProductSearchInput = ({
   const isInternalUpdateRef = useRef(false);
 
   /**
-   * Debounce del término de búsqueda (2 segundos)
+   * Debounce del término de búsqueda (300ms)
    */
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearchTerm(searchTerm);
-    }, 2000);
+    }, 300);
 
     return () => {
       clearTimeout(timer);
@@ -88,14 +94,21 @@ export const ProductSearchInput = ({
    * Busca productos cuando hay un término de búsqueda (usando el término con debounce)
    */
   const { data: products, isLoading } = useQuery({
-    queryKey: ['products', 'search', debouncedSearchTerm, limit],
+    queryKey: ['products', 'search', debouncedSearchTerm, limit, warehouseId ?? null],
     queryFn: async () => {
-      if (!debouncedSearchTerm || debouncedSearchTerm.trim().length < 2) {
+      const normalized = debouncedSearchTerm.trim();
+
+      if (normalized.length === 0) {
+        return await productsService.listCatalogProducts(limit, warehouseId);
+      }
+
+      if (normalized.length < 2) {
         return [];
       }
-      return await productsService.searchProducts(debouncedSearchTerm, limit);
+
+      return await productsService.searchProducts(normalized, limit, warehouseId);
     },
-    enabled: debouncedSearchTerm.trim().length >= 2,
+    enabled: debouncedSearchTerm.trim().length === 0 || debouncedSearchTerm.trim().length >= 2,
     staleTime: 1000 * 60 * 5
   });
 
@@ -123,10 +136,6 @@ export const ProductSearchInput = ({
   useEffect(() => {
     if (!isOpen) {
       setDropdownPosition(null);
-      return;
-    }
-
-    if (!searchTerm) {
       return;
     }
 
@@ -253,9 +262,7 @@ export const ProductSearchInput = ({
    * Maneja el click en el input
    */
   const handleInputClick = (): void => {
-    if (filteredProducts.length > 0) {
-      setIsOpen(true);
-    }
+    setIsOpen(true);
   };
 
   /**
@@ -279,9 +286,7 @@ export const ProductSearchInput = ({
    * Maneja el focus del input
    */
   const handleFocus = (): void => {
-    if (filteredProducts.length > 0) {
-      setIsOpen(true);
-    }
+    setIsOpen(true);
   };
 
   /**
@@ -329,7 +334,7 @@ export const ProductSearchInput = ({
       )}
 
       {/* Dropdown de resultados */}
-      {isOpen && (filteredProducts.length > 0 || (isLoading && debouncedSearchTerm.trim().length >= 2)) && dropdownPosition && (
+      {isOpen && (filteredProducts.length > 0 || isLoading) && dropdownPosition && (
         <div
           data-dropdown
           className="fixed z-[9999] bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-auto"
@@ -388,7 +393,11 @@ export const ProductSearchInput = ({
             <div className="p-4 text-center text-gray-500">
               No se encontraron productos
             </div>
-          ) : null}
+          ) : (
+            <div className="p-4 text-center text-gray-500">
+              Escribe al menos 2 caracteres para buscar
+            </div>
+          )}
         </div>
       )}
     </div>
