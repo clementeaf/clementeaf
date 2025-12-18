@@ -54,6 +54,43 @@ export const SidebarHeader = ({ isCollapsed, onToggleCollapse, isExpanded }: Sid
     </svg>
   );
 
+  const CollapseIcon = () => (
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 20 20"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <line
+        x1="14"
+        y1="4"
+        x2="14"
+        y2="16"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+      <line
+        x1="6"
+        y1="10"
+        x2="14"
+        y2="10"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+      <path
+        d="M9 7L6 10L9 13"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        fill="none"
+      />
+    </svg>
+  );
+
   const showCollapsedLogo = isCollapsed && !isExpanded;
   const showNormalLogo = !isCollapsed || isExpanded;
 
@@ -73,13 +110,12 @@ export const SidebarHeader = ({ isCollapsed, onToggleCollapse, isExpanded }: Sid
       )}
       <button
         onClick={onToggleCollapse}
-        className={`${
-          isCollapsed
-            ? 'p-2 text-white hover:opacity-80 transition-opacity duration-200 flex items-center justify-center'
-            : 'py-2 text-white rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors duration-200'
-        }`}
+        type="button"
+        aria-label={isCollapsed ? 'Expandir sidebar' : 'Comprimir sidebar'}
+        title={isCollapsed ? 'Expandir' : 'Comprimir'}
+        className="p-2 text-white hover:opacity-80 transition-opacity duration-200 flex items-center justify-center"
       >
-        {isCollapsed ? <ExpandIcon /> : 'Comprimir'}
+        {isCollapsed ? <ExpandIcon /> : <CollapseIcon />}
       </button>
     </div>
   );
