@@ -83,9 +83,9 @@ export const EmailModuleModal = ({
       title={emailAccess ? 'Editar Acceso de Email' : 'Agregar Email y Modo de Acceso'}
       size="md"
     >
-      <div className="space-y-6">
-        {/* Campo de Email */}
-        <div>
+      <div className="flex flex-col h-full">
+        {/* Campo de Email - Siempre visible */}
+        <div className="mb-6 flex-shrink-0">
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Email
           </label>
@@ -94,51 +94,50 @@ export const EmailModuleModal = ({
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="ejemplo@correo.com"
-            className="w-full"
+            inputClassName="w-full"
           />
         </div>
 
-        {/* Selección de Modo */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-3">
-            Modo de Acceso
-          </label>
-          <div className="space-y-3">
-            {availableModes.map((mode) => (
-              <div
-                key={mode.id}
-                className={`border-2 rounded-lg p-4 cursor-pointer transition-all duration-200 ${
-                  selectedMode === mode.id
-                    ? 'border-[#004BB7] bg-blue-50'
-                    : 'border-gray-200 hover:border-gray-300 bg-white'
-                }`}
-                onClick={() => setSelectedMode(mode.id)}
-              >
-                <div className="flex items-start gap-3">
-                  <input
-                    type="radio"
-                    name="accessMode"
-                    value={mode.id}
-                    checked={selectedMode === mode.id}
-                    onChange={() => setSelectedMode(mode.id)}
-                    className="mt-1 w-4 h-4 text-[#004BB7] border-gray-300 focus:ring-[#004BB7]"
-                  />
-                  <div className="flex-1">
-                    <div className="font-medium text-gray-900 mb-1">
-                      {mode.name}
-                    </div>
-                    <div className="text-sm text-gray-600">
-                      {mode.description}
+        {/* Selección de Modo - Con scrollbar interno */}
+        <div className="flex flex-col mb-6 flex-1 min-h-0">
+          <div className="flex-1 min-h-0 max-h-[300px] overflow-y-auto pr-2">
+            <div className="space-y-3">
+              {availableModes.map((mode) => (
+                <div
+                  key={mode.id}
+                  className={`border-2 rounded-lg p-4 cursor-pointer transition-all duration-200 ${
+                    selectedMode === mode.id
+                      ? 'border-[#004BB7] bg-blue-50'
+                      : 'border-gray-200 hover:border-gray-300 bg-white'
+                  }`}
+                  onClick={() => setSelectedMode(mode.id)}
+                >
+                  <div className="flex items-start gap-3">
+                    <input
+                      type="radio"
+                      name="accessMode"
+                      value={mode.id}
+                      checked={selectedMode === mode.id}
+                      onChange={() => setSelectedMode(mode.id)}
+                      className="mt-1 w-4 h-4 text-[#004BB7] border-gray-300 focus:ring-[#004BB7]"
+                    />
+                    <div className="flex-1">
+                      <div className="font-medium text-sm text-gray-900 mb-1">
+                        {mode.name}
+                      </div>
+                      <div className="text-xs text-gray-600">
+                        {mode.description}
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
 
-        {/* Botones de acción */}
-        <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
+        {/* Botones de acción - Siempre visibles */}
+        <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 flex-shrink-0">
           <Button
             onClick={onClose}
             className="text-gray-700 border border-gray-300 hover:bg-gray-50 px-4 py-2"

@@ -60,11 +60,11 @@ export const Modal = ({
 
   return (
     <div
-      className={`fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 transition-opacity duration-300 ${containerClassName}`}
+      className={`fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 transition-opacity duration-300 p-4 ${containerClassName}`}
       onClick={handleBackdropClick}
     >
       <div
-        className={`bg-white rounded-lg shadow-xl w-full mx-4 transition-transform duration-300 ${
+        className={`bg-white rounded-lg shadow-xl w-full mx-4 transition-transform duration-300 max-h-[90vh] flex flex-col ${
           size === 'sm' ? 'max-w-sm' : 
           size === 'md' ? 'max-w-md' : 
           size === 'lg' ? 'max-w-2xl' : 
@@ -73,7 +73,7 @@ export const Modal = ({
         onClick={(e): void => e.stopPropagation()}
       >
         {title && (
-          <div className="flex items-center justify-between p-6 border-b border-gray-200">
+          <div className="flex items-center justify-between p-6 border-b border-gray-200 flex-shrink-0">
             <h2 className="text-xl font-semibold text-gray-900">{title}</h2>
             <button
               onClick={onClose}
@@ -85,7 +85,7 @@ export const Modal = ({
             </button>
           </div>
         )}
-        <div className={title ? 'p-6' : 'p-6'}>
+        <div className={`${title ? 'p-6' : 'p-6'} flex-1 min-h-0 overflow-hidden`}>
           {children}
         </div>
       </div>
