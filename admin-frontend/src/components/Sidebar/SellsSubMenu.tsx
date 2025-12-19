@@ -28,6 +28,7 @@ export const SellsSubMenu = ({ subItems, isExpanded, onNavigate }: SellsSubMenuP
             <NavSubItem 
               key={subItem.path} 
               item={subItem} 
+              subItems={subItems}
               onNavigate={onNavigate}
             />
           );

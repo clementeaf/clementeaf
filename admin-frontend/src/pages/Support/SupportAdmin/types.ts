@@ -1,31 +1,15 @@
 /**
- * Tipo para módulos del sistema
+ * Tipo para los modos de acceso disponibles
  */
-export interface Module {
-  id: string;
-  name: string;
-  path: string;
-  hasSubModules?: boolean;
-  subModules?: SubModule[];
-}
+export type AccessMode = 'ventas' | 'bodega' | 'admin';
 
 /**
- * Tipo para submódulos
- */
-export interface SubModule {
-  id: string;
-  name: string;
-  path: string;
-}
-
-/**
- * Tipo para representar un email con sus módulos asignados
+ * Tipo para representar un email con su modo de acceso asignado
  */
 export interface EmailModuleAccess {
   id: string;
   email: string;
-  modules: string[]; // IDs de módulos asignados
-  subModules: string[]; // IDs de submódulos asignados
+  mode: AccessMode; // Modo de acceso asignado
   invitationSent: boolean;
   invitationSentAt?: string;
 }

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, Button, Input, Checkbox } from '../../../components/commons';
-import type { EmailModuleAccess, Module } from './types';
-import { availableModules } from './modulesConfig';
+import { Modal, Button, Input } from '../../../components/commons';
+import type { EmailModuleAccess, AccessMode } from './types';
+import { availableModes } from './modesConfig';
 
 /**
  * Props del componente EmailModuleModal
@@ -26,7 +26,7 @@ interface EmailModuleModalProps {
 }
 
 /**
- * Modal para agregar o editar acceso de email a módulos
+ * Modal para agregar o editar acceso de email a modos del sistema
  * @param props - Props del componente EmailModuleModal
  * @returns Componente EmailModuleModal
  */
@@ -37,8 +37,7 @@ export const EmailModuleModal = ({
   onSave
 }: EmailModuleModalProps): React.ReactElement => {
   const [email, setEmail] = useState<string>('');
-  const [selectedModules, setSelectedModules] = useState<string[]>([]);
-  const [selectedSubModules, setSelectedSubModules] = useState<string[]>([]);
+  const [selectedMode, setSelectedMode] = useState<AccessMode | ''>('');
 
   /**
    * Inicializa el estado cuando se abre el modal o cambia emailAccess
@@ -46,112 +45,43 @@ export const EmailModuleModal = ({
   useEffect(() => {
     if (emailAccess) {
       setEmail(emailAccess.email);
-      setSelectedModules(emailAccess.modules);
-      setSelectedSubModules(emailAccess.subModules);
+      setSelectedMode(emailAccess.mode);
     } else {
       setEmail('');
-      setSelectedModules([]);
-      setSelectedSubModules([]);
+      setSelectedMode('');
     }
   }, [emailAccess, isOpen]);
-
-  /**
-   * Maneja el cambio de selección de un módulo
-   */
-  const handleModuleToggle = (moduleId: string): void => {
-    setSelectedModules((prev) => {
-      if (prev.includes(moduleId)) {
-        // Si se deselecciona el módulo, también deseleccionar sus submódulos
-        const module = availableModules.find((m) => m.id === moduleId);
-        if (module?.subModules) {
-          setSelectedSubModules((prevSub) =>
-            prevSub.filter((subId) => !module.subModules?.some((sm) => sm.id === subId))
-          );
-        }
-        return prev.filter((id) => id !== moduleId);
-      }
-      return [...prev, moduleId];
-    });
-  };
-
-  /**
-   * Maneja el cambio de selección de un submódulo
-   */
-  const handleSubModuleToggle = (subModuleId: string, moduleId: string): void => {
-    // Si se selecciona un submódulo, asegurar que el módulo padre esté seleccionado
-    if (!selectedModules.includes(moduleId)) {
-      setSelectedModules((prev) => [...prev, moduleId]);
-    }
-
-    setSelectedSubModules((prev) => {
-      if (prev.includes(subModuleId)) {
-        return prev.filter((id) => id !== subModuleId);
-      }
-      return [...prev, subModuleId];
-    });
-  };
-
-  /**
-   * Verifica si todos los submódulos de un módulo están seleccionados
-   */
-  const areAllSubModulesSelected = (module: Module): boolean => {
-    if (!module.subModules || module.subModules.length === 0) return false;
-    return module.subModules.every((sm) => selectedSubModules.includes(sm.id));
-  };
-
-  /**
-   * Maneja la selección/deselección de todos los submódulos de un módulo
-   */
-  const handleSelectAllSubModules = (module: Module): void => {
-    if (!module.subModules) return;
-
-    if (areAllSubModulesSelected(module)) {
-      // Deseleccionar todos los submódulos
-      setSelectedSubModules((prev) =>
-        prev.filter((id) => !module.subModules?.some((sm) => sm.id === id))
-      );
-    } else {
-      // Seleccionar todos los submódulos y el módulo padre
-      const allSubModuleIds = module.subModules.map((sm) => sm.id);
-      setSelectedSubModules((prev) => [...new Set([...prev, ...allSubModuleIds])]);
-      if (!selectedModules.includes(module.id)) {
-        setSelectedModules((prev) => [...prev, module.id]);
-      }
-    }
-  };
 
   /**
    * Maneja el guardado del formulario
    */
   const handleSave = (): void => {
-    if (!email.trim()) {
+    if (!email.trim() || !selectedMode) {
       return;
     }
 
     onSave({
       email: email.trim(),
-      modules: selectedModules,
-      subModules: selectedSubModules
+      mode: selectedMode as AccessMode
     });
 
     // Resetear formulario
     setEmail('');
-    setSelectedModules([]);
-    setSelectedSubModules([]);
+    setSelectedMode('');
     onClose();
   };
 
   /**
    * Valida si el formulario es válido
    */
-  const isValid = email.trim().length > 0 && selectedModules.length > 0;
+  const isValid = email.trim().length > 0 && selectedMode !== '';
 
   return (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={emailAccess ? 'Editar Acceso de Email' : 'Agregar Email y Módulos'}
-      size="lg"
+      title={emailAccess ? 'Editar Acceso de Email' : 'Agregar Email y Modo de Acceso'}
+      size="md"
     >
       <div className="space-y-6">
         {/* Campo de Email */}
@@ -168,52 +98,40 @@ export const EmailModuleModal = ({
           />
         </div>
 
-        {/* Selección de Módulos */}
+        {/* Selección de Modo */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-3">
-            Módulos y Submódulos
+            Modo de Acceso
           </label>
-          <div className="border border-gray-200 rounded-lg p-4 max-h-96 overflow-y-auto space-y-4">
-            {availableModules.map((module) => (
-              <div key={module.id} className="border-b border-gray-100 pb-3 last:border-b-0">
-                <div className="flex items-center gap-2 mb-2">
-                  <Checkbox
-                    checked={selectedModules.includes(module.id)}
-                    onChange={() => handleModuleToggle(module.id)}
+          <div className="space-y-3">
+            {availableModes.map((mode) => (
+              <div
+                key={mode.id}
+                className={`border-2 rounded-lg p-4 cursor-pointer transition-all duration-200 ${
+                  selectedMode === mode.id
+                    ? 'border-[#004BB7] bg-blue-50'
+                    : 'border-gray-200 hover:border-gray-300 bg-white'
+                }`}
+                onClick={() => setSelectedMode(mode.id)}
+              >
+                <div className="flex items-start gap-3">
+                  <input
+                    type="radio"
+                    name="accessMode"
+                    value={mode.id}
+                    checked={selectedMode === mode.id}
+                    onChange={() => setSelectedMode(mode.id)}
+                    className="mt-1 w-4 h-4 text-[#004BB7] border-gray-300 focus:ring-[#004BB7]"
                   />
-                  <span className="text-sm font-medium text-gray-900">{module.name}</span>
-                </div>
-
-                {/* Submódulos */}
-                {module.hasSubModules && module.subModules && module.subModules.length > 0 && (
-                  <div className="ml-6 mt-2 space-y-2">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Checkbox
-                        checked={areAllSubModulesSelected(module)}
-                        onChange={() => handleSelectAllSubModules(module)}
-                      />
-                      <span className="text-xs text-gray-600 font-medium">Seleccionar todos</span>
+                  <div className="flex-1">
+                    <div className="font-medium text-gray-900 mb-1">
+                      {mode.name}
                     </div>
-                    {module.subModules.map((subModule) => (
-                      <div key={subModule.id} className="flex items-center gap-2 ml-4">
-                        <Checkbox
-                          checked={selectedSubModules.includes(subModule.id)}
-                          onChange={() => handleSubModuleToggle(subModule.id, module.id)}
-                          disabled={!selectedModules.includes(module.id)}
-                        />
-                        <span
-                          className={`text-sm ${
-                            selectedModules.includes(module.id)
-                              ? 'text-gray-700'
-                              : 'text-gray-400'
-                          }`}
-                        >
-                          {subModule.name}
-                        </span>
-                      </div>
-                    ))}
+                    <div className="text-sm text-gray-600">
+                      {mode.description}
+                    </div>
                   </div>
-                )}
+                </div>
               </div>
             ))}
           </div>
@@ -239,4 +157,3 @@ export const EmailModuleModal = ({
     </Modal>
   );
 };
-

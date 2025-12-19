@@ -12,17 +12,21 @@ const mockData: EmailModuleAccess[] = [
   {
     id: '1',
     email: 'usuario1@ejemplo.com',
-    modules: ['inicio', 'ventas', 'productos'],
-    subModules: ['ventas-clientes', 'ventas-nota-venta'],
+    mode: 'ventas',
     invitationSent: false
   },
   {
     id: '2',
     email: 'usuario2@ejemplo.com',
-    modules: ['bodega', 'productos'],
-    subModules: ['bodega-orden', 'bodega-metricas'],
+    mode: 'bodega',
     invitationSent: true,
     invitationSentAt: new Date().toISOString()
+  },
+  {
+    id: '3',
+    email: 'admin@ejemplo.com',
+    mode: 'admin',
+    invitationSent: false
   }
 ];
 
@@ -134,7 +138,7 @@ export const SupportAdmin = (): React.ReactElement => {
           <div>
             <h1 className="text-2xl font-bold text-gray-800">Administración de Soporte</h1>
             <p className="text-sm text-gray-600 mt-1">
-              Gestión de acceso de emails a módulos del sistema
+              Gestión de acceso de emails a modos del sistema (Ventas, Bodega, Admin General)
             </p>
           </div>
           <Button

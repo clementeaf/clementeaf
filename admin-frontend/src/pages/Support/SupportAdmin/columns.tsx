@@ -2,10 +2,10 @@ import React from 'react';
 import { type ColumnDef } from '@tanstack/react-table';
 import { Button } from '../../../components/commons';
 import type { EmailModuleAccess } from './types';
-import { availableModules } from './modulesConfig';
+import { availableModes } from './modesConfig';
 
 /**
- * Definición de columnas para la tabla de gestión de emails y módulos
+ * Definición de columnas para la tabla de gestión de emails y modos de acceso
  */
 export const columns: ColumnDef<EmailModuleAccess>[] = [
   {
@@ -21,42 +21,27 @@ export const columns: ColumnDef<EmailModuleAccess>[] = [
     }
   },
   {
-    id: 'modules',
-    header: 'Módulos Asignados',
-    enableSorting: false,
+    id: 'mode',
+    header: 'Modo de Acceso',
+    enableSorting: true,
     cell: ({ row }) => {
-      const { modules, subModules } = row.original;
-      const assignedModules = availableModules.filter(m => modules.includes(m.id));
+      const { mode } = row.original;
+      const modeConfig = availableModes.find(m => m.id === mode);
+      
+      if (!modeConfig) {
+        return (
+          <span className="text-sm text-gray-400">Sin modo asignado</span>
+        );
+      }
       
       return (
-        <div className="flex flex-wrap gap-2">
-          {assignedModules.map((module) => {
-            const moduleSubModules = module.subModules?.filter(sm => subModules.includes(sm.id)) || [];
-            const hasSubModules = moduleSubModules.length > 0;
-            
-            return (
-              <div key={module.id} className="flex flex-col gap-1">
-                <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-800">
-                  {module.name}
-                </span>
-                {hasSubModules && (
-                  <div className="flex flex-wrap gap-1 ml-2">
-                    {moduleSubModules.map((subModule) => (
-                      <span
-                        key={subModule.id}
-                        className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-blue-50 text-blue-700"
-                      >
-                        {subModule.name}
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-          {assignedModules.length === 0 && (
-            <span className="text-sm text-gray-400">Sin módulos asignados</span>
-          )}
+        <div className="flex flex-col gap-1">
+          <span className="inline-flex items-center px-3 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-800">
+            {modeConfig.name}
+          </span>
+          <span className="text-xs text-gray-500">
+            {modeConfig.description}
+          </span>
         </div>
       );
     }
