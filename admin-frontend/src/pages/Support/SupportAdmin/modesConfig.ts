@@ -16,12 +16,12 @@ export const availableModes: Array<{ id: AccessMode; name: string; description: 
   },
   {
     id: 'completo',
-    name: 'Completo',
+    name: 'Administrador',
     description: 'Acceso a Inicio, Ventas, Bodega, Productos, Roles y Soporte (Tickets)'
   },
   {
     id: 'admin',
-    name: 'Admin General',
+    name: 'Super Admin',
     description: 'Acceso completo a todos los módulos sin restricciones'
   }
 ];

@@ -138,7 +138,7 @@ export const SupportAdmin = (): React.ReactElement => {
           <div>
             <h1 className="text-2xl font-bold text-gray-800">Administración de Soporte</h1>
             <p className="text-sm text-gray-600 mt-1">
-              Gestión de acceso de emails a modos del sistema (Ventas, Bodega, Admin General)
+              Gestión de acceso de emails a modos del sistema (Ventas, Bodega, Administrador, Super Admin)
             </p>
           </div>
           <Button

@@ -77,7 +77,7 @@ export const AppSelector = (): React.ReactNode => {
             onClick={() => redirectToAdminWithMode(frontendUrls.admin, 'completo')}
             className="w-full py-3 text-base font-medium border-2 border-blue-500 rounded-xl px-4 text-blue-500 hover:bg-blue-500 hover:text-white ease-in-out duration-300"
           >
-            Completo
+            Administrador
           </Button>
 
           {isAdminAuthorized && (
