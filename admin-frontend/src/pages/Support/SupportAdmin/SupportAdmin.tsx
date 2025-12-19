@@ -109,16 +109,16 @@ export const SupportAdmin = (): React.ReactElement => {
         ...column,
         cell: ({ row }: { row: { original: EmailModuleAccess } }) => {
           return (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 h-full">
               <Button
                 onClick={() => handleEditEmail(row.original)}
-                className="text-[#004BB7] border border-[#004BB7] hover:bg-blue-50 px-3 py-1 text-sm"
+                className="text-[#004BB7] border border-[#004BB7] hover:bg-blue-50 px-3 py-1 text-sm whitespace-nowrap"
               >
                 Editar
               </Button>
               <Button
                 onClick={() => handleSendInvitation(row.original)}
-                className="bg-[#004BB7] text-white hover:bg-blue-600 px-3 py-1 text-sm"
+                className="bg-[#004BB7] text-white hover:bg-blue-600 px-3 py-1 text-sm whitespace-nowrap"
               >
                 {row.original.invitationSent ? 'Reenviar' : 'Enviar Invitación'}
               </Button>
@@ -160,9 +160,9 @@ export const SupportAdmin = (): React.ReactElement => {
             tableClassName="w-full border-collapse"
             theadClassName="bg-gray-50 sticky top-0"
             headerRowClassName="border-b border-gray-200"
-            headerCellClassName="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider"
+            headerCellClassName="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider align-middle"
             bodyRowClassName="border-b border-gray-200 hover:bg-gray-50 transition-colors duration-150"
-            bodyCellClassName="px-4 py-3 text-sm text-gray-900"
+            bodyCellClassName="px-4 py-3 text-sm text-gray-900 align-middle"
           />
         </div>
       </div>

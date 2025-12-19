@@ -14,7 +14,7 @@ export const columns: ColumnDef<EmailModuleAccess>[] = [
     enableSorting: true,
     cell: ({ row }) => {
       return (
-        <div className="text-sm text-gray-900">
+        <div className="text-sm text-gray-900 flex items-center h-full">
           {row.original.email}
         </div>
       );
@@ -35,8 +35,8 @@ export const columns: ColumnDef<EmailModuleAccess>[] = [
       }
       
       return (
-        <div className="flex flex-col gap-1">
-          <span className="inline-flex items-center px-3 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-800">
+        <div className="flex flex-col gap-1 justify-center">
+          <span className="inline-flex items-center px-3 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-800 w-fit">
             {modeConfig.name}
           </span>
           <span className="text-xs text-gray-500">
@@ -55,12 +55,12 @@ export const columns: ColumnDef<EmailModuleAccess>[] = [
       
       if (invitationSent) {
         return (
-          <div className="flex flex-col">
-            <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-green-100 text-green-800">
+          <div className="flex flex-col gap-1 justify-center">
+            <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-green-100 text-green-800 w-fit">
               Enviada
             </span>
             {invitationSentAt && (
-              <span className="text-xs text-gray-500 mt-1">
+              <span className="text-xs text-gray-500">
                 {new Date(invitationSentAt).toLocaleDateString()}
               </span>
             )}
@@ -69,9 +69,11 @@ export const columns: ColumnDef<EmailModuleAccess>[] = [
       }
       
       return (
-        <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-gray-100 text-gray-800">
-          Pendiente
-        </span>
+        <div className="flex items-center h-full">
+          <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-gray-100 text-gray-800">
+            Pendiente
+          </span>
+        </div>
       );
     }
   },
