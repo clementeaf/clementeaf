@@ -56,6 +56,11 @@ export const Sidebar = () => {
     if (!mode) return false;
     // Modo admin: acceso completo a todos los módulos
     if (mode === 'admin') return true;
+    // Modo completo: acceso a Inicio, Ventas, Bodega, Productos, Roles y Soporte
+    if (mode === 'completo') {
+      return moduleName === 'Inicio' || moduleName === 'Ventas' || moduleName === 'Bodega' || 
+             moduleName === 'Productos' || moduleName === 'Roles' || moduleName === 'Soporte';
+    }
     if (mode === 'ventas') {
       return moduleName === 'Ventas' || moduleName === 'Productos' || moduleName === 'Soporte' || moduleName === 'Roles';
     }
@@ -131,10 +136,18 @@ export const Sidebar = () => {
   };
 
   /**
-   * Filtra los submódulos de Soporte según el email del usuario
+   * Filtra los submódulos de Soporte según el email del usuario y el modo
    * El submódulo "Administración" solo es visible para usuarios autorizados
+   * En modo 'completo', solo se muestra Tickets
    */
   const getFilteredSupportSubItems = (subItems: NavItemType[]): NavItemType[] => {
+    const mode = getStoredAppMode();
+    
+    // En modo completo, solo mostrar Tickets (no Administración)
+    if (mode === 'completo') {
+      return subItems.filter(subItem => subItem.path === '/support');
+    }
+    
     if (!user?.email) return subItems.filter(item => item.path !== '/support/admin');
     
     return subItems.filter(subItem => {

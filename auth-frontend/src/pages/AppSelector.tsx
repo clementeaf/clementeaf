@@ -5,7 +5,7 @@ import { getFrontendUrls } from '../config/frontendUrls';
 import { getCookie } from '../utils/cookies';
 import { getEmailFromToken, isAuthorizedForAdminGeneral } from '../utils/jwt';
 
-type AdminMode = 'ventas' | 'bodega' | 'admin';
+type AdminMode = 'ventas' | 'bodega' | 'admin' | 'completo';
 
 /**
  * Redirige a la aplicación admin con el token, refresh token y modo en la URL.
@@ -70,6 +70,14 @@ export const AppSelector = (): React.ReactNode => {
             className="w-full py-3 text-base font-medium border-2 border-blue-500 rounded-xl px-4 text-blue-500 hover:bg-blue-500 hover:text-white ease-in-out duration-300"
           >
             Bodega
+          </Button>
+
+          <Button
+            type="button"
+            onClick={() => redirectToAdminWithMode(frontendUrls.admin, 'completo')}
+            className="w-full py-3 text-base font-medium border-2 border-blue-500 rounded-xl px-4 text-blue-500 hover:bg-blue-500 hover:text-white ease-in-out duration-300"
+          >
+            Completo
           </Button>
 
           {isAdminAuthorized && (

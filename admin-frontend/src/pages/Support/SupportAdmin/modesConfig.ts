@@ -15,6 +15,11 @@ export const availableModes: Array<{ id: AccessMode; name: string; description: 
     description: 'Acceso a módulos de Bodega, Productos, Soporte y Roles'
   },
   {
+    id: 'completo',
+    name: 'Completo',
+    description: 'Acceso a Inicio, Ventas, Bodega, Productos, Roles y Soporte (Tickets)'
+  },
+  {
     id: 'admin',
     name: 'Admin General',
     description: 'Acceso completo a todos los módulos sin restricciones'

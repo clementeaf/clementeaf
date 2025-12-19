@@ -1,4 +1,4 @@
-export type AppMode = 'ventas' | 'bodega' | 'admin';
+export type AppMode = 'ventas' | 'bodega' | 'admin' | 'completo';
 
 const STORAGE_KEY = 'adminAppMode';
 
@@ -9,7 +9,7 @@ const STORAGE_KEY = 'adminAppMode';
  */
 export const parseAppMode = (raw: string | null): AppMode | null => {
   if (!raw) return null;
-  if (raw === 'ventas' || raw === 'bodega' || raw === 'admin') return raw;
+  if (raw === 'ventas' || raw === 'bodega' || raw === 'admin' || raw === 'completo') return raw;
   return null;
 };
 
@@ -48,6 +48,7 @@ export const clearStoredAppMode = (): void => {
 export const getDefaultPathForMode = (mode: AppMode): string => {
   if (mode === 'ventas') return '/sells/quotes';
   if (mode === 'bodega') return '/picking/order';
+  if (mode === 'completo') return '/'; // Modo completo inicia en Home
   if (mode === 'admin') return '/'; // Admin general puede ver el inicio
   return '/';
 };

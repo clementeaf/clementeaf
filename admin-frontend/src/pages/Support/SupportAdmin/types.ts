@@ -1,7 +1,7 @@
 /**
  * Tipo para los modos de acceso disponibles
  */
-export type AccessMode = 'ventas' | 'bodega' | 'admin';
+export type AccessMode = 'ventas' | 'bodega' | 'admin' | 'completo';
 
 /**
  * Tipo para representar un email con su modo de acceso asignado
