@@ -1,7 +1,7 @@
 import React from 'react';
 import { type ColumnDef } from '@tanstack/react-table';
 import { Checkbox } from '../../components/commons';
-import { DocumentIcon, EyeIcon, MoreOptionsIcon } from '../../components/commons/icons';
+import { MoreOptionsIcon } from '../../components/commons/icons';
 
 /**
  * Tipo de datos para una fila de cliente
@@ -65,12 +65,6 @@ export const columns: ColumnDef<ClientRow>[] = [
     header: 'Documento',
     cell: () => (
       <div className="flex items-center gap-2">
-        <button className="p-1 hover:bg-gray-100 rounded transition-colors duration-200">
-          <DocumentIcon color="#6B7280" />
-        </button>
-        <button className="p-1 hover:bg-gray-100 rounded transition-colors duration-200">
-          <EyeIcon color="#6B7280" />
-        </button>
         <button className="p-1 hover:bg-gray-100 rounded transition-colors duration-200">
           <MoreOptionsIcon color="#6B7280" />
         </button>

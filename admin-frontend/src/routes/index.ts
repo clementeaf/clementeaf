@@ -25,6 +25,7 @@ export const routes = {
   analytics: '/analytics',
   chat: '/chat',
   support: '/support',
+  supportAdmin: '/support/admin',
   invoices: '/invoices',
   rolesManagement: '/roles/roles',
   createRole: '/roles/roles/create',

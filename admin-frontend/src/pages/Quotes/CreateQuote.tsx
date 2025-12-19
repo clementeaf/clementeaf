@@ -293,6 +293,51 @@ export const CreateQuote = () => {
 
   const isLastStep = currentStep === 4;
   const isProductsStep = currentStep === 3;
+  const isClientStep = currentStep === 1;
+
+  /**
+   * Valida si el cliente y contacto están seleccionados
+   * @returns true si ambos están seleccionados, false en caso contrario
+   */
+  const isClientStepValid = (): boolean => {
+    if (!isClientStep) return true; // Solo validar en el paso 1
+    
+    const clienteNombre = String(formData.clienteNombre || '').trim();
+    const clienteRut = String(formData.clienteRut || '').trim();
+    const contactoNombre = String(formData.contactoNombre || '').trim();
+    
+    // Debe haber cliente (nombre o RUT) y contacto (nombre)
+    const hasClient = clienteNombre.length > 0 || clienteRut.length > 0;
+    const hasContact = contactoNombre.length > 0;
+    
+    return hasClient && hasContact;
+  };
+
+  /**
+   * Obtiene el mensaje del tooltip para el botón Siguiente
+   * @returns Mensaje del tooltip o undefined si no hay restricciones
+   */
+  const getNextButtonTooltip = (): string | undefined => {
+    if (!isClientStep) return undefined;
+    
+    if (!isClientStepValid()) {
+      const clienteNombre = String(formData.clienteNombre || '').trim();
+      const clienteRut = String(formData.clienteRut || '').trim();
+      const contactoNombre = String(formData.contactoNombre || '').trim();
+      
+      const missingFields: string[] = [];
+      if (!clienteNombre && !clienteRut) {
+        missingFields.push('cliente');
+      }
+      if (!contactoNombre) {
+        missingFields.push('contacto');
+      }
+      
+      return `Debe seleccionar ${missingFields.join(' y ')} para continuar`;
+    }
+    
+    return undefined;
+  };
 
   return (
     <div className="w-full h-full flex flex-col p-8">
@@ -343,6 +388,8 @@ export const CreateQuote = () => {
                   onClick={handleNext}
                   rightIcon={<ChevronRightIcon color="white" />}
                   className="bg-[#004BB7] text-white hover:bg-blue-600 px-6 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={isClientStep && !isClientStepValid()}
+                  title={getNextButtonTooltip()}
                 >
                   Siguiente
                 </Button>

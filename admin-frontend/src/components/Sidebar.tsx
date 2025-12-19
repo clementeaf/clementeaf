@@ -3,8 +3,9 @@ import { useLocation } from 'react-router-dom';
 import { SidebarHeader } from './Sidebar/SidebarHeader';
 import { NavItem } from './Sidebar/NavItem';
 import { SellsSubMenu } from './Sidebar/SellsSubMenu';
-import { navItems, sellsSubItems, pickingSubItems, rolesSubItems } from './Sidebar/navItems.config';
-import { isActive, isSellsSectionActive, isPickingSectionActive, isRolesSectionActive } from './Sidebar/utils';
+import { navItems, sellsSubItems, pickingSubItems, rolesSubItems, supportSubItems } from './Sidebar/navItems.config';
+import { isActive, isSellsSectionActive, isPickingSectionActive, isRolesSectionActive, isSupportSectionActive } from './Sidebar/utils';
+import { isAuthorizedForSupportAdmin } from '../utils/supportAdminAccess';
 import { useLogout } from '../hooks/useAuth';
 import { usePermissions } from '../hooks/usePermissions';
 import { getStoredAppMode, type AppMode } from '../utils/appMode';
@@ -39,9 +40,11 @@ export const Sidebar = () => {
   const [isSellsExpanded, setIsSellsExpanded] = useState(false);
   const [isPickingExpanded, setIsPickingExpanded] = useState(false);
   const [isRolesExpanded, setIsRolesExpanded] = useState(false);
+  const [isSupportExpanded, setIsSupportExpanded] = useState(false);
   const [manualToggle, setManualToggle] = useState(false);
   const [manualPickingToggle, setManualPickingToggle] = useState(false);
   const [manualRolesToggle, setManualRolesToggle] = useState(false);
+  const [manualSupportToggle, setManualSupportToggle] = useState(false);
 
   /**
    * Determina si un módulo principal está permitido por modo.
@@ -51,6 +54,8 @@ export const Sidebar = () => {
    */
   const isModuleAllowedByMode = useCallback((moduleName: string, mode: AppMode | null): boolean => {
     if (!mode) return false;
+    // Modo admin: acceso completo a todos los módulos
+    if (mode === 'admin') return true;
     if (mode === 'ventas') {
       return moduleName === 'Ventas' || moduleName === 'Productos' || moduleName === 'Soporte' || moduleName === 'Roles';
     }
@@ -125,6 +130,23 @@ export const Sidebar = () => {
     });
   };
 
+  /**
+   * Filtra los submódulos de Soporte según el email del usuario
+   * El submódulo "Administración" solo es visible para usuarios autorizados
+   */
+  const getFilteredSupportSubItems = (subItems: NavItemType[]): NavItemType[] => {
+    if (!user?.email) return subItems.filter(item => item.path !== '/support/admin');
+    
+    return subItems.filter(subItem => {
+      // El submódulo "Administración" solo es visible para usuarios autorizados
+      if (subItem.path === '/support/admin') {
+        return isAuthorizedForSupportAdmin(user.email);
+      }
+      // Todos los demás submódulos son visibles para todos
+      return true;
+    });
+  };
+
   // Log de módulos filtrados solo cuando cambian los valores (evita logs en cada render)
   useEffect(() => {
     if (isLoading) return; // No loguear mientras carga
@@ -167,6 +189,13 @@ export const Sidebar = () => {
     }
   }, [location.pathname, manualRolesToggle]);
 
+  useEffect(() => {
+    if (!manualSupportToggle) {
+      const active = isSupportSectionActive(location.pathname, supportSubItems);
+      setIsSupportExpanded(active);
+    }
+  }, [location.pathname, manualSupportToggle]);
+
   const handleToggleSells = (): void => {
     setManualToggle(true);
     setIsSellsExpanded((prev) => !prev);
@@ -194,47 +223,60 @@ export const Sidebar = () => {
     setManualRolesToggle(false);
   };
 
+  const handleToggleSupport = (): void => {
+    setManualSupportToggle(true);
+    setIsSupportExpanded((prev) => !prev);
+  };
+
+  const handleSupportNavigation = (): void => {
+    setManualSupportToggle(false);
+  };
+
   const isExpanded = true;
 
   return (
     <div 
-      className={`h-full bg-[#002254] text-white flex flex-col items-start py-4 transition-all duration-300 ease-in-out ${
+      className={`h-full bg-[#002254] text-white flex flex-col items-start py-4 transition-all duration-300 ease-in-out overflow-hidden ${
         isExpanded ? 'w-[208px]' : 'w-[208px]'
       }`}
     >
       <SidebarHeader />
 
-      <nav className={`w-full flex flex-col transition-all duration-300 flex-1 ${isExpanded ? 'px-2' : 'px-1'}`}>
+      <nav className={`w-full flex flex-col transition-all duration-300 flex-1 min-h-0 overflow-y-auto overflow-x-hidden sidebar-scrollbar ${isExpanded ? 'px-2' : 'px-1'}`}>
         {filteredNavItems.map((item) => {
           const active = isActive(item.path, location.pathname);
           const isSellsItem = item.name === 'Ventas';
           const isPickingItem = item.name === 'Bodega';
           const isRolesItem = item.name === 'Roles';
-          const expanded = isSellsItem ? isSellsExpanded : isPickingItem ? isPickingExpanded : isRolesItem ? isRolesExpanded : false;
+          const isSupportItem = item.name === 'Soporte';
+          const expanded = isSellsItem ? isSellsExpanded : isPickingItem ? isPickingExpanded : isRolesItem ? isRolesExpanded : isSupportItem ? isSupportExpanded : false;
           
           // Obtener submódulos filtrados según permisos
           const filteredSellsSubItems = isSellsItem ? getFilteredSubItems(sellsSubItems) : [];
           const filteredPickingSubItems = isPickingItem ? getFilteredSubItems(pickingSubItems) : [];
           const filteredRolesSubItems = isRolesItem ? getFilteredSubItems(rolesSubItems) : [];
+          const filteredSupportSubItems = isSupportItem ? getFilteredSupportSubItems(supportSubItems) : [];
           
           const sellsSectionActive = isSellsItem && isSellsSectionActive(location.pathname, filteredSellsSubItems);
           const pickingSectionActive = isPickingItem && isPickingSectionActive(location.pathname, filteredPickingSubItems);
           const rolesSectionActive = isRolesItem && isRolesSectionActive(location.pathname, filteredRolesSubItems);
+          const supportSectionActive = isSupportItem && isSupportSectionActive(location.pathname, filteredSupportSubItems);
 
           // No mostrar el módulo si no tiene submódulos visibles (y tiene submódulos)
           if (item.hasSubItems) {
             if (isSellsItem && filteredSellsSubItems.length === 0) return null;
             if (isPickingItem && filteredPickingSubItems.length === 0) return null;
             if (isRolesItem && filteredRolesSubItems.length === 0) return null;
+            if (isSupportItem && filteredSupportSubItems.length === 0) return null;
           }
 
           return (
             <div key={item.path} className="w-full">
               <NavItem
                 item={item}
-                isActive={isSellsItem ? sellsSectionActive : isPickingItem ? pickingSectionActive : isRolesItem ? rolesSectionActive : active}
+                isActive={isSellsItem ? sellsSectionActive : isPickingItem ? pickingSectionActive : isRolesItem ? rolesSectionActive : isSupportItem ? supportSectionActive : active}
                 isExpanded={expanded}
-                onToggle={isSellsItem ? handleToggleSells : isPickingItem ? handleTogglePicking : isRolesItem ? handleToggleRoles : undefined}
+                onToggle={isSellsItem ? handleToggleSells : isPickingItem ? handleTogglePicking : isRolesItem ? handleToggleRoles : isSupportItem ? handleToggleSupport : undefined}
                 showExpandIcon={item.hasSubItems === true}
                 isCollapsed={false}
               />
@@ -260,6 +302,14 @@ export const Sidebar = () => {
                   subItems={filteredRolesSubItems}
                   isExpanded={expanded}
                   onNavigate={handleRolesNavigation}
+                />
+              )}
+
+              {isSupportItem && isExpanded && filteredSupportSubItems.length > 0 && (
+                <SellsSubMenu
+                  subItems={filteredSupportSubItems}
+                  isExpanded={expanded}
+                  onNavigate={handleSupportNavigation}
                 />
               )}
             </div>

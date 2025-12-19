@@ -53,7 +53,7 @@ export const NavItem = ({
   );
 
   const textElement = (
-    <span className={`text-[14px] leading-[20px] font-medium tracking-[0%] transition-all duration-300 ease-in-out whitespace-nowrap ${
+    <span className={`text-[14px] leading-[20px] font-medium tracking-[0%] transition-all duration-300 ease-in-out whitespace-nowrap truncate ${
       isCollapsed 
         ? 'opacity-0 max-w-0 overflow-hidden ml-0' 
         : 'opacity-100 max-w-[200px] ml-3'

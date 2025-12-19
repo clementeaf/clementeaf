@@ -41,7 +41,15 @@ export const CreateQuoteHeader = () => {
     <div className="flex items-center justify-between mb-6">
       <div className="flex items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800 mb-1">Crear Nota de venta</h1>
+          <div className="flex flex-col items-start justify-start">
+            <h1 className="text-2xl font-bold text-gray-800">Crear Nota de venta</h1>
+            <button
+              onClick={handleBackToClients}
+              className="py-2 text-gray-700 text-sm"
+            >
+              Volver a Clientes
+            </button>
+          </div>
           <nav className="text-sm text-gray-600 flex items-center gap-2">
             <button onClick={handleBackToClients} className='hover:text-black'>Clientes</button>
             <img src={ArrowRightIcon} alt="Arrow right" className="w-4 h-4" />

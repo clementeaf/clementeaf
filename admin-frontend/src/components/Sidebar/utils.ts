@@ -52,3 +52,15 @@ export const isRolesSectionActive = (currentPath: string, rolesSubItems: NavItem
          currentPath.startsWith(routes.users);
 };
 
+/**
+ * Verifica si la sección de Soporte está activa
+ * @param currentPath - Ruta actual
+ * @param supportSubItems - Subitems de Soporte
+ * @returns true si alguna subruta de Soporte está activa
+ */
+export const isSupportSectionActive = (currentPath: string, supportSubItems: NavItem[]): boolean => {
+  return supportSubItems.some(item => currentPath.startsWith(item.path)) || 
+         currentPath === routes.support ||
+         currentPath.startsWith(routes.support);
+};
+

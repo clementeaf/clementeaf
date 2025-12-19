@@ -22,7 +22,7 @@ export const SellsSubMenu = ({ subItems, isExpanded, onNavigate }: SellsSubMenuP
         isExpanded ? 'max-h-96 opacity-100 mt-1' : 'max-h-0 opacity-0 mt-0'
       }`}
     >
-      <div className="flex flex-col">
+      <div className="flex flex-col w-full">
         {subItems.map((subItem) => {
           return (
             <NavSubItem 

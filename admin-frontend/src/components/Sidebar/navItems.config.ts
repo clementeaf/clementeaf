@@ -21,7 +21,7 @@ export const navItems: NavItem[] = [
   { name: 'Bodega', path: routes.picking, icon: checkIcon, hasSubItems: true },
   { name: 'Productos', path: routes.productsSearch, icon: articlesIcon },
   { name: 'Contabilidad', path: routes.accounting, icon: articlesIcon },
-  { name: 'Soporte', path: routes.support, icon: articlesIcon },
+  { name: 'Soporte', path: routes.support, icon: articlesIcon, hasSubItems: true },
   { name: 'Roles', path: routes.rolesManagement, icon: checkIcon, hasSubItems: true }
 ];
 
@@ -50,5 +50,13 @@ export const pickingSubItems: NavItem[] = [
 export const rolesSubItems: NavItem[] = [
   { name: 'Roles', path: routes.rolesManagement, icon: checkIcon },
   { name: 'Usuarios', path: routes.users, icon: checkIcon }
+];
+
+/**
+ * Configuración de subitems de Soporte
+ */
+export const supportSubItems: NavItem[] = [
+  { name: 'Tickets', path: routes.support, icon: checkIcon },
+  { name: 'Administración', path: routes.supportAdmin, icon: checkIcon }
 ];
 

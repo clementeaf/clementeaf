@@ -25,6 +25,7 @@ const Picking = lazy(() => import('./pages/Picking').then(module => ({ default: 
 const Analytics = lazy(() => import('./pages/Analytics').then(module => ({ default: module.Analytics })));
 const Chat = lazy(() => import('./pages/Chat').then(module => ({ default: module.Chat })));
 const Support = lazy(() => import('./pages/Support').then(module => ({ default: module.Support })));
+const SupportAdmin = lazy(() => import('./pages/Support/SupportAdmin').then(module => ({ default: module.SupportAdmin })));
 const Invoices = lazy(() => import('./pages/Invoices').then(module => ({ default: module.Invoices })));
 const RolesManagement = lazy(() => import('./pages/Roles/RolesManagement').then(module => ({ default: module.RolesManagement })));
 const CreateRole = lazy(() => import('./pages/Roles/CreateRole').then(module => ({ default: module.CreateRole })));
@@ -54,20 +55,36 @@ const LoadingFallback = (): React.ReactElement => (
 function App(): React.ReactNode {
   return (
     <NotificationsProvider>
-      <div className="w-screen h-screen bg-blue-50/50 flex">
+      <div className="w-screen h-screen bg-blue-50/50 flex overflow-hidden">
         <Sidebar />
-        <div className="w-full h-full rounded-lg shadow-sm overflow-auto">
+        <div className="flex-1 h-full rounded-lg shadow-sm overflow-hidden min-w-0 flex flex-col">
           <Suspense fallback={<LoadingFallback />}>
+          <div className="flex-1 overflow-auto min-h-0">
           <Routes>
-            {/* Landing: redirige según modo */}
-            <Route path={routes.home} element={<AppModeLanding />} />
+            {/* Landing: redirige según modo, pero permite acceso directo a Home */}
+            <Route 
+              path={routes.home} 
+              element={
+                <AppModeRoute allowedModes={['ventas', 'bodega', 'admin']}>
+                  <Home />
+                </AppModeRoute>
+              } 
+            />
             
-            {/* Soporte (permitido en ambos modos) */}
+            {/* Soporte (permitido en todos los modos) */}
             <Route
               path={routes.support}
               element={
-                <AppModeRoute allowedModes={['ventas', 'bodega']}>
+                <AppModeRoute allowedModes={['ventas', 'bodega', 'admin']}>
                   <Support />
+                </AppModeRoute>
+              }
+            />
+            <Route
+              path={routes.supportAdmin}
+              element={
+                <AppModeRoute allowedModes={['ventas', 'bodega', 'admin']}>
+                  <SupportAdmin />
                 </AppModeRoute>
               }
             />
@@ -76,7 +93,7 @@ function App(): React.ReactNode {
             <Route 
               path={routes.sells} 
               element={
-                <AppModeRoute allowedModes={['ventas']}>
+                <AppModeRoute allowedModes={['ventas', 'admin']}>
                   <ProtectedRoute requiredPermissions={['module:sells', 'view:sells:clients', 'view:sells:quotes', 'view:sells:collections']} requireAny>
                     <Sells />
                   </ProtectedRoute>
@@ -86,7 +103,7 @@ function App(): React.ReactNode {
             <Route 
               path={routes.clients} 
               element={
-                <AppModeRoute allowedModes={['ventas']}>
+                <AppModeRoute allowedModes={['ventas', 'admin']}>
                   <ProtectedRoute requiredPermission="view:sells:clients">
                     <Clients />
                   </ProtectedRoute>
@@ -96,7 +113,7 @@ function App(): React.ReactNode {
             <Route 
               path={routes.createClient} 
               element={
-                <AppModeRoute allowedModes={['ventas']}>
+                <AppModeRoute allowedModes={['ventas', 'admin']}>
                   <ProtectedRoute requiredPermission="view:sells:clients">
                     <CreateClient />
                   </ProtectedRoute>
@@ -106,7 +123,7 @@ function App(): React.ReactNode {
             <Route 
               path={`${routes.clientDetails}/:id`} 
               element={
-                <AppModeRoute allowedModes={['ventas']}>
+                <AppModeRoute allowedModes={['ventas', 'admin']}>
                   <ProtectedRoute requiredPermission="view:sells:clients">
                     <ClientDetails />
                   </ProtectedRoute>
@@ -116,7 +133,7 @@ function App(): React.ReactNode {
             <Route 
               path={routes.quotes} 
               element={
-                <AppModeRoute allowedModes={['ventas']}>
+                <AppModeRoute allowedModes={['ventas', 'admin']}>
                   <ProtectedRoute requiredPermission="view:sells:quotes">
                     <Quotes />
                   </ProtectedRoute>
@@ -126,7 +143,7 @@ function App(): React.ReactNode {
             <Route 
               path={routes.createQuote} 
               element={
-                <AppModeRoute allowedModes={['ventas']}>
+                <AppModeRoute allowedModes={['ventas', 'admin']}>
                   <ProtectedRoute requiredPermission="view:sells:quotes">
                     <CreateQuote />
                   </ProtectedRoute>
@@ -136,7 +153,7 @@ function App(): React.ReactNode {
             <Route 
               path={`${routes.quoteDetails}/:id`} 
               element={
-                <AppModeRoute allowedModes={['ventas']}>
+                <AppModeRoute allowedModes={['ventas', 'admin']}>
                   <ProtectedRoute requiredPermission="view:sells:quotes">
                     <QuoteDetails />
                   </ProtectedRoute>
@@ -146,7 +163,7 @@ function App(): React.ReactNode {
             <Route 
               path={routes.collections} 
               element={
-                <AppModeRoute allowedModes={['ventas']}>
+                <AppModeRoute allowedModes={['ventas', 'admin']}>
                   <ProtectedRoute requiredPermission="view:sells:collections">
                     <Collections />
                   </ProtectedRoute>
@@ -158,7 +175,7 @@ function App(): React.ReactNode {
             <Route 
               path={routes.picking} 
               element={
-                <AppModeRoute allowedModes={['bodega']}>
+                <AppModeRoute allowedModes={['bodega', 'admin']}>
                   <ProtectedRoute requiredPermissions={['module:picking', 'view:picking:order', 'view:picking:metrics', 'view:picking:warehouse']} requireAny>
                     <Picking />
                   </ProtectedRoute>
@@ -168,7 +185,7 @@ function App(): React.ReactNode {
             <Route 
               path={routes.pickingOrder} 
               element={
-                <AppModeRoute allowedModes={['bodega']}>
+                <AppModeRoute allowedModes={['bodega', 'admin']}>
                   <ProtectedRoute requiredPermission="view:picking:order">
                     <Picking />
                   </ProtectedRoute>
@@ -178,7 +195,7 @@ function App(): React.ReactNode {
             <Route 
               path={routes.pickingMetrics} 
               element={
-                <AppModeRoute allowedModes={['bodega']}>
+                <AppModeRoute allowedModes={['bodega', 'admin']}>
                   <ProtectedRoute requiredPermission="view:picking:metrics">
                     <Picking />
                   </ProtectedRoute>
@@ -188,7 +205,7 @@ function App(): React.ReactNode {
             <Route 
               path={routes.pickingWarehouse} 
               element={
-                <AppModeRoute allowedModes={['bodega']}>
+                <AppModeRoute allowedModes={['bodega', 'admin']}>
                   <ProtectedRoute requiredPermission="view:picking:warehouse">
                     <Picking />
                   </ProtectedRoute>
@@ -200,7 +217,7 @@ function App(): React.ReactNode {
             <Route 
               path={routes.rolesManagement} 
               element={
-                <AppModeRoute allowedModes={['ventas', 'bodega']}>
+                <AppModeRoute allowedModes={['ventas', 'bodega', 'admin']}>
                   <ProtectedRoute requiredPermission="view:roles:roles">
                     <RolesManagement />
                   </ProtectedRoute>
@@ -210,7 +227,7 @@ function App(): React.ReactNode {
             <Route 
               path={routes.createRole} 
               element={
-                <AppModeRoute allowedModes={['ventas', 'bodega']}>
+                <AppModeRoute allowedModes={['ventas', 'bodega', 'admin']}>
                   <ProtectedRoute requiredPermission="view:roles:roles">
                     <CreateRole />
                   </ProtectedRoute>
@@ -220,7 +237,7 @@ function App(): React.ReactNode {
             <Route 
               path={routes.users} 
               element={
-                <AppModeRoute allowedModes={['ventas', 'bodega']}>
+                <AppModeRoute allowedModes={['ventas', 'bodega', 'admin']}>
                   <ProtectedRoute requiredPermission="view:roles:users">
                     <UsersManagement />
                   </ProtectedRoute>
@@ -230,7 +247,7 @@ function App(): React.ReactNode {
             <Route 
               path={routes.createUser} 
               element={
-                <AppModeRoute allowedModes={['ventas', 'bodega']}>
+                <AppModeRoute allowedModes={['ventas', 'bodega', 'admin']}>
                   <ProtectedRoute requiredPermission="view:roles:users">
                     <CreateUser />
                   </ProtectedRoute>
@@ -242,7 +259,7 @@ function App(): React.ReactNode {
             <Route 
               path={routes.productsSearch} 
               element={
-                <AppModeRoute allowedModes={['ventas', 'bodega']}>
+                <AppModeRoute allowedModes={['ventas', 'bodega', 'admin']}>
                   <ProtectedRoute requiredPermission="view:products:search">
                     <SearchProducts />
                   </ProtectedRoute>
@@ -295,6 +312,7 @@ function App(): React.ReactNode {
             {/* Fallback: cualquier otra ruta redirige según modo */}
             <Route path={routes.notFound} element={<AppModeLanding />} />
           </Routes>
+          </div>
         </Suspense>
       </div>
       <ToastContainer
